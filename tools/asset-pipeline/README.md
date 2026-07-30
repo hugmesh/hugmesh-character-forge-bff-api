@@ -1,0 +1,258 @@
+# Character Forge 3D asset pipeline
+
+Reproducible fetch → convert → audit → manifest pipeline for the vendored 3D
+character packs in `godot/character-forge/assets/packs/**`.
+
+Nothing under `assets/packs/` is hand-made or hand-edited. Re-running the two
+commands below from a clean checkout reproduces the committed bytes and the
+manifests that describe them.
+
+```bash
+cd tools/asset-pipeline
+npm install                                       # gltf-transform SDK + sharp + meshoptimizer
+./fetch.sh                                        # NETWORK: vendor archives -> .work/raw
+./build.sh                                        # OFFLINE: -> ../../godot/character-forge/assets/packs/**
+GODOT=/path/to/godot ./verify.sh                  # gate: freshness + glTF validation + Godot load test
+```
+
+`.work/` and `node_modules/` are git-ignored; the ~500 MB of vendor archives
+never enters the repository.
+
+---
+
+## 1. License discipline (the part that is not negotiable)
+
+Only **CC0** and **CC-BY** items with a positive redistribution verdict in the
+XR-chat research reports may be vendored. Every licence in `sources.json` was
+**read at the source during retrieval** — the LICENSE file inside the download,
+the licence block on the submission page, or (for VRM) the model's own
+`extensions.VRM.meta` — and is quoted verbatim in `licenseQuote`.
+
+`sources.json` is the single source of truth. `build-manifests.mjs` copies those
+fields into every `assets/packs/<id>/pack.json` **and** into the repo-root
+`THIRD_PARTY_ASSETS.md`, so the three can never drift. Do not hand-edit either
+generated file.
+
+Never vendored, whatever a page claims: **Mixamo** (raw-file redistribution is
+barred by Adobe's terms), **Synty**, **VRoid Hub**, **BOOTH**, **CGTrader**,
+unverified **Sketchfab** uploads, and anything from the "final fantasy free dl"
+style collections (game rips whose CC labels are void).
+
+### At-source corrections found while retrieving
+
+| Source | Research brief said | Source actually says | Action |
+|---|---|---|---|
+| 100Avatars (Polygonal Mind) | CC0 | `CCLicense.md` is the verbatim **CC-BY-4.0** text | shipped as CC-BY-4.0 with mandatory attribution |
+| 100Avatars | — | README: *"we started to rig them properly using Mixamo"* | shipped, disclosed in the manifest, flagged for legal review; scoped to an importer test corpus |
+| OGA VRoid CC0 bundle | 8 CC0 models | `Base_Female`/`Base_Male` carry in-file `licenseName: "CC0"`; `AvatarSample_D–G` carry `licenseName: "Other"` | only the two bases shipped |
+| KayKit itch pages | CC0 + "don't resell unmodified" | repo `LICENSE.txt` is plain CC0 with a *non-mandatory* credit request | shipped as CC0, credit given anyway |
+| Khronos Fox | CC0 | mesh CC0, **rig + animation CC-BY-4.0** | whole file ships as CC-BY-4.0 |
+
+### VRoid part-mixer prohibition
+
+pixiv's VRoid Studio guideline bars applications that *generate or output* models
+from deformed/recombined VRoid meshes. VRoid-derived files therefore ship as
+**fixed, whole avatars only** and must never be fed to the part-mixer. The CC0
+mixing lane is Quaternius + KayKit.
+
+---
+
+## 2. What each script does, and why
+
+| Script | Purpose |
+|---|---|
+| `fetch.sh` | Downloads every source in `sources.json`. No source needs an account or API token. |
+| `lib/itch-fetch.sh` | itch.io's free ("name your own price") download handshake — game page → CSRF → `/download_url` → `/file/<id>`. Quaternius routes all its downloads through itch. |
+| `lib/poly-bundle.mjs` | Scrapes a poly.pizza bundle for per-model GLB URLs **plus** the triangle count, licence and creator, so curation happens before download. |
+| `slim.mjs` | vendor glTF/GLB → toon-ready GLB. |
+| `animations.mjs` | `strip` (drop clips) / `only` (mesh-less shared animation library). |
+| `simplify.mjs` | over-budget decimation that **refuses to write** if skinning/morphs/joints did not survive. |
+| `vrm-slim.mjs` | VRM texture surgery that preserves the VRM extension byte-for-byte. |
+| `audit.mjs` | read-only measurement of the committed bytes (tris, render-tris, joints, jaw bone, animations, morph targets, visemes, extensions, VRM licence metadata). |
+| `build-manifests.mjs` | writes `pack.json` × 10 + `assets/packs/index.json` + `THIRD_PARTY_ASSETS.md`; fails the build over 60 MB. |
+| `lanes.json` + `build-lanes.mjs` | the hand-authored mapping of models onto the assembler's style lanes / head families / palette regions, resolved against the manifests and the engine's own enums (read out of `char3d_config.gd`, so a lane cannot name a family the engine lacks). Emits `assets/packs/lanes.json` for `scripts/pack_library.gd` and `pack-catalog.generated.ts` for the Angular selector — one source, two consumers, no drift. |
+| `lib/check-manifests.mjs` | asserts every manifest still describes the bytes on disk, that no file is unmanifested, and that `index.json` agrees with every `pack.json` it indexes. |
+| `verify.sh` | offline gate: manifest freshness, no non-core glTF extensions, glTF validation, Godot load test. |
+
+### The gate, and the proof it is not vacuous
+
+`GODOT=… ./verify.sh` currently reports **1805 passed, 0 failed** over 75 assets.
+Those are measurements, not existence checks — each was confirmed by breaking it
+on purpose and watching the gate go red:
+
+| Injected lie | Gate response |
+|---|---|
+| `khronos-fox-v1` manifest claims 999 tris instead of 576 | `FAIL: fox.glb renders 576 triangles, manifest says 999` |
+| blank the CC-BY-3.0 attribution text in `index.json` `credits[]` | `FAIL: godette-v1 is CC-BY-3.0: credits[] carries attribution text and a licence URL` |
+| relabel the CC-BY-4.0 100Avatars pack as CC0 in `index.json` | `FAIL: index.json polygonalmind-100avatars-v1.licenseSpdx agrees with pack.json` |
+
+`./build.sh` is also byte-reproducible: re-running it from the cached vendor
+archives reproduced all **75/75 committed files with identical SHA-256 digests**.
+
+### Why `slim.mjs` throws away the PBR maps
+
+The runtime shades every avatar with the house toon shader on Godot's
+Compatibility (WebGL2) renderer plus a palette-strip recolor texture. Normal /
+metallic-roughness / occlusion / emissive maps are never sampled — they are pure
+download weight, and Quaternius ships 4096² normal + ORM maps. Dropping them and
+resizing base colour to 512 px turned the Modular Outfits pack from **785 MB of
+naively-embedded GLBs into 6.6 MB**. Runtime GLB loading also generates no
+mipmaps and has no VRAM compression (godotengine/godot#100481), so small
+textures pay twice.
+
+### Why no Draco / Meshopt / quantization
+
+Godot's glTF loader must read these files at runtime (`append_from_buffer`) with
+**core glTF 2.0 only**. `slim.mjs` asserts `extensionsRequired` is empty on every
+file it writes, and `verify.sh` re-asserts it over the committed tree.
+
+### Why the animation libraries are separate files
+
+Every KayKit adventurer shipped the *same* 41-bone rig with the *same* 76 clips
+embedded — ~3.4 MB of duplicated animation per character (Knight was 3.49 MB, of
+which 6,952 triangles and a 13 KB texture). technique.md's canonical-rig rule is
+one shared `AnimationLibrary` per rig, so `animations.mjs only` extracts a
+mesh-less clip donor and `animations.mjs strip` empties the characters. Knight
+went **3.49 MB → 0.35 MB**; the pack pays for its 76 clips exactly once.
+
+### Why `.vrm` never goes through `slim.mjs`
+
+glTF-Transform only round-trips extensions it has registered. A `NodeIO`
+round-trip of `Godette_vrm_v4.vrm` came back with `extensionsUsed: []` — the
+humanoid bone map, the A/I/U/E/O viseme `blendShapeMaster`, the spring-bone
+config and the in-file licence metadata were all silently deleted. `vrm-slim.mjs`
+therefore rebuilds only the BIN chunk (re-encoded images, GC'd orphan buffer
+views) and copies the JSON through, so the extension objects survive verbatim.
+`--drop-morph-normals` additionally removes the NORMAL/TANGENT delta streams from
+morph targets — index-preserving, so viseme bindings still resolve — which took a
+VRoid base from **15.6 MB → 3.05 MB** with the visemes intact (proven by the
+Godot runtime-load test asserting `get_blend_shape_count() > 0`).
+
+### The four triangle numbers in `pack.json`, and which one is real
+
+| Field | Meaning |
+|---|---|
+| **`trisAfter`** | **Rendered triangles measured on the committed bytes.** The Quest-3 budget number; the Godot self-test re-measures it after instantiating the asset and fails on any disagreement. This is the only number to plan against. |
+| `trisUnique` | Unique mesh geometry, i.e. download/parse cost. `dedup()` merges identical meshes (KayKit ships two copies of the same sword), so this diverges from `trisAfter` whenever a mesh is reused by more than one node. |
+| `trisBeforeDecimation` | Non-null **only** when `simplify.mjs` actually rewrote the file. `decimated` states this as a boolean on every model rather than leaving it inferred. |
+| `vendorReportedTris` | Provenance only — what poly.pizza's own model metadata claimed at retrieval time. **Not** a before/after pair with `trisAfter`: the vendor counts differently (it can be *lower* than our measurement, e.g. Blue Demon 4,456 vs 5,800), so reading it as "our pipeline added triangles" would be wrong. |
+
+At the current curation **nothing needed decimating** — every asset already fits
+the 16k budget after `slim.mjs`, so `decimated` is `false` everywhere and
+`trisBeforeDecimation` is `null` everywhere. `simplify.mjs` still runs over every
+file on each build (it self-reports `skip … <= budget`), so the moment a future
+source lands over budget the decimation and its provenance are recorded
+automatically.
+
+---
+
+## 3. Curation and what was cut
+
+Hard budget: **60 MB** of committed pack payload. Actual: **38.78 MB / 75 files**.
+
+| Pack | Files | MB | License | Style / rig |
+|---|---:|---:|---|---|
+| `quaternius-base-v1` | 11 | 5.06 | CC0-1.0 | jrpg / humanoid (2 bases, 8 hair+brow parts, 43-clip library) |
+| `quaternius-outfits-v1` | 20 | 6.61 | CC0-1.0 | jrpg / humanoid (modular clothing parts) |
+| `quaternius-monsters-v1` | 15 | 3.39 | CC0-1.0 | monster / humanoid |
+| `quaternius-animals-v1` | 6 | 3.60 | CC0-1.0 | furry-donor / quadruped |
+| `kaykit-adventurers-v1` | 6 | 3.91 | CC0-1.0 | jrpg / humanoid (5 chars + 76-clip library) |
+| `kaykit-skeletons-v1` | 5 | 4.46 | CC0-1.0 | monster / humanoid (4 chars + 95-clip library) |
+| `vroid-cc0-v1` | 2 | 6.09 | CC0-1.0 | anime / humanoid, **visemes** |
+| `polygonalmind-100avatars-v1` | 8 | 5.02 | CC-BY-4.0 | filler / humanoid, **visemes** |
+| `godette-v1` | 1 | 0.49 | CC-BY-3.0 | anime / humanoid, **visemes** |
+| `khronos-fox-v1` | 1 | 0.14 | CC-BY-4.0 | furry-donor / quadruped |
+
+**Cut, and why:**
+
+- **30 of the 45 Ultimate Monsters** — kept the bipedal creature/anthro-adjacent
+  roster (Cat, Bunny, Frog, Dragon ×2, Yeti, Orc ×2, Demon ×2, Ghost, Mushroom
+  King, Tribal) + two slimes; dropped the fish/birds/aliens/ninja/wizard and the
+  "Evolved" duplicates that add no silhouette.
+- **6 of the 12 Animated Animals** — kept Fox/Wolf/Husky/Shiba/Deer/Horse as
+  head/tail donors; cut the farm set (Cow, Bull, Donkey, Alpaca, Stag, White
+  Horse), which donates nothing the Deer/Horse do not.
+- **The 4 assembled Quaternius outfits** — they are the 20 modular parts already
+  shipped, pre-combined (~1.4 MB of redundancy).
+- **`AvatarSample_D/E/F/G`** — in-file `licenseName: "Other"`, 26.7k–34.4k tris,
+  417–498 joints, and no safe decimation path for a VRM.
+- **192 of the 200 non-voxel 100Avatars, and all 200 voxel variants** — 8 are
+  enough for an importer corpus; the whole repo is 2.4 GB.
+- **The "Origin at 0" hairstyle variants** — the "Rigged to Head Bone" copies are
+  the useful ones.
+- **Quaternius `.blend` source tiers, all FBX copies, all normal/ORM/roughness
+  maps** — see §2.
+
+Remaining headroom (~21 MB) is deliberately **not** spent on larger textures:
+runtime-loaded GLBs get no VRAM compression on web, so 1024² maps would cost 4×
+the GPU memory for a look the palette-strip recolor design does not need.
+
+---
+
+## 4. Known gaps / follow-ups
+
+1. **Blender-only sources are not converted.** `OGA Modular RPG Characters
+   (System G6)` and `OGA Base Rigged Stylized Humanoid (YW)` ship `.blend` files
+   only. Blender is not installed here, so they are recorded in
+   `sources.json → notShipped` rather than faked. **TODO:** on a machine with
+   Blender, export both to GLB (`--background --python` batch), re-slot materials
+   to the 7 semantic regions, add a jaw bone, and add them to `sources.json`.
+2. **No jaw bone anywhere on the CC0 lane.** Every Quaternius/KayKit/Fox
+   character is flagged `no jaw bone and no visemes`. Adding one is a Blender
+   batch job (legal-inventory.md); until then the lip-sync channel for these
+   models has to come from the assembler (procedural jaw) or the JRPG-authentic
+   5-frame mouth-texture strip (`shaders/mouth_strip.gdshader` already exists).
+3. **Over-bone-budget models.** `bunny` (98 joints), `orc`/`mushroom_king` (86),
+   and both VRoid bases (166/134 — VRoid spring-bone hair chains) exceed the ~75
+   bone Quest guidance. Flagged per-model in `pack.json`; the fix is bone-chain
+   pruning, which needs a rig-aware tool.
+4. **BLOCKER — the web export will currently drop every `.vrm` and every
+   manifest.** Measured in this tree: of the 86 files under `assets/packs/`, only
+   the **64 `.glb`** have `.import` sidecars. The **11 `.vrm`** (all three viseme
+   packs: `vroid-cc0-v1`, `polygonalmind-100avatars-v1`, `godette-v1` — 11.6 MB)
+   and the **11 `.json`** (10 `pack.json` + `index.json`) have none, because
+   `.vrm` is consumed through the *runtime* loader (godot-vrm is not enabled in
+   `project.godot`) and Godot has no importer for these JSON files. `preset.0` in
+   `export_presets.cfg` is `export_filter="all_resources"` with
+   `include_filter=""`, which ships imported resources only — so all 22 of those
+   files are excluded from the bundle, taking the entire anime/viseme lane and
+   the index the runtime reads instead of enumerating `res://` with them.
+   **Fix (owned by whoever owns `export_presets.cfg`, not this lane):**
+   `include_filter="*.vrm,*.json"`. This cannot be verified from here — DESIGN §0
+   bars this lane from downloading export templates or running exports — so it
+   must be re-checked on the first real web export.
+5. **Quaternius RPG Character Pack** is Google-Drive-only and was skipped; its
+   coverage overlaps what is already shipped. (Confirmed at the source: the only
+   download control on `quaternius.com/packs/rpgcharacters.html` is an
+   `onclick="window.open('https://drive.google.com/drive/folders/…')"` — this is
+   the one Quaternius pack with no itch.io listing, so `lib/itch-fetch.sh`
+   cannot reach it.)
+5b. **KayKit Character Animations is the wrong rig, not a missing download.** It
+   fetches fine (CC0, verified in the pack's own `LICENSE.txt`), but its
+   `KayKit_AnimatedCharacter_v1.2.glb` is the blocky PrototypePete demo body on a
+   **6-joint** rig, while the Adventurers/Skeletons characters we ship are a
+   41-bone rig — the 30 clips cannot drive them without a rig-aware retarget.
+   The 76-clip library already extracted from the Adventurers pack is on the
+   correct rig and covers the room's social poses (Idle, Cheer, Sit_Chair_*,
+   Sit_Floor_*, Lie_*, Interact, PickUp, Throw). **TODO** (needs Blender or an
+   editor-authored BoneMap): retarget the 5 clips unique to the standalone pack —
+   Wave, Dance, Climbing, Hop, Roll — onto the 41-bone rig. `Wave` and `Dance` are
+   the two a chat room actually wants.
+6. **Sketchfab anthro candidates** need an account token plus per-model IP
+   vetting (link-audit.md) — not attemptable from an unauthenticated pipeline.
+7. **Upstream `SKIN_SKELETON_INVALID`** appears on 13 assets. It is present
+   byte-identically in the vendor originals (an FBX2glTF quirk), so `verify.sh`
+   allow-lists exactly that one code and nothing else.
+8. **Quaternius' free UBC zip references textures it does not ship**
+   (`T_Eye_Normal_png.png`, `T_Hair_1_Normal_png.png`). `slim.mjs` aliases
+   `<name>_png.png` → `<name>.png` and drops them as normal maps regardless.
+
+---
+
+## 5. Adding a source
+
+1. Verify the licence **at the source** and copy the text into `licenseQuote`.
+2. Add a block to `sources.json` (`packs[]` if shipping, `notShipped[]` if not).
+3. Add its download to `fetch.sh` and its conversion to `build.sh`.
+4. `./build.sh && GODOT=... ./verify.sh` — the manifests, `THIRD_PARTY_ASSETS.md`
+   and the budget check all update themselves.

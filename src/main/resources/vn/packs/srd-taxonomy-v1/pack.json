@@ -1,0 +1,349 @@
+{
+  "packId": "srd-taxonomy-v1",
+  "version": "1.0.0",
+  "displayName": "Taxonomy + SRD Placeholders v1",
+  "licenseSpdx": "CC-BY-4.0",
+  "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") by Wizards of the Coast LLC and available at https://dnd.wizards.com/resources/systems-reference-document. The SRD 5.1 is licensed under the Creative Commons Attribution 4.0 International License available at https://creativecommons.org/licenses/by/4.0/legalcode.",
+  "canvas": { "width": 1024, "height": 1024 },
+  "slots": [
+    {
+      "slot": "body",
+      "zOrder": 20,
+      "required": true,
+      "anchor": { "x": 0.5, "y": 0.5 },
+      "parts": [
+        {
+          "id": "body_canid_01",
+          "displayName": "Canid Body",
+          "file": "parts/body/body_canid_01.svg",
+          "category": "base",
+          "headArchetype": "canid",
+          "tags": ["archetype"],
+          "tintRegions": [
+            { "region": "fur", "svgClass": "region-fur", "defaultPalette": "#C9A06A" }
+          ],
+          "anchorOverride": null,
+          "offset": { "x": 0, "y": 0 }
+        },
+        {
+          "id": "body_felid_01",
+          "displayName": "Felid Body",
+          "file": "parts/body/body_felid_01.svg",
+          "category": "base",
+          "headArchetype": "felid",
+          "tags": ["archetype"],
+          "tintRegions": [
+            { "region": "fur", "svgClass": "region-fur", "defaultPalette": "#D8B070" }
+          ],
+          "anchorOverride": null,
+          "offset": { "x": 0, "y": 0 }
+        },
+        {
+          "id": "body_avian_01",
+          "displayName": "Avian Body",
+          "file": "parts/body/body_avian_01.svg",
+          "category": "base",
+          "headArchetype": "avian",
+          "tags": ["archetype"],
+          "tintRegions": [
+            { "region": "fur", "svgClass": "region-fur", "defaultPalette": "#8FB4D8" }
+          ],
+          "anchorOverride": null,
+          "offset": { "x": 0, "y": 0 }
+        },
+        {
+          "id": "body_reptile_01",
+          "displayName": "Reptile Body",
+          "file": "parts/body/body_reptile_01.svg",
+          "category": "base",
+          "headArchetype": "reptile",
+          "tags": ["archetype"],
+          "tintRegions": [
+            { "region": "fur", "svgClass": "region-fur", "defaultPalette": "#6FA86A" }
+          ],
+          "anchorOverride": null,
+          "offset": { "x": 0, "y": 0 }
+        },
+        {
+          "id": "body_synth_01",
+          "displayName": "Synth Body",
+          "file": "parts/body/body_synth_01.svg",
+          "category": "base",
+          "headArchetype": "synth",
+          "tags": ["archetype"],
+          "tintRegions": [
+            { "region": "fur", "svgClass": "region-fur", "defaultPalette": "#9AA4B0" }
+          ],
+          "anchorOverride": null,
+          "offset": { "x": 0, "y": 0 }
+        },
+        {
+          "id": "body_humanoid_01",
+          "displayName": "Humanoid Body",
+          "file": "parts/body/body_humanoid_01.svg",
+          "category": "base",
+          "headArchetype": "humanoid",
+          "tags": ["archetype"],
+          "tintRegions": [
+            { "region": "fur", "svgClass": "region-fur", "defaultPalette": "#E0B89A" }
+          ],
+          "anchorOverride": null,
+          "offset": { "x": 0, "y": 0 }
+        },
+        {
+          "id": "body_dragonborn_01",
+          "displayName": "Dragonborn Body",
+          "file": "parts/body/body_dragonborn_01.svg",
+          "category": "base",
+          "headArchetype": "reptile",
+          "source": "SRD 5.1",
+          "tags": ["race", "draconic"],
+          "tintRegions": [
+            { "region": "fur", "svgClass": "region-fur", "defaultPalette": "#B05A45" }
+          ],
+          "anchorOverride": null,
+          "offset": { "x": 0, "y": 0 }
+        },
+        {
+          "id": "body_tiefling_01",
+          "displayName": "Tiefling Body",
+          "file": "parts/body/body_tiefling_01.svg",
+          "category": "base",
+          "headArchetype": "humanoid",
+          "source": "SRD 5.1",
+          "tags": ["race", "fiendish"],
+          "tintRegions": [
+            { "region": "fur", "svgClass": "region-fur", "defaultPalette": "#A8506A" }
+          ],
+          "anchorOverride": null,
+          "offset": { "x": 0, "y": 0 }
+        }
+      ]
+    },
+    {
+      "slot": "head",
+      "zOrder": 60,
+      "required": true,
+      "anchor": { "x": 0.5, "y": 0.35 },
+      "parts": [
+        {
+          "id": "head_canid_01",
+          "displayName": "Canid Head",
+          "file": "parts/head/head_canid_01.svg",
+          "category": "head",
+          "headArchetype": "canid",
+          "tags": ["archetype"],
+          "tintRegions": [
+            { "region": "fur", "svgClass": "region-fur", "defaultPalette": "#C9A06A" }
+          ],
+          "anchorOverride": null,
+          "offset": { "x": 0, "y": 0 }
+        },
+        {
+          "id": "head_felid_01",
+          "displayName": "Felid Head",
+          "file": "parts/head/head_felid_01.svg",
+          "category": "head",
+          "headArchetype": "felid",
+          "tags": ["archetype"],
+          "tintRegions": [
+            { "region": "fur", "svgClass": "region-fur", "defaultPalette": "#D8B070" }
+          ],
+          "anchorOverride": null,
+          "offset": { "x": 0, "y": 0 }
+        },
+        {
+          "id": "head_avian_01",
+          "displayName": "Avian Head",
+          "file": "parts/head/head_avian_01.svg",
+          "category": "head",
+          "headArchetype": "avian",
+          "tags": ["archetype"],
+          "tintRegions": [
+            { "region": "fur", "svgClass": "region-fur", "defaultPalette": "#8FB4D8" }
+          ],
+          "anchorOverride": null,
+          "offset": { "x": 0, "y": 0 }
+        },
+        {
+          "id": "head_reptile_01",
+          "displayName": "Reptile Head",
+          "file": "parts/head/head_reptile_01.svg",
+          "category": "head",
+          "headArchetype": "reptile",
+          "tags": ["archetype"],
+          "tintRegions": [
+            { "region": "fur", "svgClass": "region-fur", "defaultPalette": "#6FA86A" }
+          ],
+          "anchorOverride": null,
+          "offset": { "x": 0, "y": 0 }
+        },
+        {
+          "id": "head_synth_01",
+          "displayName": "Synth Head",
+          "file": "parts/head/head_synth_01.svg",
+          "category": "head",
+          "headArchetype": "synth",
+          "tags": ["archetype"],
+          "tintRegions": [
+            { "region": "fur", "svgClass": "region-fur", "defaultPalette": "#9AA4B0" }
+          ],
+          "anchorOverride": null,
+          "offset": { "x": 0, "y": 0 }
+        },
+        {
+          "id": "head_humanoid_01",
+          "displayName": "Humanoid Head",
+          "file": "parts/head/head_humanoid_01.svg",
+          "category": "head",
+          "headArchetype": "humanoid",
+          "tags": ["archetype"],
+          "tintRegions": [
+            { "region": "fur", "svgClass": "region-fur", "defaultPalette": "#E0B89A" }
+          ],
+          "anchorOverride": null,
+          "offset": { "x": 0, "y": 0 }
+        },
+        {
+          "id": "head_dragonborn_01",
+          "displayName": "Dragonborn Head",
+          "file": "parts/head/head_dragonborn_01.svg",
+          "category": "head",
+          "headArchetype": "reptile",
+          "source": "SRD 5.1",
+          "tags": ["race", "draconic"],
+          "tintRegions": [
+            { "region": "fur", "svgClass": "region-fur", "defaultPalette": "#B05A45" }
+          ],
+          "anchorOverride": null,
+          "offset": { "x": 0, "y": 0 }
+        },
+        {
+          "id": "head_tiefling_01",
+          "displayName": "Tiefling Head",
+          "file": "parts/head/head_tiefling_01.svg",
+          "category": "head",
+          "headArchetype": "humanoid",
+          "source": "SRD 5.1",
+          "tags": ["race", "fiendish"],
+          "tintRegions": [
+            { "region": "fur", "svgClass": "region-fur", "defaultPalette": "#A8506A" }
+          ],
+          "anchorOverride": null,
+          "offset": { "x": 0, "y": 0 }
+        },
+        {
+          "id": "head_dwarf_01",
+          "displayName": "Dwarf Head",
+          "file": "parts/head/head_dwarf_01.svg",
+          "category": "head",
+          "headArchetype": "humanoid",
+          "source": "SRD 5.1",
+          "tags": ["race"],
+          "tintRegions": [
+            { "region": "fur", "svgClass": "region-fur", "defaultPalette": "#D8A77A" }
+          ],
+          "anchorOverride": null,
+          "offset": { "x": 0, "y": 0 }
+        },
+        {
+          "id": "head_elf_01",
+          "displayName": "Elf Head",
+          "file": "parts/head/head_elf_01.svg",
+          "category": "head",
+          "headArchetype": "humanoid",
+          "source": "SRD 5.1",
+          "tags": ["race"],
+          "tintRegions": [
+            { "region": "fur", "svgClass": "region-fur", "defaultPalette": "#EAD0B0" }
+          ],
+          "anchorOverride": null,
+          "offset": { "x": 0, "y": 0 }
+        }
+      ]
+    },
+    {
+      "slot": "eyes",
+      "zOrder": 100,
+      "required": true,
+      "anchor": { "x": 0.5, "y": 0.32 },
+      "parts": [
+        {
+          "id": "eyes_round_01",
+          "displayName": "Round Eyes",
+          "file": "parts/eyes/eyes_round_01.svg",
+          "category": "eyes",
+          "compatibleHeads": ["*"],
+          "tags": ["eyes"],
+          "tintRegions": [
+            { "region": "iris", "svgClass": "region-iris", "defaultPalette": "#3A78C2" }
+          ],
+          "anchorOverride": null,
+          "offset": { "x": 0, "y": 0 }
+        },
+        {
+          "id": "eyes_visor_01",
+          "displayName": "Synth Visor",
+          "file": "parts/eyes/eyes_visor_01.svg",
+          "category": "eyes",
+          "compatibleHeads": ["synth"],
+          "tags": ["eyes", "synth"],
+          "tintRegions": [
+            { "region": "iris", "svgClass": "region-iris", "defaultPalette": "#37C2A8" }
+          ],
+          "anchorOverride": null,
+          "offset": { "x": 0, "y": 0 }
+        },
+        {
+          "id": "eyes_reptilian_01",
+          "displayName": "Reptilian Eyes",
+          "file": "parts/eyes/eyes_reptilian_01.svg",
+          "category": "eyes",
+          "compatibleHeads": ["reptile"],
+          "source": "SRD 5.1",
+          "tags": ["eyes", "draconic"],
+          "tintRegions": [
+            { "region": "iris", "svgClass": "region-iris", "defaultPalette": "#D2B23A" }
+          ],
+          "anchorOverride": null,
+          "offset": { "x": 0, "y": 0 }
+        }
+      ]
+    },
+    {
+      "slot": "feature",
+      "zOrder": 80,
+      "required": false,
+      "anchor": { "x": 0.5, "y": 0.3 },
+      "parts": [
+        {
+          "id": "muzzle_beak_01",
+          "displayName": "Avian Beak",
+          "file": "parts/feature/muzzle_beak_01.svg",
+          "category": "feature",
+          "compatibleHeads": ["avian"],
+          "tags": ["feature"],
+          "tintRegions": [
+            { "region": "fur", "svgClass": "region-fur", "defaultPalette": "#E0A838" }
+          ],
+          "anchorOverride": null,
+          "offset": { "x": 0, "y": 0 }
+        },
+        {
+          "id": "horns_tiefling_01",
+          "displayName": "Tiefling Horns",
+          "file": "parts/feature/horns_tiefling_01.svg",
+          "category": "feature",
+          "compatibleHeads": ["humanoid"],
+          "source": "SRD 5.1",
+          "tags": ["feature", "fiendish"],
+          "tintRegions": [
+            { "region": "fur", "svgClass": "region-fur", "defaultPalette": "#5A4030" }
+          ],
+          "anchorOverride": null,
+          "offset": { "x": 0, "y": 0 }
+        }
+      ]
+    }
+  ]
+}

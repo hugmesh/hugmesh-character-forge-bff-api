@@ -1,0 +1,59 @@
+:host {
+  display: block;
+}
+
+.saves {
+  border: 1px solid var(--hug-border, #333);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem 0.75rem;
+
+  legend {
+    font-weight: 600;
+    padding: 0 0.4rem;
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0;
+
+  li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.35rem 0.4rem;
+    border-radius: 4px;
+
+    &.loaded {
+      background: var(--hug-bg-2, #1a1a2e);
+    }
+  }
+
+  .char-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .active-badge {
+    margin-left: 0.4rem;
+    padding: 0.05rem 0.4rem;
+    border: 1px solid var(--hug-success, #4caf50);
+    border-radius: 999px;
+    color: var(--hug-success, #4caf50);
+    font-size: 0.8rem;
+  }
+
+  .row-actions {
+    display: inline-flex;
+    gap: 0.35rem;
+    flex-shrink: 0;
+  }
+}

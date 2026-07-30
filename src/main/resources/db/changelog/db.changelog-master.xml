@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <!--
+      Character-forge BFF schema. Liquibase runs over a JDBC datasource (Liquibase
+      has no R2DBC runner); all runtime data access goes through R2DBC.
+
+        001 — character_forge_character (uuid PK DB-generated via gen_random_uuid;
+              owner_subject = the IMMUTABLE Casdoor sub, NEVER localpart; per-brand
+              `domain` column following the forum-bff 003 treatment; jsonb
+              `definition` holding the canonical, fully server-validated Char3DConfig;
+              `active` + the PARTIAL UNIQUE index enforcing ONE active character per
+              (owner_subject, domain))
+
+      POSTGRES-ONLY BY DESIGN: jsonb, gen_random_uuid() and the partial unique index
+      are Postgres features. The test store IS Postgres (Testcontainers via the
+      commons PostgresTestSupport + PostgresSliceTestConfig — the forum-bff 004
+      precedent that moved slices off H2), and the production runtime is Postgres.
+    -->
+
+    <include file="db/changelog/001-character-forge-character.xml"/>
+</databaseChangeLog>

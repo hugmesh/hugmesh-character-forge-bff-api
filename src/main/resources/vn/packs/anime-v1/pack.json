@@ -1,0 +1,1798 @@
+{
+  "packId": "anime-v1",
+  "version": "1.0.0",
+  "displayName": "Anime & Kemonomimi",
+  "licenseSpdx": "CC-BY-SA-4.0",
+  "canvas": {
+    "width": 1024,
+    "height": 1024
+  },
+  "slots": [
+    {
+      "slot": "tail",
+      "zOrder": 10,
+      "required": false,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "parts": [
+        {
+          "id": "tail_neko_01",
+          "displayName": "Neko Tail",
+          "file": "parts/tail/tail_neko_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "anime",
+            "kemonomimi",
+            "neko",
+            "cat",
+            "tail",
+            "slim"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#4a4553"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f2e0e6"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "tail_kitsune_01",
+          "displayName": "Kitsune Tail",
+          "file": "parts/tail/tail_kitsune_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "anime",
+            "kemonomimi",
+            "kitsune",
+            "fox",
+            "tail",
+            "fluffy"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#e8913a"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f7efe2"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "tail_kitsune_nine_01",
+          "displayName": "Nine-Tail Fan",
+          "file": "parts/tail/tail_kitsune_nine_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "anime",
+            "kemonomimi",
+            "kitsune",
+            "fox",
+            "tail",
+            "nine-tails",
+            "kyuubi",
+            "fan"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#e8913a"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f7efe2"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "tail_ookami_01",
+          "displayName": "Ookami Tail",
+          "file": "parts/tail/tail_ookami_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "anime",
+            "kemonomimi",
+            "ookami",
+            "wolf",
+            "tail",
+            "bushy"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#8b8e99"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e8e6df"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        }
+      ]
+    },
+    {
+      "slot": "wings",
+      "zOrder": 15,
+      "required": false,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "parts": [
+        {
+          "id": "wings_fairy_01",
+          "displayName": "Fairy Wings",
+          "file": "parts/wings/wings_fairy_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "anime",
+            "fairy",
+            "wings",
+            "translucent",
+            "double-lobe"
+          ],
+          "tintRegions": [
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#bfe3f2"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        }
+      ]
+    },
+    {
+      "slot": "body",
+      "zOrder": 20,
+      "required": true,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "parts": [
+        {
+          "id": "body_anime_a_01",
+          "displayName": "Slight Body (Camisole)",
+          "file": "parts/body/body_anime_a_01.svg",
+          "category": "base",
+          "headArchetype": "humanoid",
+          "tags": [
+            "anime",
+            "humanoid",
+            "body",
+            "femme",
+            "slight",
+            "camisole"
+          ],
+          "tintRegions": [
+            {
+              "region": "skin",
+              "svgClass": "region-skin",
+              "defaultPalette": "#f2c9a8"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e88ca4"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#c9647f"
+            },
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#3a3340"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "body_anime_b_01",
+          "displayName": "Broad Body (Tee)",
+          "file": "parts/body/body_anime_b_01.svg",
+          "category": "base",
+          "headArchetype": "humanoid",
+          "tags": [
+            "anime",
+            "humanoid",
+            "body",
+            "masc",
+            "broad",
+            "tee"
+          ],
+          "tintRegions": [
+            {
+              "region": "skin",
+              "svgClass": "region-skin",
+              "defaultPalette": "#f2c9a8"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#6c8ec9"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#41537a"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "body_anime_c_01",
+          "displayName": "Androgynous Body (Hoodie)",
+          "file": "parts/body/body_anime_c_01.svg",
+          "category": "base",
+          "headArchetype": "humanoid",
+          "tags": [
+            "anime",
+            "humanoid",
+            "body",
+            "androgynous",
+            "hoodie",
+            "cozy"
+          ],
+          "tintRegions": [
+            {
+              "region": "skin",
+              "svgClass": "region-skin",
+              "defaultPalette": "#f2c9a8"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#8a76b8"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#5c4a85"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        }
+      ]
+    },
+    {
+      "slot": "markings",
+      "zOrder": 30,
+      "required": false,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "parts": [
+        {
+          "id": "marking_blush_01",
+          "displayName": "Cheek Blush",
+          "file": "parts/markings/marking_blush_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "anime",
+            "marking",
+            "blush",
+            "cheeks",
+            "cute"
+          ],
+          "tintRegions": [
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f2a0a0"
+            },
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#d97f7f"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "marking_freckles_01",
+          "displayName": "Freckles",
+          "file": "parts/markings/marking_freckles_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "anime",
+            "marking",
+            "freckles",
+            "dots",
+            "cheeks"
+          ],
+          "tintRegions": [
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#b5764f"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        }
+      ]
+    },
+    {
+      "slot": "head",
+      "zOrder": 60,
+      "required": true,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "parts": [
+        {
+          "id": "head_anime_round_01",
+          "displayName": "Round Anime Face",
+          "file": "parts/head/head_anime_round_01.svg",
+          "category": "head",
+          "headArchetype": "humanoid",
+          "tags": [
+            "anime",
+            "humanoid",
+            "head",
+            "round",
+            "soft",
+            "blush"
+          ],
+          "tintRegions": [
+            {
+              "region": "skin",
+              "svgClass": "region-skin",
+              "defaultPalette": "#f2c9a8"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f5a8a8"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#d99c86"
+            },
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#3a3340"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_anime_oval_01",
+          "displayName": "Oval Anime Face",
+          "file": "parts/head/head_anime_oval_01.svg",
+          "category": "head",
+          "headArchetype": "humanoid",
+          "tags": [
+            "anime",
+            "humanoid",
+            "head",
+            "oval",
+            "tapered"
+          ],
+          "tintRegions": [
+            {
+              "region": "skin",
+              "svgClass": "region-skin",
+              "defaultPalette": "#f2c9a8"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#d99c86"
+            },
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#3a3340"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_anime_sharp_01",
+          "displayName": "Sharp Anime Face",
+          "file": "parts/head/head_anime_sharp_01.svg",
+          "category": "head",
+          "headArchetype": "humanoid",
+          "tags": [
+            "anime",
+            "humanoid",
+            "head",
+            "sharp",
+            "pointed-chin",
+            "angular"
+          ],
+          "tintRegions": [
+            {
+              "region": "skin",
+              "svgClass": "region-skin",
+              "defaultPalette": "#f2c9a8"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#d99c86"
+            },
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#3a3340"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        }
+      ]
+    },
+    {
+      "slot": "ears",
+      "zOrder": 70,
+      "required": false,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "parts": [
+        {
+          "id": "ears_neko_01",
+          "displayName": "Neko Ears",
+          "file": "parts/ears/ears_neko_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "anime",
+            "kemonomimi",
+            "neko",
+            "cat",
+            "ears"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#4a4553"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f2e0e6"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "ears_kitsune_01",
+          "displayName": "Kitsune Ears",
+          "file": "parts/ears/ears_kitsune_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "anime",
+            "kemonomimi",
+            "kitsune",
+            "fox",
+            "ears",
+            "dark-tips"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#e8913a"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f7efe2"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#3a2b26"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "ears_ookami_01",
+          "displayName": "Ookami Ears",
+          "file": "parts/ears/ears_ookami_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "anime",
+            "kemonomimi",
+            "ookami",
+            "wolf",
+            "ears",
+            "tufty"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#8b8e99"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e8e6df"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "ears_usagi_01",
+          "displayName": "Usagi Ears",
+          "file": "parts/ears/ears_usagi_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "anime",
+            "kemonomimi",
+            "usagi",
+            "bunny",
+            "rabbit",
+            "ears",
+            "tall"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#efe9e2"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f2c9cf"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        }
+      ]
+    },
+    {
+      "slot": "feature",
+      "zOrder": 80,
+      "required": false,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "parts": [
+        {
+          "id": "feature_halo_01",
+          "displayName": "Halo",
+          "file": "parts/feature/feature_halo_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "anime",
+            "angel",
+            "halo",
+            "floating",
+            "sparkle"
+          ],
+          "tintRegions": [
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#ffd76b"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#fff3c4"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "feature_oni_horns_01",
+          "displayName": "Oni Horns",
+          "file": "parts/feature/feature_oni_horns_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "anime",
+            "oni",
+            "demon",
+            "horns",
+            "short"
+          ],
+          "tintRegions": [
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#c9524a"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f0c05a"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        }
+      ]
+    },
+    {
+      "slot": "brows",
+      "zOrder": 90,
+      "required": false,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "parts": [
+        {
+          "id": "brows_anime_neutral_01",
+          "displayName": "Neutral Anime Brows",
+          "file": "parts/brows/brows_anime_neutral_01.svg",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "brows",
+            "anime",
+            "neutral",
+            "relaxed"
+          ],
+          "tintRegions": [
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#3b3441"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "brows_anime_happy_01",
+          "displayName": "Happy Anime Brows",
+          "file": "parts/brows/brows_anime_happy_01.svg",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "brows",
+            "anime",
+            "happy",
+            "raised",
+            "cheerful"
+          ],
+          "tintRegions": [
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#3b3441"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "brows_anime_sad_01",
+          "displayName": "Sad Anime Brows",
+          "file": "parts/brows/brows_anime_sad_01.svg",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "brows",
+            "anime",
+            "sad",
+            "worried"
+          ],
+          "tintRegions": [
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#3b3441"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "brows_anime_angry_01",
+          "displayName": "Angry Anime Brows",
+          "file": "parts/brows/brows_anime_angry_01.svg",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "brows",
+            "anime",
+            "angry",
+            "vein",
+            "cross-popping"
+          ],
+          "tintRegions": [
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#3b3441"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e2554f"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        }
+      ]
+    },
+    {
+      "slot": "eyes",
+      "zOrder": 100,
+      "required": true,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "parts": [
+        {
+          "id": "eyes_tareme_01",
+          "displayName": "Tareme Eyes",
+          "file": "parts/eyes/eyes_tareme_01.svg",
+          "category": "eyes",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "eyes",
+            "anime",
+            "tareme",
+            "gentle",
+            "droopy",
+            "soft"
+          ],
+          "tintRegions": [
+            {
+              "region": "iris",
+              "svgClass": "region-iris",
+              "defaultPalette": "#7b68c9"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#2b2438"
+            },
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#3b3441"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "eyes_tsurime_01",
+          "displayName": "Tsurime Eyes",
+          "file": "parts/eyes/eyes_tsurime_01.svg",
+          "category": "eyes",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "eyes",
+            "anime",
+            "tsurime",
+            "sharp",
+            "confident",
+            "winged"
+          ],
+          "tintRegions": [
+            {
+              "region": "iris",
+              "svgClass": "region-iris",
+              "defaultPalette": "#3f8fbf"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#2b2438"
+            },
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#3b3441"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "eyes_catslit_01",
+          "displayName": "Cat-Slit Eyes",
+          "file": "parts/eyes/eyes_catslit_01.svg",
+          "category": "eyes",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "eyes",
+            "anime",
+            "cat",
+            "slit",
+            "feline",
+            "feral"
+          ],
+          "tintRegions": [
+            {
+              "region": "iris",
+              "svgClass": "region-iris",
+              "defaultPalette": "#d9a441"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#2b2438"
+            },
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#3b3441"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "eyes_sparkle_big_01",
+          "displayName": "Big Sparkle Eyes",
+          "file": "parts/eyes/eyes_sparkle_big_01.svg",
+          "category": "eyes",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "eyes",
+            "anime",
+            "sparkle",
+            "starry",
+            "shoujo",
+            "dazzled"
+          ],
+          "tintRegions": [
+            {
+              "region": "iris",
+              "svgClass": "region-iris",
+              "defaultPalette": "#5ec4b8"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#2b2438"
+            },
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#3b3441"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "eyes_anime_happy_01",
+          "displayName": "Happy Closed Eyes",
+          "file": "parts/eyes/eyes_anime_happy_01.svg",
+          "category": "eyes",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "eyes",
+            "anime",
+            "happy",
+            "closed",
+            "arcs",
+            "smiling"
+          ],
+          "tintRegions": [
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#3b3441"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "eyes_anime_sad_01",
+          "displayName": "Teary Sad Eyes",
+          "file": "parts/eyes/eyes_anime_sad_01.svg",
+          "category": "eyes",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "eyes",
+            "anime",
+            "sad",
+            "teary",
+            "crying",
+            "watery"
+          ],
+          "tintRegions": [
+            {
+              "region": "iris",
+              "svgClass": "region-iris",
+              "defaultPalette": "#6f9fd8"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#2b2438"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#a7d8f0"
+            },
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#3b3441"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "eyes_anime_angry_01",
+          "displayName": "Angry Glare Eyes",
+          "file": "parts/eyes/eyes_anime_angry_01.svg",
+          "category": "eyes",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "eyes",
+            "anime",
+            "angry",
+            "glare",
+            "sharp",
+            "narrowed"
+          ],
+          "tintRegions": [
+            {
+              "region": "iris",
+              "svgClass": "region-iris",
+              "defaultPalette": "#b3452e"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#2b2438"
+            },
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#3b3441"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "eyes_wink_01",
+          "displayName": "Wink",
+          "file": "parts/eyes/eyes_wink_01.svg",
+          "category": "eyes",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "eyes",
+            "anime",
+            "wink",
+            "playful",
+            "cheeky"
+          ],
+          "tintRegions": [
+            {
+              "region": "iris",
+              "svgClass": "region-iris",
+              "defaultPalette": "#7b68c9"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#2b2438"
+            },
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#3b3441"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        }
+      ]
+    },
+    {
+      "slot": "mouth",
+      "zOrder": 110,
+      "required": false,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "parts": [
+        {
+          "id": "mouth_anime_neutral_01",
+          "displayName": "Tiny Neutral Mouth",
+          "file": "parts/mouth/mouth_anime_neutral_01.svg",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "mouth",
+            "anime",
+            "neutral",
+            "tiny"
+          ],
+          "tintRegions": [
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#3b3441"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "mouth_anime_happy_01",
+          "displayName": "Cat-Smile Mouth",
+          "file": "parts/mouth/mouth_anime_happy_01.svg",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "mouth",
+            "anime",
+            "happy",
+            "cat-smile",
+            "open",
+            "fang"
+          ],
+          "tintRegions": [
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#3b3441"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#5c2231"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "mouth_anime_sad_01",
+          "displayName": "Wobbly Sad Mouth",
+          "file": "parts/mouth/mouth_anime_sad_01.svg",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "mouth",
+            "anime",
+            "sad",
+            "wobbly",
+            "wavering"
+          ],
+          "tintRegions": [
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#3b3441"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "mouth_anime_angry_01",
+          "displayName": "Gritted Teeth Mouth",
+          "file": "parts/mouth/mouth_anime_angry_01.svg",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "mouth",
+            "anime",
+            "angry",
+            "gritted",
+            "teeth",
+            "clenched"
+          ],
+          "tintRegions": [
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#3b3441"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        }
+      ]
+    },
+    {
+      "slot": "hair",
+      "zOrder": 120,
+      "required": false,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "parts": [
+        {
+          "id": "hair_bob_01",
+          "displayName": "Bob Cut",
+          "file": "parts/hair/hair_bob_01.svg",
+          "category": "hair",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "anime",
+            "hair",
+            "bob",
+            "short",
+            "bangs"
+          ],
+          "tintRegions": [
+            {
+              "region": "hair",
+              "svgClass": "region-hair",
+              "defaultPalette": "#6b4a3a"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#96705a"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hair_twintails_01",
+          "displayName": "Twintails",
+          "file": "parts/hair/hair_twintails_01.svg",
+          "category": "hair",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "anime",
+            "hair",
+            "twintails",
+            "pigtails",
+            "long",
+            "beads"
+          ],
+          "tintRegions": [
+            {
+              "region": "hair",
+              "svgClass": "region-hair",
+              "defaultPalette": "#c9698c"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e39ab4"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#f2d24b"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hair_ponytail_01",
+          "displayName": "High Ponytail",
+          "file": "parts/hair/hair_ponytail_01.svg",
+          "category": "hair",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "anime",
+            "hair",
+            "ponytail",
+            "tied",
+            "long"
+          ],
+          "tintRegions": [
+            {
+              "region": "hair",
+              "svgClass": "region-hair",
+              "defaultPalette": "#4a5f8a"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#7d92bd"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hair_long_straight_01",
+          "displayName": "Long Straight",
+          "file": "parts/hair/hair_long_straight_01.svg",
+          "category": "hair",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "anime",
+            "hair",
+            "long",
+            "straight",
+            "curtains"
+          ],
+          "tintRegions": [
+            {
+              "region": "hair",
+              "svgClass": "region-hair",
+              "defaultPalette": "#3a3a4c"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#5c5c78"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hair_hime_01",
+          "displayName": "Hime Cut",
+          "file": "parts/hair/hair_hime_01.svg",
+          "category": "hair",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "anime",
+            "hair",
+            "hime",
+            "blunt",
+            "long",
+            "straight"
+          ],
+          "tintRegions": [
+            {
+              "region": "hair",
+              "svgClass": "region-hair",
+              "defaultPalette": "#2e2e40"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#52527a"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hair_messy_short_01",
+          "displayName": "Messy Short",
+          "file": "parts/hair/hair_messy_short_01.svg",
+          "category": "hair",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "anime",
+            "hair",
+            "messy",
+            "short",
+            "tousled"
+          ],
+          "tintRegions": [
+            {
+              "region": "hair",
+              "svgClass": "region-hair",
+              "defaultPalette": "#7a5a3a"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#a4835c"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hair_curly_01",
+          "displayName": "Curly",
+          "file": "parts/hair/hair_curly_01.svg",
+          "category": "hair",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "anime",
+            "hair",
+            "curly",
+            "curls",
+            "voluminous"
+          ],
+          "tintRegions": [
+            {
+              "region": "hair",
+              "svgClass": "region-hair",
+              "defaultPalette": "#8a4a2f"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#b06f4a"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hair_spiky_01",
+          "displayName": "Spiky",
+          "file": "parts/hair/hair_spiky_01.svg",
+          "category": "hair",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "anime",
+            "hair",
+            "spiky",
+            "shonen",
+            "wild"
+          ],
+          "tintRegions": [
+            {
+              "region": "hair",
+              "svgClass": "region-hair",
+              "defaultPalette": "#caa23a"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e6c669"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hair_side_sweep_01",
+          "displayName": "Side Sweep",
+          "file": "parts/hair/hair_side_sweep_01.svg",
+          "category": "hair",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "anime",
+            "hair",
+            "side-sweep",
+            "asymmetric",
+            "fringe"
+          ],
+          "tintRegions": [
+            {
+              "region": "hair",
+              "svgClass": "region-hair",
+              "defaultPalette": "#7a4a8a"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#a374b3"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        }
+      ]
+    },
+    {
+      "slot": "accessory",
+      "zOrder": 130,
+      "required": false,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "parts": [
+        {
+          "id": "accessory_ribbon_01",
+          "displayName": "Big Head Ribbon",
+          "file": "parts/accessory/accessory_ribbon_01.svg",
+          "category": "accessory",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "anime",
+            "ribbon",
+            "bow",
+            "head",
+            "cute"
+          ],
+          "tintRegions": [
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e5566d"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#b23a4e"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "accessory_megane_01",
+          "displayName": "Half-Rim Glasses",
+          "file": "parts/accessory/accessory_megane_01.svg",
+          "category": "accessory",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "anime",
+            "megane",
+            "glasses",
+            "half-rim"
+          ],
+          "tintRegions": [
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#3a3340"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "accessory_choker_bell_01",
+          "displayName": "Bell Choker",
+          "file": "parts/accessory/accessory_choker_bell_01.svg",
+          "category": "accessory",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "anime",
+            "choker",
+            "bell",
+            "collar",
+            "neck"
+          ],
+          "tintRegions": [
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#454050"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#f0c05a"
+            },
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#4a3526"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "accessory_hairclip_01",
+          "displayName": "X Hairclip",
+          "file": "parts/accessory/accessory_hairclip_01.svg",
+          "category": "accessory",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "anime",
+            "hairclip",
+            "x-clip",
+            "pin",
+            "cute"
+          ],
+          "tintRegions": [
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f0647e"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#fdf3f5"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        }
+      ]
+    }
+  ],
+  "expressionSlots": [
+    "eyes",
+    "brows",
+    "mouth"
+  ],
+  "expressions": [
+    {
+      "id": "neutral",
+      "path": "expressions/neutral.json"
+    },
+    {
+      "id": "happy",
+      "path": "expressions/happy.json"
+    },
+    {
+      "id": "sad",
+      "path": "expressions/sad.json"
+    },
+    {
+      "id": "angry",
+      "path": "expressions/angry.json"
+    }
+  ]
+}

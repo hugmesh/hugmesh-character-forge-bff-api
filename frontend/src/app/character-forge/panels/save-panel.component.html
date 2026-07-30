@@ -1,0 +1,42 @@
+<fieldset class="saves" data-testid="cf-saves">
+  <legend>Saved characters</legend>
+  <div class="actions">
+    <button type="button" data-testid="cf-save-new" (click)="saveNew()">Save as new</button>
+    <button type="button" data-testid="cf-save-over" (click)="saveOver()">Save</button>
+    <button type="button" data-testid="cf-load-active" (click)="loadActive()">Load active</button>
+    <button type="button" data-testid="cf-refresh" (click)="refresh()">Refresh</button>
+  </div>
+  @if (!state.withinSizeCap()) {
+    <p class="field-error" role="alert" data-testid="cf-size-cap">
+      This definition exceeds the server's 16KB cap.
+    </p>
+  }
+  <p class="status" role="status" aria-live="polite" data-testid="cf-save-status">{{ status() }}</p>
+  @if (error()) {
+    <p class="field-error" role="alert" data-testid="cf-save-error">{{ error() }}</p>
+  }
+  <ul class="list" data-testid="cf-save-list">
+    @for (c of characters(); track c.id) {
+      <li [class.loaded]="c.id === loadedId()">
+        <span class="char-name">
+          {{ c.name }}
+          @if (c.active) {
+            <span class="active-badge" data-testid="cf-active-badge">active</span>
+          }
+        </span>
+        <span class="row-actions">
+          <button type="button" [attr.data-testid]="'cf-load-' + c.id" (click)="load(c)">Load</button>
+          <button
+            type="button"
+            [attr.data-testid]="'cf-activate-' + c.id"
+            [attr.aria-disabled]="c.active ? 'true' : null"
+            (click)="!c.active && setActive(c)"
+          >Set active</button>
+          <button type="button" [attr.data-testid]="'cf-delete-' + c.id" (click)="remove(c)">Delete</button>
+        </span>
+      </li>
+    } @empty {
+      <li class="hint">No saved characters yet.</li>
+    }
+  </ul>
+</fieldset>

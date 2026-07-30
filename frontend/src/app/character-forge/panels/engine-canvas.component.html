@@ -1,0 +1,28 @@
+<div class="engine-host" data-testid="cf-engine-host">
+  @if (engine.status() === 'absent') {
+    <div class="engine-absent" role="note" data-testid="cf-engine-absent">
+      <h2>Engine bundle not present</h2>
+      <p>
+        The 3D preview (the Godot web export) is not baked into this build yet
+        — it lands in <code>assets/game/</code> at export time. The parameter
+        editor, VN import and save/load below all work without it; the live
+        turntable preview appears once the bundle ships.
+      </p>
+    </div>
+  } @else {
+    <canvas
+      #gameCanvas
+      class="engine-canvas"
+      data-testid="cf-engine-canvas"
+      aria-label="3D character preview (turntable)"
+    >Your browser does not support the canvas element.</canvas>
+    @if (engine.status() === 'loading') {
+      <p class="hint" role="status" aria-live="polite" data-testid="cf-engine-loading">
+        Starting the 3D engine…
+      </p>
+    }
+  }
+  @if (engine.error(); as err) {
+    <p class="field-error" role="alert" data-testid="cf-engine-error">{{ err }}</p>
+  }
+</div>

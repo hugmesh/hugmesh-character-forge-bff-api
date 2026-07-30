@@ -1,0 +1,112 @@
+{
+	"$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+	"version": 1,
+	"newProjectRoot": "projects",
+	"projects": {
+		"character-forge": {
+			"projectType": "application",
+			"root": ".",
+			"sourceRoot": "src",
+			"prefix": "snap",
+			"architect": {
+				"build": {
+					"builder": "@angular-architects/native-federation:build",
+					"options": {
+						"entryPoints": [
+							"src/main.ts"
+						],
+						"projectName": "character-forge"
+					},
+					"configurations": {
+						"production": {
+							"target": "character-forge:esbuild:production"
+						},
+						"development": {
+							"target": "character-forge:esbuild:development",
+							"dev": true
+						}
+					},
+					"defaultConfiguration": "production"
+				},
+				"serve": {
+					"builder": "@angular-architects/native-federation:build",
+					"options": {
+						"target": "character-forge:serve-original:development",
+						"rebuildDelay": 0,
+						"dev": true,
+						"port": 0,
+						"entryPoints": [
+							"src/main.ts"
+						],
+						"projectName": "character-forge"
+					}
+				},
+				"esbuild": {
+					"builder": "@angular-devkit/build-angular:application",
+					"options": {
+						"outputPath": "dist/character-forge",
+						"index": "src/index.html",
+						"browser": "src/main.ts",
+						"polyfills": [
+							"zone.js",
+							"es-module-shims"
+						],
+						"tsConfig": "tsconfig.app.json",
+						"assets": [
+							{ "glob": "**/*", "input": "src/assets", "output": "assets" }
+						],
+						"styles": [
+							"src/styles.scss"
+						]
+					},
+					"configurations": {
+						"production": {
+							"outputHashing": "all"
+						},
+						"development": {
+							"optimization": false,
+							"extractLicenses": false,
+							"sourceMap": true
+						}
+					},
+					"defaultConfiguration": "production"
+				},
+				"serve-original": {
+					"builder": "@angular-devkit/build-angular:dev-server",
+					"options": {
+						"buildTarget": "character-forge:build",
+						"port": 4213
+					}
+				},
+				"test": {
+					"builder": "@angular/build:karma",
+					"options": {
+						"tsConfig": "tsconfig.spec.json",
+						"karmaConfig": "karma.conf.js",
+						"polyfills": [
+							"zone.js",
+							"zone.js/testing"
+						],
+						"styles": [
+							"src/styles.scss"
+						],
+						"assets": [
+							{ "glob": "**/*", "input": "src/assets", "output": "assets" }
+						]
+					}
+				}
+			}
+		}
+	},
+	"schematics": {
+		"@schematics/angular:component": {
+			"type": "component"
+		},
+		"@schematics/angular:directive": {
+			"type": "directive"
+		},
+		"@schematics/angular:service": {
+			"type": "service"
+		}
+	}
+}

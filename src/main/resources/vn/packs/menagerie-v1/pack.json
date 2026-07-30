@@ -1,0 +1,6792 @@
+{
+  "packId": "menagerie-v1",
+  "version": "1.0.0",
+  "displayName": "Menagerie — All Creatures",
+  "licenseSpdx": "CC-BY-SA-4.0",
+  "canvas": {
+    "width": 1024,
+    "height": 1024
+  },
+  "slots": [
+    {
+      "slot": "tail",
+      "zOrder": 10,
+      "required": false,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "parts": [
+        {
+          "id": "tail_wolf_bushy_01",
+          "displayName": "Bushy Wolf Tail",
+          "file": "parts/tail/tail_wolf_bushy_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "canid",
+            "hyena",
+            "mustelid",
+            "procyonid"
+          ],
+          "tags": [
+            "furry",
+            "canid",
+            "wolf",
+            "tail",
+            "bushy"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#8b8e99"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#33303b"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "tail_tadpole_01",
+          "displayName": "Tadpole Tail",
+          "file": "parts/tail/tail_tadpole_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "amphibian",
+            "aquatic"
+          ],
+          "tags": [
+            "amphibian",
+            "aquatic",
+            "tadpole",
+            "tail",
+            "paddle",
+            "fin"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#79b356"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#a8d4c4"
+            },
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#4a8a6a"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "tail_shark_01",
+          "displayName": "Shark Tail",
+          "file": "parts/tail/tail_shark_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "aquatic"
+          ],
+          "tags": [
+            "aquatic",
+            "shark",
+            "caudal-fin",
+            "vertical"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#6b7f92"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e8eef2"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#2f3a45"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "tail_cetacean_01",
+          "displayName": "Cetacean Fluke",
+          "file": "parts/tail/tail_cetacean_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "aquatic"
+          ],
+          "tags": [
+            "aquatic",
+            "whale",
+            "orca",
+            "dolphin",
+            "fluke",
+            "horizontal"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#6b7f92"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e8eef2"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#2f3a45"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "tail_feather_fan_01",
+          "displayName": "Feather Fan Tail",
+          "file": "parts/tail/tail_feather_fan_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "avian",
+            "gryphon"
+          ],
+          "tags": [
+            "tail",
+            "feathers",
+            "fan",
+            "avian",
+            "gryphon"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#b0855a"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e8d5b5"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "tail_gryphon_01",
+          "displayName": "Gryphon Tail",
+          "file": "parts/tail/tail_gryphon_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "gryphon"
+          ],
+          "tags": [
+            "tail",
+            "lion",
+            "feather-tip",
+            "gryphon",
+            "mythical"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#b0855a"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e8d5b5"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#c98f3f"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "tail_fox_01",
+          "displayName": "Fox Tail",
+          "file": "parts/tail/tail_fox_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "canid",
+            "hyena",
+            "mustelid",
+            "procyonid"
+          ],
+          "tags": [
+            "furry",
+            "canid",
+            "fox",
+            "tail",
+            "plume",
+            "tip"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#cf6c28"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f6ecd9"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "tail_husky_curl_01",
+          "displayName": "Curled Husky Tail",
+          "file": "parts/tail/tail_husky_curl_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "canid",
+            "hyena",
+            "mustelid",
+            "procyonid"
+          ],
+          "tags": [
+            "furry",
+            "canid",
+            "husky",
+            "tail",
+            "curl"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#5f6b7d"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f3f5f8"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "tail_deer_01",
+          "displayName": "Deer Flag Tail",
+          "file": "parts/tail/tail_deer_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "cervine"
+          ],
+          "tags": [
+            "tail",
+            "cervine",
+            "deer",
+            "short"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#a97d4e"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f4ecd8"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "tail_horse_01",
+          "displayName": "Flowing Horse Tail",
+          "file": "parts/tail/tail_horse_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "equine"
+          ],
+          "tags": [
+            "tail",
+            "equine",
+            "horse",
+            "long",
+            "flowing"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#9c6a3f"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#58402a"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#33261c"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "tail_dino_01",
+          "displayName": "Dino Tail",
+          "file": "parts/tail/tail_dino_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "dino",
+            "reptile",
+            "dragon"
+          ],
+          "tags": [
+            "dino",
+            "reptile",
+            "tail",
+            "stiff",
+            "counterbalance"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#7ba05b"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#ead9a6"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#46603a"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "tail_kobold_01",
+          "displayName": "Whippy Kobold Tail",
+          "file": "parts/tail/tail_kobold_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "dragon",
+            "reptile"
+          ],
+          "tags": [
+            "kobold",
+            "dragon",
+            "reptile",
+            "tail",
+            "whip",
+            "chromatic"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#a6663d"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e0c08a"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#6b4526"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "tail_spade_01",
+          "displayName": "Spade-Tipped Tail",
+          "file": "parts/tail/tail_spade_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "dragon",
+            "reptile"
+          ],
+          "tags": [
+            "scalie",
+            "dragon",
+            "tail",
+            "spade"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#a63d40"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e8c98f"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#5e2a2d"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "tail_thick_lizard_01",
+          "displayName": "Thick Lizard Tail",
+          "file": "parts/tail/tail_thick_lizard_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "reptile",
+            "dragon"
+          ],
+          "tags": [
+            "scalie",
+            "reptile",
+            "lizard",
+            "tail"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#6fae5c"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#cfe08e"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#3f6b34"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "tail_cat_01",
+          "displayName": "Cat Tail",
+          "file": "parts/tail/tail_cat_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "felid"
+          ],
+          "tags": [
+            "furry",
+            "felid",
+            "cat",
+            "tail"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#8f97a3"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#4d5560"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "tail_lion_01",
+          "displayName": "Lion Tail",
+          "file": "parts/tail/tail_lion_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "felid"
+          ],
+          "tags": [
+            "furry",
+            "felid",
+            "lion",
+            "tail",
+            "tuft"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#c99a56"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#8a5a2e"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "tail_hyena_01",
+          "displayName": "Hyena Brush Tail",
+          "file": "parts/tail/tail_hyena_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "hyena"
+          ],
+          "tags": [
+            "hyena",
+            "tail",
+            "brush",
+            "short",
+            "dark-tip"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#c19a6b"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#33261f"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "tail_pig_curl_01",
+          "displayName": "Pig Curl Tail",
+          "file": "parts/tail/tail_pig_curl_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "suid"
+          ],
+          "tags": [
+            "suid",
+            "pig",
+            "boar",
+            "tail",
+            "curl",
+            "corkscrew"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#8a6550"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e8d6b8"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#6b4a3e"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "tail_bunny_puff_01",
+          "displayName": "Bunny Puff Tail",
+          "file": "parts/tail/tail_bunny_puff_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "lapine"
+          ],
+          "tags": [
+            "furry",
+            "lapine",
+            "rabbit",
+            "puff",
+            "tail"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#c9b29a"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f0e4d6"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "tail_rat_thin_01",
+          "displayName": "Thin Rat Tail",
+          "file": "parts/tail/tail_rat_thin_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "rodent"
+          ],
+          "tags": [
+            "furry",
+            "rodent",
+            "rat",
+            "tail",
+            "naked"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#8d8078"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#cf8f9b"
+            },
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#4a3526"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "tail_squirrel_01",
+          "displayName": "Squirrel Swoosh Tail",
+          "file": "parts/tail/tail_squirrel_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "rodent"
+          ],
+          "tags": [
+            "furry",
+            "rodent",
+            "squirrel",
+            "tail",
+            "swoosh",
+            "fluffy"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#b56a3c"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#ecd9bd"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "tail_ringed_01",
+          "displayName": "Ringed Tail",
+          "file": "parts/tail/tail_ringed_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "procyonid"
+          ],
+          "tags": [
+            "furry",
+            "procyonid",
+            "raccoon",
+            "ringed",
+            "banded"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#8d8a93"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#ece7dc"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#322e35"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "tail_redpanda_01",
+          "displayName": "Red Panda Tail",
+          "file": "parts/tail/tail_redpanda_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "procyonid"
+          ],
+          "tags": [
+            "furry",
+            "procyonid",
+            "red-panda",
+            "ringed",
+            "thick",
+            "fluffy"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#b5502a"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f2e8da"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#402a24"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "tail_otter_01",
+          "displayName": "Otter Rudder Tail",
+          "file": "parts/tail/tail_otter_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "mustelid",
+            "aquatic"
+          ],
+          "tags": [
+            "furry",
+            "mustelid",
+            "otter",
+            "rudder",
+            "tapered",
+            "aquatic"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#6f5136"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#d9c3a3"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#3a2a22"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "tail_phoenix_01",
+          "displayName": "Phoenix Plume Tail",
+          "file": "parts/tail/tail_phoenix_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "avian",
+            "gryphon"
+          ],
+          "tags": [
+            "mythic",
+            "tail",
+            "phoenix",
+            "flame",
+            "plume",
+            "long"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#d9503a"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f7a83c"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#e8952f"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "tail_eastern_01",
+          "displayName": "Eastern Dragon Tail",
+          "file": "parts/tail/tail_eastern_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "dragon",
+            "reptile"
+          ],
+          "tags": [
+            "scalie",
+            "dragon",
+            "eastern",
+            "tail",
+            "serpentine",
+            "fluff"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#4f9e82"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f0dfae"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#c9b183"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "tail_goo_01",
+          "displayName": "Goo Tail",
+          "file": "parts/tail/tail_goo_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "slime",
+            "hybrid",
+            "goo",
+            "tail",
+            "drippy",
+            "core-glow"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#5fc9a0"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#c8f7e3"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "tail_macropod_01",
+          "displayName": "Kangaroo Tail",
+          "file": "parts/tail/tail_macropod_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "macropod"
+          ],
+          "tags": [
+            "macropod",
+            "kangaroo",
+            "tail",
+            "thick",
+            "balance"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#b5854f"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e6cba4"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#6b4226"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "tail_synth_01",
+          "displayName": "Segmented Synth Tail",
+          "file": "parts/tail/tail_synth_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "synth"
+          ],
+          "tags": [
+            "synth",
+            "protogen",
+            "robot",
+            "tail",
+            "segmented",
+            "led"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#3a3f4b"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#5ad7d4"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#1f232c"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "tail_bear_stub_01",
+          "displayName": "Bear Stub Tail",
+          "file": "parts/tail/tail_bear_stub_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "ursine"
+          ],
+          "tags": [
+            "tail",
+            "ursine",
+            "bear",
+            "stub",
+            "short"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#7a5844"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#c8a880"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "tail_cow_tassel_01",
+          "displayName": "Cow Tassel Tail",
+          "file": "parts/tail/tail_cow_tassel_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "bovine",
+            "caprine"
+          ],
+          "tags": [
+            "tail",
+            "bovine",
+            "cow",
+            "tassel",
+            "rope"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#ece5d8"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#d9cfbe"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#3a332e"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        }
+      ]
+    },
+    {
+      "slot": "wings",
+      "zOrder": 15,
+      "required": false,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "parts": [
+        {
+          "id": "wings_small_01",
+          "displayName": "Mini Wings",
+          "file": "parts/wings/wings_small_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "wings",
+            "feathers",
+            "small",
+            "cute",
+            "cherub"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#f5efe2"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#d9c9a8"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "wings_feathered_01",
+          "displayName": "Feathered Wings",
+          "file": "parts/wings/wings_feathered_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "wings",
+            "feathers",
+            "avian",
+            "gryphon",
+            "flight",
+            "spread"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#8a6f4d"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#d9c9a8"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "wings_crystal_01",
+          "displayName": "Crystal Shard Wings (any gem via palette)",
+          "file": "parts/wings/wings_crystal_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "crystal",
+            "gem",
+            "wings",
+            "shards",
+            "faceted",
+            "hybrid"
+          ],
+          "tintRegions": [
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#c9b8f0"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#4b3f78"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "wings_dragon_01",
+          "displayName": "Dragon Wings",
+          "file": "parts/wings/wings_dragon_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "dragon",
+            "reptile"
+          ],
+          "tags": [
+            "scalie",
+            "dragon",
+            "wings",
+            "membrane",
+            "bat-style"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#a63d40"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#d98a6a"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#d9c9a3"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "wings_bat_01",
+          "displayName": "Bat Wings",
+          "file": "parts/wings/wings_bat_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "bat",
+            "wings",
+            "membrane",
+            "scalloped"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#66597a"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#dcb8c6"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#2e2536"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "wings_insect_01",
+          "displayName": "Insect Wings",
+          "file": "parts/wings/wings_insect_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "insect",
+            "bug",
+            "wings",
+            "membrane",
+            "veins",
+            "slim",
+            "oval"
+          ],
+          "tintRegions": [
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#dceef5"
+            },
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#7fa3b2"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "wings_butterfly_01",
+          "displayName": "Butterfly Wings",
+          "file": "parts/wings/wings_butterfly_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "insect",
+            "butterfly",
+            "wings",
+            "scalloped",
+            "eyespots",
+            "big"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#e0904a"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f6d98c"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#4b3328"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "wings_goo_01",
+          "displayName": "Goo Wings",
+          "file": "parts/wings/wings_goo_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "slime",
+            "hybrid",
+            "goo",
+            "wings",
+            "membrane",
+            "bubbles"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#5fc9a0"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#c8f7e3"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#eafaf2"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "wings_moth_01",
+          "displayName": "Moth Wings",
+          "file": "parts/wings/wings_moth_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "moth",
+            "insect",
+            "wings",
+            "eyespots",
+            "rounded"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#d9c49a"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f2e9d5"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#5f4a63"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        }
+      ]
+    },
+    {
+      "slot": "body",
+      "zOrder": 20,
+      "required": true,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "parts": [
+        {
+          "id": "body_canid_lean_01",
+          "displayName": "Lean Canid Body",
+          "file": "parts/body/body_canid_lean_01.svg",
+          "category": "base",
+          "headArchetype": "canid",
+          "tags": [
+            "furry",
+            "canid",
+            "lean",
+            "digitigrade",
+            "ruff"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#9a8265"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e8ddc8"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#4a3a2e"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "body_amphibian_01",
+          "displayName": "Amphibian Body",
+          "file": "parts/body/body_amphibian_01.svg",
+          "category": "base",
+          "headArchetype": "amphibian",
+          "tags": [
+            "furry",
+            "amphibian",
+            "body",
+            "pear",
+            "smooth",
+            "belly",
+            "toe-pads"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#79b356"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e3edb4"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#e8935a"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "body_aquatic_01",
+          "displayName": "Aquatic Body",
+          "file": "parts/body/body_aquatic_01.svg",
+          "category": "base",
+          "headArchetype": "aquatic",
+          "tags": [
+            "aquatic",
+            "smooth",
+            "countershaded",
+            "streamlined"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#6b7f92"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e8eef2"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#2f3a45"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "body_finned_01",
+          "displayName": "Finned Body",
+          "file": "parts/body/body_finned_01.svg",
+          "category": "base",
+          "headArchetype": "aquatic",
+          "tags": [
+            "aquatic",
+            "fin",
+            "arm-fins",
+            "webbed",
+            "streamlined"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#6b7f92"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#bfe6ee"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#2f3a45"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "body_avian_01",
+          "displayName": "Avian Body",
+          "file": "parts/body/body_avian_01.svg",
+          "category": "base",
+          "headArchetype": "avian",
+          "tags": [
+            "furry",
+            "avian",
+            "bird",
+            "feathers",
+            "talons"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#f2c14e"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#faf0dc"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#e8933a"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "body_gryphon_01",
+          "displayName": "Gryphon Body",
+          "file": "parts/body/body_gryphon_01.svg",
+          "category": "base",
+          "headArchetype": "gryphon",
+          "tags": [
+            "furry",
+            "gryphon",
+            "griffin",
+            "feathers",
+            "haunches",
+            "talons",
+            "mythical"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#b0855a"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e8d5b5"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#6b4a2f"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "body_canid_stocky_01",
+          "displayName": "Stocky Canid Body",
+          "file": "parts/body/body_canid_stocky_01.svg",
+          "category": "base",
+          "headArchetype": "canid",
+          "tags": [
+            "furry",
+            "canid",
+            "stocky",
+            "digitigrade",
+            "ruff"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#7d7266"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#ddd3c2"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#403528"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "body_hoofed_01",
+          "displayName": "Slender Hoofed Body",
+          "file": "parts/body/body_hoofed_01.svg",
+          "category": "base",
+          "headArchetype": "cervine",
+          "tags": [
+            "furry",
+            "cervine",
+            "deer",
+            "hooves",
+            "slim"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#a97d4e"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#ead9b8"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#3e2e22"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "body_equine_01",
+          "displayName": "Tall Equine Body",
+          "file": "parts/body/body_equine_01.svg",
+          "category": "base",
+          "headArchetype": "equine",
+          "tags": [
+            "furry",
+            "equine",
+            "horse",
+            "hooves",
+            "tall"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#9c6a3f"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#33261c"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "body_slime_01",
+          "displayName": "Slime Body",
+          "file": "parts/body/body_slime_01.svg",
+          "category": "base",
+          "headArchetype": "slime",
+          "tags": [
+            "slime",
+            "goo",
+            "blob",
+            "gel",
+            "drip-skirt",
+            "core"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#78d178"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#b9f0b3"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#f0fdee"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "body_robot_01",
+          "displayName": "Retro Robot Body",
+          "file": "parts/body/body_robot_01.svg",
+          "category": "base",
+          "headArchetype": "robot",
+          "tags": [
+            "robot",
+            "retro",
+            "machine",
+            "boxy",
+            "screen",
+            "rivets",
+            "tube-arms"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#9aa3ad"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#8fe3f5"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#4a4f58"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "body_dino_01",
+          "displayName": "Dino Body",
+          "file": "parts/body/body_dino_01.svg",
+          "category": "base",
+          "headArchetype": "dino",
+          "tags": [
+            "dino",
+            "scalie",
+            "stocky",
+            "digitigrade",
+            "theropod"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#7ba05b"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#ead9a6"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#46603a"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "body_dragon_plated_01",
+          "displayName": "Plated Dragon Body (any metal via palette)",
+          "file": "parts/body/body_dragon_plated_01.svg",
+          "category": "base",
+          "headArchetype": "dragon",
+          "tags": [
+            "dragon",
+            "metallic",
+            "plated",
+            "rivets",
+            "armor"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#8f95a3"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#dfe6ee"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#454b59"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "body_dragon_stone_01",
+          "displayName": "Stone Dragon Body",
+          "file": "parts/body/body_dragon_stone_01.svg",
+          "category": "base",
+          "headArchetype": "dragon",
+          "tags": [
+            "dragon",
+            "stone",
+            "earth",
+            "moss",
+            "slab"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#8a8071"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#7da35c"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#4d463c"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "body_kobold_01",
+          "displayName": "Kobold Body (chromatic via palette)",
+          "file": "parts/body/body_kobold_01.svg",
+          "category": "base",
+          "headArchetype": "dragon",
+          "tags": [
+            "kobold",
+            "draconic",
+            "chromatic",
+            "small",
+            "scutes"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#a6663d"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e0c08a"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#6b4526"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "body_scaled_01",
+          "displayName": "Scaled Dragon Body",
+          "file": "parts/body/body_scaled_01.svg",
+          "category": "base",
+          "headArchetype": "dragon",
+          "tags": [
+            "scalie",
+            "dragon",
+            "scutes",
+            "digitigrade"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#a63d40"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e8c98f"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#d9c9a3"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "body_serpent_01",
+          "displayName": "Serpent Coil Body",
+          "file": "parts/body/body_serpent_01.svg",
+          "category": "base",
+          "headArchetype": "reptile",
+          "tags": [
+            "scalie",
+            "reptile",
+            "snake",
+            "naga",
+            "coil"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#8aa657"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#d9c98a"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#4a5537"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "body_felid_01",
+          "displayName": "Felid Body",
+          "file": "parts/body/body_felid_01.svg",
+          "category": "base",
+          "headArchetype": "felid",
+          "tags": [
+            "furry",
+            "felid",
+            "feline",
+            "sleek"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#b99a6b"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e9e0cf"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#7a6252"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "body_hyena_01",
+          "displayName": "Hyena Body",
+          "file": "parts/body/body_hyena_01.svg",
+          "category": "base",
+          "headArchetype": "hyena",
+          "tags": [
+            "furry",
+            "hyena",
+            "sloped-back",
+            "withers",
+            "stocky"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#c19a6b"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e4d3b4"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#33261f"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "body_bat_01",
+          "displayName": "Bat Body",
+          "file": "parts/body/body_bat_01.svg",
+          "category": "base",
+          "headArchetype": "bat",
+          "tags": [
+            "furry",
+            "bat",
+            "slight",
+            "membrane",
+            "slim"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#66597a"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#dcb8c6"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#2e2536"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "body_lapine_01",
+          "displayName": "Lapine Body",
+          "file": "parts/body/body_lapine_01.svg",
+          "category": "base",
+          "headArchetype": "lapine",
+          "tags": [
+            "furry",
+            "lapine",
+            "rabbit",
+            "haunches"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#c9b29a"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f0e4d6"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#d4788c"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "body_rodent_01",
+          "displayName": "Rodent Body",
+          "file": "parts/body/body_rodent_01.svg",
+          "category": "base",
+          "headArchetype": "rodent",
+          "tags": [
+            "furry",
+            "rodent",
+            "mouse",
+            "rat",
+            "small"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#9a9aa6"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#eadfd6"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#d98fa0"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "body_sleek_01",
+          "displayName": "Sleek Mustelid Body",
+          "file": "parts/body/body_sleek_01.svg",
+          "category": "base",
+          "headArchetype": "mustelid",
+          "tags": [
+            "furry",
+            "mustelid",
+            "sleek",
+            "long",
+            "otter",
+            "ferret"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#7a5c40"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#dcc9a8"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#3c2b20"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "body_procyonid_01",
+          "displayName": "Fluffy Procyonid Body",
+          "file": "parts/body/body_procyonid_01.svg",
+          "category": "base",
+          "headArchetype": "procyonid",
+          "tags": [
+            "furry",
+            "procyonid",
+            "fluffy",
+            "raccoon",
+            "red-panda"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#8d8a93"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#ece7dc"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#322e35"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "body_synth_01",
+          "displayName": "Synth Body",
+          "file": "parts/body/body_synth_01.svg",
+          "category": "base",
+          "headArchetype": "synth",
+          "tags": [
+            "synth",
+            "protogen",
+            "robot",
+            "android",
+            "panels",
+            "screen",
+            "cyber"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#3a3f4b"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#5ad7d4"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#1f232c"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "body_macropod_01",
+          "displayName": "Kangaroo Body",
+          "file": "parts/body/body_macropod_01.svg",
+          "category": "base",
+          "headArchetype": "macropod",
+          "tags": [
+            "furry",
+            "macropod",
+            "kangaroo",
+            "roo",
+            "pouch",
+            "stocky"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#b5854f"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e6cba4"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#6b4226"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "body_moth_01",
+          "displayName": "Moth Body",
+          "file": "parts/body/body_moth_01.svg",
+          "category": "base",
+          "headArchetype": "moth",
+          "tags": [
+            "furry",
+            "moth",
+            "insect",
+            "fuzzy",
+            "collar",
+            "slim"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#cdb891"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f0e6d0"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#7a6248"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "body_stocky_01",
+          "displayName": "Stocky Ursine Body",
+          "file": "parts/body/body_stocky_01.svg",
+          "category": "base",
+          "headArchetype": "ursine",
+          "tags": [
+            "furry",
+            "ursine",
+            "bear",
+            "stocky",
+            "claws",
+            "belly"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#7a5844"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#c8a880"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#362a22"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "body_hoofed_stocky_01",
+          "displayName": "Stocky Hoofed Body",
+          "file": "parts/body/body_hoofed_stocky_01.svg",
+          "category": "base",
+          "headArchetype": "bovine",
+          "tags": [
+            "furry",
+            "bovine",
+            "cow",
+            "stocky",
+            "hooves",
+            "cloven"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#ece5d8"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#d9cfbe"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#3a332e"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        }
+      ]
+    },
+    {
+      "slot": "markings",
+      "zOrder": 30,
+      "required": false,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "parts": [
+        {
+          "id": "marking_mask_01",
+          "displayName": "Bandit Mask",
+          "file": "parts/markings/marking_mask_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "marking",
+            "mask",
+            "bandit",
+            "face",
+            "raccoon",
+            "ferret"
+          ],
+          "tintRegions": [
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#38313a"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#efe8db"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "marking_countershade_01",
+          "displayName": "Countershade Belly",
+          "file": "parts/markings/marking_countershade_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "aquatic"
+          ],
+          "tags": [
+            "aquatic",
+            "countershade",
+            "belly",
+            "ventral"
+          ],
+          "tintRegions": [
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e8eef2"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#2f3a45"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "marking_sock_01",
+          "displayName": "Leg Socks",
+          "file": "parts/markings/marking_sock_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "marking",
+            "socks",
+            "legs",
+            "paws"
+          ],
+          "tintRegions": [
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f0e9dc"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "marking_muzzle_blaze_01",
+          "displayName": "Muzzle Blaze",
+          "file": "parts/markings/marking_muzzle_blaze_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "marking",
+            "blaze",
+            "muzzle",
+            "forehead",
+            "stripe"
+          ],
+          "tintRegions": [
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f0e9dc"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "marking_fawn_spots_01",
+          "displayName": "Fawn Spots",
+          "file": "parts/markings/marking_fawn_spots_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "cervine"
+          ],
+          "tags": [
+            "marking",
+            "spots",
+            "fawn",
+            "cervine",
+            "deer"
+          ],
+          "tintRegions": [
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f2e7c9"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "marking_dino_stripes_01",
+          "displayName": "Dino Back Stripes",
+          "file": "parts/markings/marking_dino_stripes_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "dino",
+            "reptile"
+          ],
+          "tags": [
+            "dino",
+            "reptile",
+            "stripes",
+            "back",
+            "marking"
+          ],
+          "tintRegions": [
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#4e6b3a"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "marking_metallic_sheen_01",
+          "displayName": "Metallic Sheen Overlay",
+          "file": "parts/markings/marking_metallic_sheen_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "metallic",
+            "sheen",
+            "highlight",
+            "overlay",
+            "hybrid"
+          ],
+          "tintRegions": [
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#eef3f8"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "marking_stone_cracks_01",
+          "displayName": "Stone Crack Web Overlay",
+          "file": "parts/markings/marking_stone_cracks_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "stone",
+            "cracks",
+            "earth",
+            "overlay",
+            "hybrid"
+          ],
+          "tintRegions": [
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#4d463c"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "marking_crystal_growths_01",
+          "displayName": "Crystal Growths Overlay (any gem via palette)",
+          "file": "parts/markings/marking_crystal_growths_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "crystal",
+            "gem",
+            "growths",
+            "overlay",
+            "hybrid"
+          ],
+          "tintRegions": [
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#c9b8f0"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#4b3f78"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "marking_belly_scutes_01",
+          "displayName": "Belly Scutes",
+          "file": "parts/markings/marking_belly_scutes_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "dragon",
+            "reptile"
+          ],
+          "tags": [
+            "scalie",
+            "dragon",
+            "reptile",
+            "scutes",
+            "belly"
+          ],
+          "tintRegions": [
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e8c98f"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#c9a86e"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "marking_tiger_stripes_01",
+          "displayName": "Tiger Stripes",
+          "file": "parts/markings/marking_tiger_stripes_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "felid"
+          ],
+          "tags": [
+            "furry",
+            "felid",
+            "tiger",
+            "stripes",
+            "marking"
+          ],
+          "tintRegions": [
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#35302b"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "marking_hyena_spots_01",
+          "displayName": "Hyena Spots",
+          "file": "parts/markings/marking_hyena_spots_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "hyena",
+            "spots",
+            "dapples",
+            "marking"
+          ],
+          "tintRegions": [
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#33261f"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "marking_bee_stripes_01",
+          "displayName": "Bee Stripes",
+          "file": "parts/markings/marking_bee_stripes_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "insect",
+            "bee",
+            "stripes",
+            "bands",
+            "abdomen",
+            "marking"
+          ],
+          "tintRegions": [
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#3a2d1c"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "marking_belly_patch_01",
+          "displayName": "Belly Patch",
+          "file": "parts/markings/marking_belly_patch_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "marking",
+            "belly",
+            "patch",
+            "universal"
+          ],
+          "tintRegions": [
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f0e4d6"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "marking_kirin_scales_01",
+          "displayName": "Kirin Scale Patches",
+          "file": "parts/markings/marking_kirin_scales_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "cervine",
+            "equine",
+            "dragon"
+          ],
+          "tags": [
+            "mythic",
+            "marking",
+            "scales",
+            "kirin",
+            "patches"
+          ],
+          "tintRegions": [
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#8fc4a5"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "marking_serpent_coils_01",
+          "displayName": "Serpent Coil Bands",
+          "file": "parts/markings/marking_serpent_coils_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "reptile",
+            "dragon",
+            "aquatic"
+          ],
+          "tags": [
+            "scalie",
+            "serpent",
+            "coils",
+            "bands",
+            "belly"
+          ],
+          "tintRegions": [
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#dbe6a8"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "marking_goo_drip_01",
+          "displayName": "Goo Drip Mantle",
+          "file": "parts/markings/marking_goo_drip_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "slime",
+            "hybrid",
+            "goo",
+            "marking",
+            "drippy",
+            "shoulders",
+            "chest"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#5fc9a0"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#c8f7e3"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#eafaf2"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "marking_holstein_patches_01",
+          "displayName": "Holstein Patches",
+          "file": "parts/markings/marking_holstein_patches_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "marking",
+            "patches",
+            "holstein",
+            "cow",
+            "bovine",
+            "dairy"
+          ],
+          "tintRegions": [
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#3a332e"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        }
+      ]
+    },
+    {
+      "slot": "head",
+      "zOrder": 60,
+      "required": true,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "parts": [
+        {
+          "id": "head_wolf_01",
+          "displayName": "Wolf Head",
+          "file": "parts/head/head_wolf_01.svg",
+          "category": "head",
+          "headArchetype": "canid",
+          "tags": [
+            "furry",
+            "canid",
+            "wolf",
+            "cheek-fluff",
+            "broad"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#8b8e99"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e8e6df"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#33303b"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_frog_01",
+          "displayName": "Frog Head",
+          "file": "parts/head/head_frog_01.svg",
+          "category": "head",
+          "headArchetype": "amphibian",
+          "tags": [
+            "furry",
+            "amphibian",
+            "frog",
+            "wide-face",
+            "eye-bumps",
+            "throat-pouch",
+            "smile"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#79b356"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e3edb4"
+            },
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#3e6b2f"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_salamander_01",
+          "displayName": "Salamander Head",
+          "file": "parts/head/head_salamander_01.svg",
+          "category": "head",
+          "headArchetype": "amphibian",
+          "tags": [
+            "furry",
+            "amphibian",
+            "salamander",
+            "round-face",
+            "cheek-dots",
+            "spots",
+            "smile"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#6a5a8c"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#f2c14e"
+            },
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#3d3355"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_newt_01",
+          "displayName": "Newt Head",
+          "file": "parts/head/head_newt_01.svg",
+          "category": "head",
+          "headArchetype": "amphibian",
+          "tags": [
+            "furry",
+            "amphibian",
+            "newt",
+            "crest-fin",
+            "throat-patch",
+            "smile"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#d98a52"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f2b83d"
+            },
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#7a4426"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_shark_01",
+          "displayName": "Shark Head",
+          "file": "parts/head/head_shark_01.svg",
+          "category": "head",
+          "headArchetype": "aquatic",
+          "tags": [
+            "furry",
+            "aquatic",
+            "shark",
+            "gills",
+            "blunt-snout"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#6b7f92"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e8eef2"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#2f3a45"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_orca_01",
+          "displayName": "Orca Head",
+          "file": "parts/head/head_orca_01.svg",
+          "category": "head",
+          "headArchetype": "aquatic",
+          "tags": [
+            "furry",
+            "aquatic",
+            "orca",
+            "whale",
+            "eye-patch"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#1d2228"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f2f5f7"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#46525c"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_axolotl_01",
+          "displayName": "Axolotl Head",
+          "file": "parts/head/head_axolotl_01.svg",
+          "category": "head",
+          "headArchetype": "aquatic",
+          "tags": [
+            "furry",
+            "aquatic",
+            "axolotl",
+            "gill-fronds",
+            "smile"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#f2b8c6"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e0708e"
+            },
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#8a4a5e"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_bird_01",
+          "displayName": "Songbird Head",
+          "file": "parts/head/head_bird_01.svg",
+          "category": "head",
+          "headArchetype": "avian",
+          "tags": [
+            "furry",
+            "avian",
+            "bird",
+            "songbird",
+            "beak",
+            "cute"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#f2c14e"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#faf0dc"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#e8933a"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_raptor_01",
+          "displayName": "Raptor Head",
+          "file": "parts/head/head_raptor_01.svg",
+          "category": "head",
+          "headArchetype": "avian",
+          "tags": [
+            "furry",
+            "avian",
+            "raptor",
+            "eagle",
+            "hawk",
+            "beak",
+            "fierce"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#6b4f3a"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e9dcc8"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#d9a441"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_gryphon_01",
+          "displayName": "Gryphon Head",
+          "file": "parts/head/head_gryphon_01.svg",
+          "category": "head",
+          "headArchetype": "gryphon",
+          "tags": [
+            "furry",
+            "gryphon",
+            "griffin",
+            "beak",
+            "ear-tufts",
+            "mythical"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#b0855a"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e8d5b5"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#c98f3f"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_fox_01",
+          "displayName": "Fox Head",
+          "file": "parts/head/head_fox_01.svg",
+          "category": "head",
+          "headArchetype": "canid",
+          "tags": [
+            "furry",
+            "canid",
+            "fox",
+            "vulpine",
+            "big-ears"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#cf6c28"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f6ecd9"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#3a2b26"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_husky_01",
+          "displayName": "Husky Head",
+          "file": "parts/head/head_husky_01.svg",
+          "category": "head",
+          "headArchetype": "canid",
+          "tags": [
+            "furry",
+            "canid",
+            "husky",
+            "dog",
+            "mask"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#5f6b7d"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f3f5f8"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#2c2f38"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_deer_01",
+          "displayName": "Deer Head",
+          "file": "parts/head/head_deer_01.svg",
+          "category": "head",
+          "headArchetype": "cervine",
+          "tags": [
+            "furry",
+            "cervine",
+            "deer",
+            "doe"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#a97d4e"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#ead9b8"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#3e2e22"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_horse_01",
+          "displayName": "Horse Head",
+          "file": "parts/head/head_horse_01.svg",
+          "category": "head",
+          "headArchetype": "equine",
+          "tags": [
+            "furry",
+            "equine",
+            "horse",
+            "pony"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#9c6a3f"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#58402a"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#33261c"
+            },
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#241a12"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_slime_01",
+          "displayName": "Slime Head",
+          "file": "parts/head/head_slime_01.svg",
+          "category": "head",
+          "headArchetype": "slime",
+          "tags": [
+            "slime",
+            "goo",
+            "blob",
+            "gel",
+            "drippy",
+            "glossy"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#78d178"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#b9f0b3"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#f0fdee"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_robot_01",
+          "displayName": "Retro Robot Head",
+          "file": "parts/head/head_robot_01.svg",
+          "category": "head",
+          "headArchetype": "robot",
+          "tags": [
+            "robot",
+            "retro",
+            "machine",
+            "antenna",
+            "faceplate",
+            "steel"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#9aa3ad"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#8fe3f5"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#4a4f58"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_trex_01",
+          "displayName": "T-Rex Head",
+          "file": "parts/head/head_trex_01.svg",
+          "category": "head",
+          "headArchetype": "dino",
+          "tags": [
+            "dino",
+            "scalie",
+            "trex",
+            "jaw",
+            "teeth"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#7ba05b"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f0e8d4"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#46603a"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_raptor_dino_01",
+          "displayName": "Raptor Head",
+          "file": "parts/head/head_raptor_dino_01.svg",
+          "category": "head",
+          "headArchetype": "dino",
+          "tags": [
+            "dino",
+            "scalie",
+            "raptor",
+            "feathered",
+            "crest"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#4f8f8b"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e0b64e"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#2f5a57"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_triceratops_01",
+          "displayName": "Triceratops Head",
+          "file": "parts/head/head_triceratops_01.svg",
+          "category": "head",
+          "headArchetype": "dino",
+          "tags": [
+            "dino",
+            "scalie",
+            "triceratops",
+            "frill",
+            "horns",
+            "beak"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#a3814f"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#d9a874"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#5c4630"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_dragon_metallic_01",
+          "displayName": "Metallic Dragon Head (any metal via palette)",
+          "file": "parts/head/head_dragon_metallic_01.svg",
+          "category": "head",
+          "headArchetype": "dragon",
+          "tags": [
+            "dragon",
+            "metallic",
+            "plated",
+            "gold",
+            "silver",
+            "bronze"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#8f95a3"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#dfe6ee"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#454b59"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_dragon_stone_01",
+          "displayName": "Stone Dragon Head",
+          "file": "parts/head/head_dragon_stone_01.svg",
+          "category": "head",
+          "headArchetype": "dragon",
+          "tags": [
+            "dragon",
+            "stone",
+            "earth",
+            "moss",
+            "cracked"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#8a8071"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#7da35c"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#4d463c"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_dragon_crystal_01",
+          "displayName": "Crystal Dragon Head (any gem via palette)",
+          "file": "parts/head/head_dragon_crystal_01.svg",
+          "category": "head",
+          "headArchetype": "dragon",
+          "tags": [
+            "dragon",
+            "crystal",
+            "gem",
+            "faceted",
+            "amethyst",
+            "sapphire",
+            "ruby"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#7a6fae"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#c9b8f0"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#4b3f78"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_kobold_01",
+          "displayName": "Kobold Head (chromatic via palette)",
+          "file": "parts/head/head_kobold_01.svg",
+          "category": "head",
+          "headArchetype": "dragon",
+          "tags": [
+            "kobold",
+            "draconic",
+            "chromatic",
+            "cute",
+            "big-ears",
+            "horn-nubs"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#a6663d"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e0c08a"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#6b4526"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_dragon_01",
+          "displayName": "Dragon Head",
+          "file": "parts/head/head_dragon_01.svg",
+          "category": "head",
+          "headArchetype": "dragon",
+          "tags": [
+            "scalie",
+            "dragon",
+            "horned",
+            "snout"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#a63d40"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e8c98f"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#5e2a2d"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_lizard_01",
+          "displayName": "Lizard Head",
+          "file": "parts/head/head_lizard_01.svg",
+          "category": "head",
+          "headArchetype": "reptile",
+          "tags": [
+            "scalie",
+            "reptile",
+            "lizard",
+            "crest",
+            "grin"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#6fae5c"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#cfe08e"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#3f6b34"
+            },
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#2f4a28"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_snake_01",
+          "displayName": "Cobra Head",
+          "file": "parts/head/head_snake_01.svg",
+          "category": "head",
+          "headArchetype": "reptile",
+          "tags": [
+            "scalie",
+            "reptile",
+            "snake",
+            "cobra",
+            "hood"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#8aa657"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#d9c98a"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#4a5537"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_cat_01",
+          "displayName": "Cat Head",
+          "file": "parts/head/head_cat_01.svg",
+          "category": "head",
+          "headArchetype": "felid",
+          "tags": [
+            "furry",
+            "felid",
+            "cat",
+            "feline"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#8f97a3"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e8e3da"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#d98a94"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_tiger_01",
+          "displayName": "Tiger Head",
+          "file": "parts/head/head_tiger_01.svg",
+          "category": "head",
+          "headArchetype": "felid",
+          "tags": [
+            "furry",
+            "felid",
+            "tiger",
+            "stripes",
+            "feline"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#dd8a3e"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#35302b"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#efe6d8"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_lion_01",
+          "displayName": "Lion Head",
+          "file": "parts/head/head_lion_01.svg",
+          "category": "head",
+          "headArchetype": "felid",
+          "tags": [
+            "furry",
+            "felid",
+            "lion",
+            "mane",
+            "feline"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#c99a56"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#8a5a2e"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#e8d9bd"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_hyena_01",
+          "displayName": "Hyena Head",
+          "file": "parts/head/head_hyena_01.svg",
+          "category": "head",
+          "headArchetype": "hyena",
+          "tags": [
+            "furry",
+            "hyena",
+            "grin",
+            "mohawk",
+            "round-ears"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#c19a6b"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e4d3b4"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#33261f"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_bat_01",
+          "displayName": "Bat Head",
+          "file": "parts/head/head_bat_01.svg",
+          "category": "head",
+          "headArchetype": "bat",
+          "tags": [
+            "furry",
+            "bat",
+            "leaf-ears",
+            "fangs",
+            "leaf-nose"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#66597a"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#dcb8c6"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#2e2536"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_boar_01",
+          "displayName": "Boar Head",
+          "file": "parts/head/head_boar_01.svg",
+          "category": "head",
+          "headArchetype": "suid",
+          "tags": [
+            "furry",
+            "suid",
+            "boar",
+            "pig",
+            "tusks",
+            "snout"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#8a6550"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e8d6b8"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#6b4a3e"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_bee_01",
+          "displayName": "Bee Head",
+          "file": "parts/head/head_bee_01.svg",
+          "category": "head",
+          "headArchetype": "insect",
+          "tags": [
+            "insect",
+            "bee",
+            "bug",
+            "fuzzy",
+            "round",
+            "antennae",
+            "cheerful"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#e8b544"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f7e7b8"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#42311f"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_mantis_01",
+          "displayName": "Mantis Head",
+          "file": "parts/head/head_mantis_01.svg",
+          "category": "head",
+          "headArchetype": "insect",
+          "tags": [
+            "insect",
+            "mantis",
+            "bug",
+            "triangular",
+            "compound-eyes",
+            "antennae"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#7fae52"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#d9e8a8"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#3b5226"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_rabbit_01",
+          "displayName": "Rabbit Head",
+          "file": "parts/head/head_rabbit_01.svg",
+          "category": "head",
+          "headArchetype": "lapine",
+          "tags": [
+            "furry",
+            "lapine",
+            "rabbit",
+            "bunny"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#c9b29a"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f0e4d6"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#d4788c"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_mouse_01",
+          "displayName": "Mouse Head",
+          "file": "parts/head/head_mouse_01.svg",
+          "category": "head",
+          "headArchetype": "rodent",
+          "tags": [
+            "furry",
+            "rodent",
+            "mouse"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#9a9aa6"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#eadfd6"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#d98fa0"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_rat_01",
+          "displayName": "Rat Head",
+          "file": "parts/head/head_rat_01.svg",
+          "category": "head",
+          "headArchetype": "rodent",
+          "tags": [
+            "furry",
+            "rodent",
+            "rat"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#8d8078"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#cfc3b8"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#cf8f9b"
+            },
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#4a3526"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_squirrel_01",
+          "displayName": "Squirrel Head",
+          "file": "parts/head/head_squirrel_01.svg",
+          "category": "head",
+          "headArchetype": "rodent",
+          "tags": [
+            "furry",
+            "rodent",
+            "squirrel"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#b56a3c"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#ecd9bd"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#5f3a22"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_otter_01",
+          "displayName": "Otter Head",
+          "file": "parts/head/head_otter_01.svg",
+          "category": "head",
+          "headArchetype": "mustelid",
+          "tags": [
+            "furry",
+            "mustelid",
+            "otter",
+            "whiskers"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#6f5136"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#d9c3a3"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#3a2a22"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_ferret_01",
+          "displayName": "Ferret Head",
+          "file": "parts/head/head_ferret_01.svg",
+          "category": "head",
+          "headArchetype": "mustelid",
+          "tags": [
+            "furry",
+            "mustelid",
+            "ferret",
+            "mask",
+            "sable"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#e8dcc4"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#5a4536"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#8a5a52"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_raccoon_01",
+          "displayName": "Raccoon Head",
+          "file": "parts/head/head_raccoon_01.svg",
+          "category": "head",
+          "headArchetype": "procyonid",
+          "tags": [
+            "furry",
+            "procyonid",
+            "raccoon",
+            "mask"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#8d8a93"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#ece7dc"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#322e35"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_redpanda_01",
+          "displayName": "Red Panda Head",
+          "file": "parts/head/head_redpanda_01.svg",
+          "category": "head",
+          "headArchetype": "procyonid",
+          "tags": [
+            "furry",
+            "procyonid",
+            "red-panda",
+            "redpanda",
+            "wah"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#b5502a"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f2e8da"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#402a24"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_unicorn_01",
+          "displayName": "Unicorn Head",
+          "file": "parts/head/head_unicorn_01.svg",
+          "category": "head",
+          "headArchetype": "equine",
+          "tags": [
+            "mythic",
+            "equine",
+            "unicorn",
+            "ethereal",
+            "mane"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#f0ebf7"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#b48fd9"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#a292b8"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_phoenix_01",
+          "displayName": "Phoenix Head",
+          "file": "parts/head/head_phoenix_01.svg",
+          "category": "head",
+          "headArchetype": "avian",
+          "tags": [
+            "mythic",
+            "avian",
+            "phoenix",
+            "flame",
+            "firebird",
+            "crest"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#d9503a"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f7a83c"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#e8952f"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_kirin_01",
+          "displayName": "Kirin Head",
+          "file": "parts/head/head_kirin_01.svg",
+          "category": "head",
+          "headArchetype": "cervine",
+          "tags": [
+            "mythic",
+            "cervine",
+            "kirin",
+            "qilin",
+            "horn",
+            "whiskers"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#cda45e"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#8fc4a5"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#6e5136"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_eastern_dragon_01",
+          "displayName": "Eastern Dragon Head",
+          "file": "parts/head/head_eastern_dragon_01.svg",
+          "category": "head",
+          "headArchetype": "dragon",
+          "tags": [
+            "scalie",
+            "dragon",
+            "eastern",
+            "whiskers",
+            "mane",
+            "antlers"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#4f9e82"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f0dfae"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#c9b183"
+            },
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#2e5b4c"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_kelpie_01",
+          "displayName": "Kelpie Head",
+          "file": "parts/head/head_kelpie_01.svg",
+          "category": "head",
+          "headArchetype": "aquatic",
+          "tags": [
+            "aquatic",
+            "kelpie",
+            "horse",
+            "fin-mane",
+            "gills"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#4a8f9c"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#a5e3da"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#28545e"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_basilisk_01",
+          "displayName": "Basilisk Head",
+          "file": "parts/head/head_basilisk_01.svg",
+          "category": "head",
+          "headArchetype": "reptile",
+          "tags": [
+            "scalie",
+            "reptile",
+            "basilisk",
+            "serpent",
+            "hood",
+            "crown"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#6e8f4a"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#dbe6a8"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#d9b84a"
+            },
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#3a4d26"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_protogen_01",
+          "displayName": "Protogen Head",
+          "file": "parts/head/head_protogen_01.svg",
+          "category": "head",
+          "headArchetype": "synth",
+          "tags": [
+            "furry",
+            "synth",
+            "protogen",
+            "robot",
+            "visor",
+            "cyber"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#3a3f4b"
+            },
+            {
+              "region": "iris",
+              "svgClass": "region-iris",
+              "defaultPalette": "#4de3e1"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#1f232c"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_kangaroo_01",
+          "displayName": "Kangaroo Head",
+          "file": "parts/head/head_kangaroo_01.svg",
+          "category": "head",
+          "headArchetype": "macropod",
+          "tags": [
+            "furry",
+            "macropod",
+            "kangaroo",
+            "roo",
+            "long-muzzle"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#b5854f"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e6cba4"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#6b4226"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_moth_01",
+          "displayName": "Moth Head",
+          "file": "parts/head/head_moth_01.svg",
+          "category": "head",
+          "headArchetype": "moth",
+          "tags": [
+            "furry",
+            "moth",
+            "insect",
+            "fuzzy",
+            "ruff",
+            "antennae"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#cdb891"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f0e6d0"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#7a6248"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_bear_01",
+          "displayName": "Bear Head",
+          "file": "parts/head/head_bear_01.svg",
+          "category": "head",
+          "headArchetype": "ursine",
+          "tags": [
+            "furry",
+            "ursine",
+            "bear",
+            "round-ears"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#7a5844"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#c8a880"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#362a22"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_goat_01",
+          "displayName": "Goat Head",
+          "file": "parts/head/head_goat_01.svg",
+          "category": "head",
+          "headArchetype": "caprine",
+          "tags": [
+            "furry",
+            "caprine",
+            "goat",
+            "beard"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#cfc3ae"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#efe6d4"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#55483a"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "head_cow_01",
+          "displayName": "Cow Head",
+          "file": "parts/head/head_cow_01.svg",
+          "category": "head",
+          "headArchetype": "bovine",
+          "tags": [
+            "furry",
+            "bovine",
+            "cow",
+            "pink-muzzle"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#ece5d8"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#d99fa4"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#3a332e"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        }
+      ]
+    },
+    {
+      "slot": "ears",
+      "zOrder": 70,
+      "required": false,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "parts": [
+        {
+          "id": "ears_lop_01",
+          "displayName": "Lop Ears",
+          "file": "parts/ears/ears_lop_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "lapine"
+          ],
+          "tags": [
+            "furry",
+            "lapine",
+            "rabbit",
+            "lop",
+            "floppy"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#c9b29a"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f0e4d6"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "ears_goo_01",
+          "displayName": "Goo Ears",
+          "file": "parts/ears/ears_goo_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "slime",
+            "hybrid",
+            "goo",
+            "ears",
+            "drippy"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#5fc9a0"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#c8f7e3"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        }
+      ]
+    },
+    {
+      "slot": "feature",
+      "zOrder": 80,
+      "required": false,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "parts": [
+        {
+          "id": "feature_mane_01",
+          "displayName": "Fluffy Mane Collar",
+          "file": "parts/feature/feature_mane_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "felid",
+            "canid"
+          ],
+          "tags": [
+            "furry",
+            "mane",
+            "ruff",
+            "collar",
+            "fluff"
+          ],
+          "tintRegions": [
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#8a5a2e"
+            },
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#c99a56"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "feature_snail_shell_01",
+          "displayName": "Snail Shell",
+          "file": "parts/feature/feature_snail_shell_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "snail",
+            "shell",
+            "spiral",
+            "back",
+            "cute",
+            "accessory-like"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#d9a066"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#8c5a3c"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#6b4226"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "feature_dorsal_fin_01",
+          "displayName": "Dorsal Fin",
+          "file": "parts/feature/feature_dorsal_fin_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "aquatic"
+          ],
+          "tags": [
+            "aquatic",
+            "shark",
+            "fin",
+            "dorsal"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#6b7f92"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e8eef2"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#2f3a45"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "feature_head_fins_01",
+          "displayName": "Head Fins",
+          "file": "parts/feature/feature_head_fins_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "aquatic",
+            "reptile",
+            "dragon"
+          ],
+          "tags": [
+            "aquatic",
+            "fin",
+            "webbed",
+            "ear-fins"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#6b7f92"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#bfe6ee"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "feature_head_crest_01",
+          "displayName": "Feather Crest",
+          "file": "parts/feature/feature_head_crest_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "avian",
+            "gryphon"
+          ],
+          "tags": [
+            "crest",
+            "feathers",
+            "plume",
+            "avian",
+            "gryphon",
+            "cockatoo"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#e05a4e"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f2b344"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "feature_antlers_01",
+          "displayName": "Branching Antlers",
+          "file": "parts/feature/feature_antlers_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "cervine"
+          ],
+          "tags": [
+            "antlers",
+            "cervine",
+            "deer",
+            "stag",
+            "horns"
+          ],
+          "tintRegions": [
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#b59872"
+            },
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#a97d4e"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "feature_horse_mane_01",
+          "displayName": "Horse Mane",
+          "file": "parts/feature/feature_horse_mane_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "equine"
+          ],
+          "tags": [
+            "mane",
+            "equine",
+            "horse",
+            "hair"
+          ],
+          "tintRegions": [
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#58402a"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#33261c"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "feature_dragon_spines_01",
+          "displayName": "Dorsal Spine Row",
+          "file": "parts/feature/feature_dragon_spines_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "dragon",
+            "reptile",
+            "dino",
+            "aquatic"
+          ],
+          "tags": [
+            "dragon",
+            "reptile",
+            "spines",
+            "dorsal",
+            "chromatic"
+          ],
+          "tintRegions": [
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#d9c9a3"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#c96a4a"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "feature_crystal_horns_01",
+          "displayName": "Crystal Horns (any gem via palette)",
+          "file": "parts/feature/feature_crystal_horns_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "crystal",
+            "gem",
+            "horns",
+            "faceted",
+            "hybrid"
+          ],
+          "tintRegions": [
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#c9b8f0"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#4b3f78"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "feature_dragon_horns_01",
+          "displayName": "Swept Dragon Horns",
+          "file": "parts/feature/feature_dragon_horns_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "dragon",
+            "reptile"
+          ],
+          "tags": [
+            "scalie",
+            "dragon",
+            "horns"
+          ],
+          "tintRegions": [
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#d9c9a3"
+            },
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#8a744f"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "feature_frill_01",
+          "displayName": "Neck Frill",
+          "file": "parts/feature/feature_frill_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "reptile",
+            "dragon"
+          ],
+          "tags": [
+            "scalie",
+            "reptile",
+            "frill",
+            "membrane"
+          ],
+          "tintRegions": [
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e0a45c"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#8a5a2e"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "feature_tusks_01",
+          "displayName": "Boar Tusks",
+          "file": "parts/feature/feature_tusks_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "suid"
+          ],
+          "tags": [
+            "suid",
+            "boar",
+            "tusks",
+            "ivory"
+          ],
+          "tintRegions": [
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e8d6b8"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#6b4a3e"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "feature_hyena_mane_01",
+          "displayName": "Hyena Mane",
+          "file": "parts/feature/feature_hyena_mane_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "hyena"
+          ],
+          "tags": [
+            "hyena",
+            "mane",
+            "mohawk",
+            "spiky",
+            "crest"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#c19a6b"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#33261f"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "feature_antennae_ball_01",
+          "displayName": "Ball Antennae",
+          "file": "parts/feature/feature_antennae_ball_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "insect",
+            "moth",
+            "bug",
+            "antennae",
+            "ball",
+            "springy"
+          ],
+          "tintRegions": [
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#4a3a2c"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "feature_unicorn_horn_01",
+          "displayName": "Unicorn Spiral Horn",
+          "file": "parts/feature/feature_unicorn_horn_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "equine",
+            "cervine",
+            "caprine"
+          ],
+          "tags": [
+            "mythic",
+            "horn",
+            "unicorn",
+            "spiral"
+          ],
+          "tintRegions": [
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#e6d3a3"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f8f1dd"
+            },
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#f0ebf7"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "feature_fin_mane_01",
+          "displayName": "Dorsal Fin-Mane",
+          "file": "parts/feature/feature_fin_mane_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "aquatic",
+            "dragon",
+            "reptile"
+          ],
+          "tags": [
+            "aquatic",
+            "fin",
+            "mane",
+            "membrane",
+            "dorsal"
+          ],
+          "tintRegions": [
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#a5e3da"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#28545e"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "feature_goo_crown_01",
+          "displayName": "Melting Goo Crown",
+          "file": "parts/feature/feature_goo_crown_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "slime",
+            "hybrid",
+            "goo",
+            "crown",
+            "drippy"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#5fc9a0"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#c8f7e3"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "feature_core_orb_01",
+          "displayName": "Slime Core Orb",
+          "file": "parts/feature/feature_core_orb_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "slime",
+            "hybrid",
+            "goo",
+            "core",
+            "orb",
+            "nucleus"
+          ],
+          "tintRegions": [
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#2e8b6a"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#c8f7e3"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "feature_antennae_01",
+          "displayName": "Feathered Antennae",
+          "file": "parts/feature/feature_antennae_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "moth"
+          ],
+          "tags": [
+            "moth",
+            "insect",
+            "antennae",
+            "feathered",
+            "plume"
+          ],
+          "tintRegions": [
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f0e6d0"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#7a6248"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "feature_synth_fins_01",
+          "displayName": "LED Ear-Fins",
+          "file": "parts/feature/feature_synth_fins_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "synth"
+          ],
+          "tags": [
+            "synth",
+            "protogen",
+            "robot",
+            "fins",
+            "led",
+            "cyber"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#3a3f4b"
+            },
+            {
+              "region": "iris",
+              "svgClass": "region-iris",
+              "defaultPalette": "#4de3e1"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#1f232c"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "feature_goat_horns_01",
+          "displayName": "Back-Curved Goat Horns",
+          "file": "parts/feature/feature_goat_horns_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "caprine"
+          ],
+          "tags": [
+            "horns",
+            "caprine",
+            "goat",
+            "scimitar"
+          ],
+          "tintRegions": [
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#a08c6c"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#c4b394"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "feature_ram_horns_01",
+          "displayName": "Spiral Ram Horns",
+          "file": "parts/feature/feature_ram_horns_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "caprine",
+            "bovine"
+          ],
+          "tags": [
+            "horns",
+            "ram",
+            "sheep",
+            "caprine",
+            "spiral"
+          ],
+          "tintRegions": [
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#b09a74"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#d8c8a4"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "feature_bull_horns_01",
+          "displayName": "Wide Bull Horns",
+          "file": "parts/feature/feature_bull_horns_01.svg",
+          "category": "feature",
+          "compatibleHeads": [
+            "bovine"
+          ],
+          "tags": [
+            "horns",
+            "bull",
+            "bovine",
+            "wide"
+          ],
+          "tintRegions": [
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#e4d6b4"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#453729"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        }
+      ]
+    },
+    {
+      "slot": "brows",
+      "zOrder": 90,
+      "required": false,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "parts": [
+        {
+          "id": "brows_neutral_01",
+          "displayName": "Neutral Brows",
+          "file": "parts/brows/brows_neutral_01.svg",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "brows",
+            "neutral",
+            "relaxed"
+          ],
+          "tintRegions": [
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#4a3526"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "brows_happy_01",
+          "displayName": "Happy Brows",
+          "file": "parts/brows/brows_happy_01.svg",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "brows",
+            "happy",
+            "raised",
+            "expression"
+          ],
+          "tintRegions": [
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#4a3526"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "brows_sad_01",
+          "displayName": "Sad Brows",
+          "file": "parts/brows/brows_sad_01.svg",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "brows",
+            "sad",
+            "worried",
+            "expression"
+          ],
+          "tintRegions": [
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#4a3526"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "brows_angry_01",
+          "displayName": "Angry Brows",
+          "file": "parts/brows/brows_angry_01.svg",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "brows",
+            "angry",
+            "slanted",
+            "expression"
+          ],
+          "tintRegions": [
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#4a3526"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        }
+      ]
+    },
+    {
+      "slot": "eyes",
+      "zOrder": 100,
+      "required": true,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "parts": [
+        {
+          "id": "eyes_round_01",
+          "displayName": "Round Eyes",
+          "file": "parts/eyes/eyes_round_01.svg",
+          "category": "eyes",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "eyes",
+            "round",
+            "toony",
+            "neutral",
+            "friendly"
+          ],
+          "tintRegions": [
+            {
+              "region": "iris",
+              "svgClass": "region-iris",
+              "defaultPalette": "#3a78c2"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#33303b"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "eyes_feral_slit_01",
+          "displayName": "Feral Slit Eyes",
+          "file": "parts/eyes/eyes_feral_slit_01.svg",
+          "category": "eyes",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "eyes",
+            "feral",
+            "slit",
+            "predator",
+            "cat-eye",
+            "reptile"
+          ],
+          "tintRegions": [
+            {
+              "region": "iris",
+              "svgClass": "region-iris",
+              "defaultPalette": "#c9a13b"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#33303b"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "eyes_sparkle_01",
+          "displayName": "Sparkle Eyes",
+          "file": "parts/eyes/eyes_sparkle_01.svg",
+          "category": "eyes",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "eyes",
+            "sparkle",
+            "shiny",
+            "anime",
+            "cute",
+            "big"
+          ],
+          "tintRegions": [
+            {
+              "region": "iris",
+              "svgClass": "region-iris",
+              "defaultPalette": "#6ec1e4"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#33303b"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "eyes_happy_01",
+          "displayName": "Happy Closed Eyes",
+          "file": "parts/eyes/eyes_happy_01.svg",
+          "category": "eyes",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "eyes",
+            "happy",
+            "closed",
+            "arcs",
+            "expression"
+          ],
+          "tintRegions": [
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#4a3526"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "eyes_sad_01",
+          "displayName": "Sad Droopy Eyes",
+          "file": "parts/eyes/eyes_sad_01.svg",
+          "category": "eyes",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "eyes",
+            "sad",
+            "droopy",
+            "half-lidded",
+            "expression"
+          ],
+          "tintRegions": [
+            {
+              "region": "iris",
+              "svgClass": "region-iris",
+              "defaultPalette": "#3a78c2"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#33303b"
+            },
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#4a3526"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "eyes_angry_01",
+          "displayName": "Angry Glare",
+          "file": "parts/eyes/eyes_angry_01.svg",
+          "category": "eyes",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "eyes",
+            "angry",
+            "glare",
+            "slanted",
+            "expression"
+          ],
+          "tintRegions": [
+            {
+              "region": "iris",
+              "svgClass": "region-iris",
+              "defaultPalette": "#3a78c2"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#33303b"
+            },
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#4a3526"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        }
+      ]
+    },
+    {
+      "slot": "mouth",
+      "zOrder": 110,
+      "required": false,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "parts": [
+        {
+          "id": "mouth_neutral_01",
+          "displayName": "Neutral Mouth",
+          "file": "parts/mouth/mouth_neutral_01.svg",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "mouth",
+            "neutral",
+            "small",
+            "animal-w"
+          ],
+          "tintRegions": [
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#4a3526"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "mouth_happy_01",
+          "displayName": "Happy Open Smile",
+          "file": "parts/mouth/mouth_happy_01.svg",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "mouth",
+            "happy",
+            "smile",
+            "open",
+            "fang",
+            "tongue"
+          ],
+          "tintRegions": [
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#4a3526"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#c96a7a"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "mouth_sad_01",
+          "displayName": "Sad Frown",
+          "file": "parts/mouth/mouth_sad_01.svg",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "mouth",
+            "sad",
+            "frown",
+            "expression"
+          ],
+          "tintRegions": [
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#4a3526"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "mouth_angry_01",
+          "displayName": "Angry Snarl",
+          "file": "parts/mouth/mouth_angry_01.svg",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "mouth",
+            "angry",
+            "snarl",
+            "fangs",
+            "gritted",
+            "expression"
+          ],
+          "tintRegions": [
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#4a3526"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        }
+      ]
+    },
+    {
+      "slot": "hair",
+      "zOrder": 120,
+      "required": false,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "parts": [
+        {
+          "id": "hair_flower_01",
+          "displayName": "Flower Crown",
+          "file": "parts/hair/hair_flower_01.svg",
+          "category": "hair",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "flower",
+            "crown",
+            "wreath",
+            "blooms",
+            "flora",
+            "cute"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#f2a7b8"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f7d774"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#5c8a48"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hair_leafy_01",
+          "displayName": "Leafy Sprout Crown",
+          "file": "parts/hair/hair_leafy_01.svg",
+          "category": "hair",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "plant",
+            "leaf",
+            "sprout",
+            "bud",
+            "flora",
+            "nature"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#6fae52"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f2b6c6"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#46752f"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hair_goo_01",
+          "displayName": "Goo Swoosh Hairdo",
+          "file": "parts/hair/hair_goo_01.svg",
+          "category": "hair",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "slime",
+            "hybrid",
+            "goo",
+            "hair",
+            "swoosh",
+            "drippy"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#5fc9a0"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#c8f7e3"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        }
+      ]
+    },
+    {
+      "slot": "accessory",
+      "zOrder": 130,
+      "required": false,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "parts": [
+        {
+          "id": "accessory_bandana_01",
+          "displayName": "Bandana Neckerchief",
+          "file": "parts/accessory/accessory_bandana_01.svg",
+          "category": "accessory",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "accessory",
+            "bandana",
+            "neckerchief",
+            "scarf",
+            "neck"
+          ],
+          "tintRegions": [
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#b03a3a"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#efe3c8"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "accessory_mushroom_cap_01",
+          "displayName": "Mushroom Cap",
+          "file": "parts/accessory/accessory_mushroom_cap_01.svg",
+          "category": "accessory",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "mushroom",
+            "toadstool",
+            "flora",
+            "spots",
+            "cottagecore",
+            "cute"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#d95f4c"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#f6efe0"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#e3d5b8"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "accessory_collar_01",
+          "displayName": "Buckle Collar with Tag",
+          "file": "parts/accessory/accessory_collar_01.svg",
+          "category": "accessory",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "accessory",
+            "collar",
+            "buckle",
+            "tag",
+            "studs",
+            "neck"
+          ],
+          "tintRegions": [
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#a83a3a"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#d9a441"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "accessory_glasses_01",
+          "displayName": "Round Glasses",
+          "file": "parts/accessory/accessory_glasses_01.svg",
+          "category": "accessory",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "accessory",
+            "glasses",
+            "round",
+            "frames",
+            "nerdy"
+          ],
+          "tintRegions": [
+            {
+              "region": "line",
+              "svgClass": "region-line",
+              "defaultPalette": "#33303b"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "accessory_ear_piercing_01",
+          "displayName": "Ear Piercing Hoops",
+          "file": "parts/accessory/accessory_ear_piercing_01.svg",
+          "category": "accessory",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "accessory",
+            "piercing",
+            "hoops",
+            "earring",
+            "punk"
+          ],
+          "tintRegions": [
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#d9a441"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "accessory_slime_pet_01",
+          "displayName": "Slime Pet Buddy",
+          "file": "parts/accessory/accessory_slime_pet_01.svg",
+          "category": "accessory",
+          "compatibleHeads": [
+            "*"
+          ],
+          "tags": [
+            "slime",
+            "hybrid",
+            "goo",
+            "pet",
+            "shoulder",
+            "cute"
+          ],
+          "tintRegions": [
+            {
+              "region": "fur",
+              "svgClass": "region-fur",
+              "defaultPalette": "#5fc9a0"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#c8f7e3"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#24523f"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        }
+      ]
+    }
+  ],
+  "expressionSlots": [
+    "eyes",
+    "brows",
+    "mouth"
+  ],
+  "expressions": [
+    {
+      "id": "neutral",
+      "path": "expressions/neutral.json"
+    },
+    {
+      "id": "happy",
+      "path": "expressions/happy.json"
+    },
+    {
+      "id": "sad",
+      "path": "expressions/sad.json"
+    },
+    {
+      "id": "angry",
+      "path": "expressions/angry.json"
+    }
+  ]
+}

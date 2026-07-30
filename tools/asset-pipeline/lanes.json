@@ -1,0 +1,821 @@
+{
+  "schema": "3d-pack-lanes",
+  "schemaVersion": 1,
+  "notes": "Hand-authored mapping from the vendored packs (sources.json / pack.json) onto the assembler-v2 basis registry: which style lane a model belongs to, which head family / body archetype it stands in for, how it mounts onto the rig, and how each of its glTF material slots maps onto the 11 palette regions. build-lanes.mjs validates every reference against the committed pack.json manifests and emits assets/packs/lanes.json (read by scripts/pack_library.gd) plus the frontend's generated catalog, so the engine, the UI and this file can never drift.",
+
+  "mounts": {
+    "avatar": "The GLB/VRM IS the avatar: the whole procedural rig is hidden and the mesh replaces it. Registered on the HEAD basis so exactly one mesh_basis_required signal fires per rebuild.",
+    "body": "Mesh body + PROCEDURAL head: the loaded rig replaces the procedural body, and the procedural head (with its ears/horns/muzzle) is re-parented onto the rig's head bone from code via BoneAttachment3D. Registered on the BODY basis.",
+    "procedural": "No mesh at all — the parametric assembler builds everything. The default, and the primary for the kemono lane."
+  },
+
+  "materialPolicy": {
+    "quaternius-base-v1": {
+      "policy": "map",
+      "reason": "Untextured flat-colour material slots — legal-inventory.md's 'maps perfectly onto our 7-region semantic recolor system'. Every slot is named and gets a region.",
+      "slots": {
+        "MI_Superhero_Female": "skin",
+        "MI_Superhero_Male": "skin",
+        "MI_Hair_1": "hair",
+        "MI_Hair_2": "hair",
+        "MI_Eyes": "iris"
+      }
+    },
+    "quaternius-outfits-v1": {
+      "policy": "map",
+      "reason": "Flat-colour modular garments. Split across the jrpg-bases.md 60/30/10 blocking: the peasant set is the 60 (fur), the ranger set the 30 (accent), and the bare 'Regular' body material is the 15-25% skin.",
+      "slots": {
+        "MI_Peasant": "fur",
+        "MI_Ranger": "accent",
+        "MI_Regular_Female": "skin",
+        "MI_Regular_Male": "skin"
+      }
+    },
+    "quaternius-monsters-v1": {
+      "policy": "map",
+      "reason": "Flat-colour slots, one primitive per material, so every region recolours independently. *_Main is the base coat, *_Secondary the accent — except on the three chibi kemono bipeds (cat/bunny/frog) where the secondary IS the lighter belly/muzzle countershade kemono.md describes, so it maps to innerMuzzle.",
+      "slots": {
+        "Orc_Main": "fur",
+        "Orc_Secondary": "accent",
+        "Orc_Mouth": "innerMuzzle",
+        "Orc_Hair": "hair",
+        "Demon_Main": "fur",
+        "BlueDemon_Main": "fur",
+        "BlueDemon_Secondary": "accent",
+        "Dragon_Main": "fur",
+        "Dragon_Secondary": "accent",
+        "Dragon_Horn": "detail",
+        "Ghost_Main": "fur",
+        "Green_Main": "fur",
+        "Pink_Main": "fur",
+        "Pink_Secondary": "accent",
+        "Yeti_Main": "fur",
+        "Yeti_Secondary": "accent",
+        "MushroomKing_Main": "fur",
+        "MushroomKing_Secondary": "accent",
+        "Tribal_Main": "fur",
+        "Tribal_Secondary": "accent",
+        "Tribal_Gold": "detail",
+        "Cat_Main": "fur",
+        "Cat_Secondary": "innerMuzzle",
+        "Bunny_Main": "fur",
+        "Bunny_Secondary": "innerMuzzle",
+        "Frog_Main": "fur",
+        "Frog_Secondary": "innerMuzzle",
+        "Ears": "innerEar",
+        "Eye_White": "detail",
+        "Eye_Black": "iris",
+        "Black": "line",
+        "Teeth": "detail",
+        "Tongue": "innerMuzzle",
+        "Gold": "detail",
+        "Belt": "detail",
+        "Straps": "detail",
+        "Wood": "detail",
+        "Material.011": "detail",
+        "Material.024": "detail"
+      },
+      "unverifiedSlots": {
+        "Material.011": "Unnamed Blender default on the Bunny — assigned to 'detail' by elimination, not by looking at the model. No visual audit was possible in this environment.",
+        "Material.024": "Same: unnamed Blender default on the Bunny."
+      }
+    },
+    "quaternius-animals-v1": {
+      "policy": "map",
+      "reason": "Head/tail DONOR pack (quadruped rigs). Mapped for completeness and for the fox/wolf head-graft follow-up; no lane registers these as a basis today (see blocked[] below).",
+      "slots": {
+        "Main": "fur",
+        "Main_Light": "innerMuzzle",
+        "Main_Dark": "accent",
+        "Grey": "accent",
+        "Black": "line",
+        "Hair": "hair",
+        "Hooves": "detail",
+        "Muzzle": "innerMuzzle",
+        "Nose": "line",
+        "Eye_White": "detail",
+        "Eyes_White": "detail",
+        "Eye_Lighter": "detail",
+        "Eye_Black": "iris",
+        "Eyes_Black": "iris",
+        "Eyes_Pupil": "iris",
+        "Material": "fur",
+        "Material.001": "innerMuzzle",
+        "Material.002": "accent",
+        "Material.003": "detail",
+        "Material.006": "line"
+      },
+      "unverifiedSlots": {
+        "Material": "The Husky ships five unnamed Blender-default materials. Assigned by slot order (base coat, light, accent, detail, dark) WITHOUT a visual check — flagged rather than presented as verified.",
+        "Material.001": "See 'Material'.",
+        "Material.002": "See 'Material'.",
+        "Material.003": "See 'Material'.",
+        "Material.006": "See 'Material'."
+      }
+    },
+    "vroid-cc0-v1": {
+      "policy": "map",
+      "reason": "VRoid names every material with a role suffix (_SKIN/_FACE/_EYE/_HAIR/_CLOTH), so the mapping is exact rather than heuristic. Used when the house toon shader replaces MToon on the web path (technique.md: MToon on WebGL2 is unverified upstream).",
+      "slots": {
+        "F00_000_00_Face_00_SKIN": "skin",
+        "F00_001_01_Body_00_SKIN": "skin",
+        "F00_000_00_FaceMouth_00_FACE": "innerMuzzle",
+        "F00_000_00_FaceBrow_00_FACE": "hair",
+        "F00_000_00_FaceEyelash_00_FACE": "line",
+        "F00_000_00_FaceEyeline_00_FACE": "line",
+        "F00_000_00_EyeIris_00_EYE": "iris",
+        "F00_000_00_EyeWhite_00_EYE": "detail",
+        "F00_000_00_EyeHighlight_00_EYE": "detail",
+        "F00_000_00_EyeExtra_01_EYE": "detail",
+        "F00_000_HairBack_00_HAIR": "hair",
+        "F00_001_01_Tops_01_CLOTH": "fur",
+        "F00_001_01_Bottoms_01_CLOTH": "accent",
+        "F00_001_01_Shoes_01_CLOTH": "socks",
+        "F00_001_01_Accessory_Tie_01_CLOTH": "detail",
+        "M00_000_00_Face_00_SKIN": "skin",
+        "M00_001_01_Body_00_SKIN": "skin",
+        "M00_000_00_FaceMouth_00_FACE": "innerMuzzle",
+        "M00_000_00_FaceBrow_00_FACE": "hair",
+        "M00_000_00_FaceEyelash_00_FACE": "line",
+        "M00_000_00_FaceEyeline_00_FACE": "line",
+        "M00_000_00_EyeIris_00_EYE": "iris",
+        "M00_000_00_EyeWhite_00_EYE": "detail",
+        "M00_000_00_EyeHighlight_00_EYE": "detail",
+        "M00_000_00_EyeExtra_01_EYE": "detail",
+        "M00_000_HairBack_00_HAIR": "hair",
+        "M00_001_01_Tops_01_CLOTH": "fur",
+        "M00_001_01_Bottoms_01_CLOTH": "accent",
+        "M00_001_01_Shoes_01_CLOTH": "socks",
+        "M00_001_01_Accessory_Tie_01_CLOTH": "detail"
+      }
+    },
+    "godette-v1": {
+      "policy": "map",
+      "reason": "Four named materials on a 3.4k-tri anime mascot — the cheapest anime avatar we ship and the one that fits the Quest-3 budget with room to spare.",
+      "slots": {
+        "Face": "skin",
+        "Body": "fur",
+        "GodotLogo": "detail",
+        "Backpack": "accent"
+      }
+    },
+    "kaykit-adventurers-v1": {
+      "policy": "preserve",
+      "reason": "SINGLE 1024x1024 gradient atlas per character (legal-inventory.md: 'recolor requires atlas palette-swap, not material slots'). Swapping the atlas material for a flat house material would collapse the whole character to one colour, so the vendor material is KEPT and per-region recolour is unavailable for this pack. The fix is the atlas palette-swap shader — technique.md's option A conversion is a re-UV job and Blender is not available here."
+    },
+    "kaykit-skeletons-v1": {
+      "policy": "preserve",
+      "reason": "Same single-atlas texturing as the Adventurers pack, plus an emissive 'Glow' slot for the eye sockets."
+    },
+    "polygonalmind-100avatars-v1": {
+      "policy": "preserve",
+      "reason": "Each avatar bakes to one atlas material (mat_NNN); the same atlas problem as KayKit. Scoped to the VRM importer corpus anyway, not to player avatars."
+    },
+    "khronos-fox-v1": {
+      "policy": "preserve",
+      "reason": "One textured material on a 576-tri quadruped; it is the runtime-loader reference asset, not a player avatar."
+    }
+  },
+
+  "unlaned": {
+    "quaternius-animals-v1": "Vendored as HEAD/TAIL DONOR geometry for the kemono graft, which the blocked[] entry below proves is not possible at runtime: every quadruped is one skinned mesh with no separable head node. They are quadrupeds, not avatars, so they are deliberately not offered as playable characters either. Kept because they remain the donor set the moment a Blender-equipped pipeline exists.",
+    "khronos-fox-v1": "The canonical quadruped skinning/animation reference asset for the runtime GLB loader tests (576 tris, mixed CC0 mesh / CC-BY-4.0 rig). A test fixture, never a player avatar."
+  },
+
+  "lanes": [
+    {
+      "id": "anime",
+      "displayName": "Anime",
+      "summary": "VRoid CC0 base bodies + the CC-BY Godette mascot. VRM: standardised humanoid rig, A/I/U/E/O visemes and in-file licence metadata.",
+      "proceduralFamilies": ["humanoid"],
+      "entries": [
+        {
+          "key": "anime-vroid-female",
+          "displayName": "VRoid base — female",
+          "packId": "vroid-cc0-v1",
+          "modelId": "base_female",
+          "family": "humanoid",
+          "archetype": "humanoid",
+          "mount": "avatar",
+          "style": "anime",
+          "partMixable": false,
+          "notes": "pixiv's VRoid Studio guideline bars any app that generates or outputs models from deformed/recombined VRoid meshes, so this ships as a FIXED whole avatar and never enters the part-mixer. 166 joints is over the ~75-bone Quest budget (manifest flag)."
+        },
+        {
+          "key": "anime-vroid-male",
+          "displayName": "VRoid base — male",
+          "packId": "vroid-cc0-v1",
+          "modelId": "base_male",
+          "family": "humanoid",
+          "archetype": "humanoid",
+          "mount": "avatar",
+          "style": "anime",
+          "partMixable": false,
+          "notes": "Same VRoid part-mixer prohibition; 134 joints, over the Quest bone budget."
+        },
+        {
+          "key": "anime-godette",
+          "displayName": "Godette (low-poly)",
+          "packId": "godette-v1",
+          "modelId": "godette",
+          "family": "humanoid",
+          "archetype": "humanoid",
+          "mount": "avatar",
+          "style": "anime",
+          "partMixable": true,
+          "notes": "CC-BY-3.0 — attribution is MANDATORY and must be visible in-app, not manifest-only. 3,439 tris / 68 joints: the only anime avatar that is comfortably inside the Quest-3 browser budget."
+        }
+      ]
+    },
+    {
+      "id": "jrpg",
+      "displayName": "JRPG",
+      "summary": "Quaternius Universal Base Characters + Modular Fantasy Outfits (recolourable flat-colour slots) and the KayKit Adventurers chibi line (atlas-textured, recolour unavailable).",
+      "proceduralFamilies": ["humanoid"],
+      "entries": [
+        {
+          "key": "jrpg-ubc-male",
+          "displayName": "Universal Base — male",
+          "packId": "quaternius-base-v1",
+          "modelId": "ubc_superhero_male",
+          "family": "humanoid",
+          "archetype": "humanoid",
+          "mount": "avatar",
+          "style": "toon",
+          "partMixable": true,
+          "notes": "The maker backbone: retargetable humanoid rig shared with the 43-clip Universal Animation Library. No jaw bone and no visemes — the assembler supplies the mouth-strip lip-sync channel."
+        },
+        {
+          "key": "jrpg-ubc-female",
+          "displayName": "Universal Base — female",
+          "packId": "quaternius-base-v1",
+          "modelId": "ubc_superhero_female",
+          "family": "humanoid",
+          "archetype": "humanoid",
+          "mount": "avatar",
+          "style": "toon",
+          "partMixable": true,
+          "notes": "Same rig and animation library as the male base."
+        },
+        {
+          "key": "jrpg-outfit-peasant-male",
+          "displayName": "Peasant outfit — male base",
+          "packId": "quaternius-outfits-v1",
+          "modelId": "male_peasant_body",
+          "extraPieces": [
+            "male_peasant_arms",
+            "male_peasant_legs",
+            "male_peasant_feet"
+          ],
+          "family": "humanoid",
+          "archetype": "humanoid",
+          "mount": "body",
+          "style": "toon",
+          "partMixable": true,
+          "notes": "Quaternius Modular Character Outfits: garment pieces skinned to the SAME 65-bone Universal Base rig, composed at runtime by re-parenting each piece's skinned mesh onto the mounted skeleton (all 65 skin binds resolve by name — verified, no Blender step). Mounted as a BODY so the procedural head sits on top: the pack ships no head piece, and its 'Regular' proportion body is baked into the arm/leg pieces."
+        },
+        {
+          "key": "jrpg-outfit-peasant-female",
+          "displayName": "Peasant outfit — female base",
+          "packId": "quaternius-outfits-v1",
+          "modelId": "female_peasant_body",
+          "extraPieces": [
+            "female_peasant_arms",
+            "female_peasant_legs",
+            "female_peasant_feet"
+          ],
+          "family": "humanoid",
+          "archetype": "humanoid",
+          "mount": "body",
+          "style": "toon",
+          "partMixable": true,
+          "notes": "Same composed-set mount on the female Regular base. 13,568 triangles across the four pieces — inside the Quest-3 budget."
+        },
+        {
+          "key": "jrpg-outfit-ranger-male",
+          "displayName": "Ranger outfit — male base",
+          "packId": "quaternius-outfits-v1",
+          "modelId": "male_ranger_body",
+          "extraPieces": [
+            "male_ranger_arms",
+            "male_ranger_legs",
+            "male_ranger_feet_boots",
+            "male_ranger_acc_pauldron"
+          ],
+          "family": "humanoid",
+          "archetype": "humanoid",
+          "mount": "body",
+          "style": "toon",
+          "partMixable": true,
+          "notes": "Five pieces including pauldrons. The hooded head piece is deliberately NOT included: this mounts as a body under the procedural head, and a hood plus our own head would intersect. 21,210 triangles — over the 15k Quest-3 budget, and flagged as such in the selector."
+        },
+        {
+          "key": "jrpg-outfit-ranger-female",
+          "displayName": "Ranger outfit — female base",
+          "packId": "quaternius-outfits-v1",
+          "modelId": "female_ranger_body",
+          "extraPieces": [
+            "female_ranger_arms",
+            "female_ranger_legs",
+            "female_ranger_feet",
+            "female_ranger_acc_pauldrons"
+          ],
+          "family": "humanoid",
+          "archetype": "humanoid",
+          "mount": "body",
+          "style": "toon",
+          "partMixable": true,
+          "notes": "Same five-piece set on the female base; the hood piece is excluded for the same reason. 24,830 triangles — over the Quest-3 budget, flagged in the selector."
+        },
+        {
+          "key": "jrpg-knight",
+          "displayName": "Knight (KayKit)",
+          "packId": "kaykit-adventurers-v1",
+          "modelId": "knight",
+          "family": "humanoid",
+          "archetype": "humanoid",
+          "mount": "avatar",
+          "style": "toon",
+          "partMixable": true,
+          "notes": "Atlas-textured: per-region recolour is unavailable (materialPolicy 'preserve'). Ships with the 76-clip KayKit animation library on the same 41-bone rig. KayKit ships every weapon and shield of the pack inside EACH character file; hiddenMeshes (node names measured from the committed bytes) hides the held props so the avatar does not arrive carrying all of them at once.",
+          "hiddenMeshes": [
+            "1H_Sword",
+            "1H_Sword_Offhand",
+            "2H_Sword",
+            "Badge_Shield",
+            "Rectangle_Shield",
+            "Round_Shield",
+            "Spike_Shield"
+          ]
+        },
+        {
+          "key": "jrpg-barbarian",
+          "displayName": "Barbarian (KayKit)",
+          "packId": "kaykit-adventurers-v1",
+          "modelId": "barbarian",
+          "family": "humanoid",
+          "archetype": "humanoid",
+          "mount": "avatar",
+          "style": "toon",
+          "partMixable": true,
+          "notes": "Atlas-textured; recolour unavailable. KayKit ships every weapon and shield of the pack inside EACH character file; hiddenMeshes (node names measured from the committed bytes) hides the held props so the avatar does not arrive carrying all of them at once.",
+          "hiddenMeshes": [
+            "1H_Axe",
+            "1H_Axe_Offhand",
+            "2H_Axe",
+            "Barbarian_Round_Shield",
+            "Mug"
+          ]
+        },
+        {
+          "key": "jrpg-mage",
+          "displayName": "Mage (KayKit)",
+          "packId": "kaykit-adventurers-v1",
+          "modelId": "mage",
+          "family": "humanoid",
+          "archetype": "humanoid",
+          "mount": "avatar",
+          "style": "toon",
+          "partMixable": true,
+          "notes": "Atlas-textured; recolour unavailable. KayKit ships every weapon and shield of the pack inside EACH character file; hiddenMeshes (node names measured from the committed bytes) hides the held props so the avatar does not arrive carrying all of them at once.",
+          "hiddenMeshes": [
+            "1H_Wand",
+            "2H_Staff",
+            "Spellbook",
+            "Spellbook_open"
+          ]
+        },
+        {
+          "key": "jrpg-rogue",
+          "displayName": "Rogue (KayKit)",
+          "packId": "kaykit-adventurers-v1",
+          "modelId": "rogue",
+          "family": "humanoid",
+          "archetype": "humanoid",
+          "mount": "avatar",
+          "style": "toon",
+          "partMixable": true,
+          "notes": "Atlas-textured; recolour unavailable. KayKit ships every weapon and shield of the pack inside EACH character file; hiddenMeshes (node names measured from the committed bytes) hides the held props so the avatar does not arrive carrying all of them at once.",
+          "hiddenMeshes": [
+            "1H_Crossbow",
+            "2H_Crossbow",
+            "Knife",
+            "Knife_Offhand",
+            "Throwable"
+          ]
+        },
+        {
+          "key": "jrpg-rogue-hooded",
+          "displayName": "Rogue, hooded (KayKit)",
+          "packId": "kaykit-adventurers-v1",
+          "modelId": "rogue_hooded",
+          "family": "humanoid",
+          "archetype": "humanoid",
+          "mount": "avatar",
+          "style": "toon",
+          "partMixable": true,
+          "notes": "Atlas-textured; recolour unavailable. KayKit ships every weapon and shield of the pack inside EACH character file; hiddenMeshes (node names measured from the committed bytes) hides the held props so the avatar does not arrive carrying all of them at once.",
+          "hiddenMeshes": [
+            "1H_Crossbow",
+            "2H_Crossbow",
+            "Knife",
+            "Knife_Offhand",
+            "Throwable"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "kemono",
+      "displayName": "Kemono / Furry",
+      "summary": "PROCEDURAL FIRST. legal-inventory.md is blunt: 'There is NO production-grade CC0 rigged+animated anthro biped pack anywhere', so the kemono.md numeric style rules drive the parametric assembler for all 27 beast families. Two mesh options exist on top: a mesh BODY under a procedural beast head, and the three chibi bipeds inside Ultimate Monsters.",
+      "proceduralFamilies": [
+        "canid", "felid", "avian", "reptile", "dragon", "dino", "kobold", "gryphon",
+        "equine", "cervine", "bovine", "caprine", "suid", "hyena", "lapine", "rodent",
+        "macropod", "moth", "insect", "bat", "ursine", "mustelid", "procyonid",
+        "amphibian", "aquatic", "slime", "robot", "synth"
+      ],
+      "entries": [
+        {
+          "key": "kemono-ubc-body-male",
+          "displayName": "Mesh body + beast head (male base)",
+          "packId": "quaternius-base-v1",
+          "modelId": "ubc_superhero_male",
+          "family": "humanoid",
+          "archetype": "humanoid",
+          "mount": "body",
+          "style": "toon",
+          "partMixable": true,
+          "notes": "The hybrid legal-inventory.md recommends: CC0 humanoid body + our procedural head. The head is re-parented onto the rig's head bone FROM CODE (BoneAttachment3D), never authored into the GLB. Head family stays whatever the character selects, so any of the 28 beast families works over this body."
+        },
+        {
+          "key": "kemono-ubc-body-female",
+          "displayName": "Mesh body + beast head (female base)",
+          "packId": "quaternius-base-v1",
+          "modelId": "ubc_superhero_female",
+          "family": "humanoid",
+          "archetype": "humanoid",
+          "mount": "body",
+          "style": "toon",
+          "partMixable": true,
+          "notes": "Same hybrid on the female base."
+        },
+        {
+          "key": "kemono-cat",
+          "displayName": "Chibi cat",
+          "packId": "quaternius-monsters-v1",
+          "modelId": "cat",
+          "family": "felid",
+          "archetype": "felid",
+          "mount": "avatar",
+          "style": "toon",
+          "partMixable": true,
+          "notes": "1,772 tris on a 4-bone rig — the cheapest avatar in the repo. legal-inventory.md's 'immediate chibi anthro preset row'."
+        },
+        {
+          "key": "kemono-bunny",
+          "displayName": "Chibi bunny",
+          "packId": "quaternius-monsters-v1",
+          "modelId": "bunny",
+          "family": "lapine",
+          "archetype": "lapine",
+          "mount": "avatar",
+          "style": "toon",
+          "partMixable": true,
+          "notes": "98 joints — over the ~75-bone Quest budget (manifest flag carried through to the UI)."
+        },
+        {
+          "key": "kemono-frog",
+          "displayName": "Chibi frog",
+          "packId": "quaternius-monsters-v1",
+          "modelId": "frog",
+          "family": "amphibian",
+          "archetype": "amphibian",
+          "mount": "avatar",
+          "style": "toon",
+          "partMixable": true,
+          "notes": "5,016 tris / 43 joints, inside budget."
+        }
+      ]
+    },
+    {
+      "id": "monsters",
+      "displayName": "Monsters",
+      "summary": "Quaternius Ultimate Monsters (CC0, animated) plus the KayKit undead. SRD-safe creatures only — no WotC Product Identity is modelled or shipped.",
+      "proceduralFamilies": ["dragon", "slime", "robot", "synth", "insect", "moth"],
+      "entries": [
+        {
+          "key": "monster-dragon",
+          "displayName": "Dragon",
+          "packId": "quaternius-monsters-v1",
+          "modelId": "dragon",
+          "family": "dragon",
+          "archetype": "dragon",
+          "mount": "avatar",
+          "style": "toon",
+          "partMixable": true,
+          "notes": "4,562 tris / 13 joints."
+        },
+        {
+          "key": "monster-dragon-evolved",
+          "displayName": "Dragon, evolved",
+          "packId": "quaternius-monsters-v1",
+          "modelId": "dragon_evolved",
+          "family": "dragon",
+          "archetype": "dragon",
+          "mount": "avatar",
+          "style": "toon",
+          "partMixable": true,
+          "notes": "7,438 tris / 46 joints."
+        },
+        {
+          "key": "monster-orc",
+          "displayName": "Orc",
+          "packId": "quaternius-monsters-v1",
+          "modelId": "orc",
+          "family": "humanoid",
+          "archetype": "humanoid",
+          "mount": "avatar",
+          "style": "toon",
+          "partMixable": true,
+          "notes": "86 joints — over the Quest bone budget. Has a separate Orc_Mouth + Tongue material, so the innerMuzzle region actually shows."
+        },
+        {
+          "key": "monster-demon",
+          "displayName": "Demon",
+          "packId": "quaternius-monsters-v1",
+          "modelId": "demon",
+          "family": "humanoid",
+          "archetype": "humanoid",
+          "mount": "avatar",
+          "style": "toon",
+          "partMixable": true,
+          "notes": "4,784 tris / 43 joints."
+        },
+        {
+          "key": "monster-blue-demon",
+          "displayName": "Blue demon",
+          "packId": "quaternius-monsters-v1",
+          "modelId": "blue_demon",
+          "family": "humanoid",
+          "archetype": "humanoid",
+          "mount": "avatar",
+          "style": "toon",
+          "partMixable": true,
+          "notes": "5,800 tris / 43 joints."
+        },
+        {
+          "key": "monster-yeti",
+          "displayName": "Yeti",
+          "packId": "quaternius-monsters-v1",
+          "modelId": "yeti",
+          "family": "ursine",
+          "archetype": "ursine",
+          "mount": "avatar",
+          "style": "toon",
+          "partMixable": true,
+          "notes": "2,136 tris on a 4-bone rig."
+        },
+        {
+          "key": "monster-ghost",
+          "displayName": "Ghost",
+          "packId": "quaternius-monsters-v1",
+          "modelId": "ghost",
+          "family": "synth",
+          "archetype": "synth",
+          "mount": "avatar",
+          "style": "toon",
+          "partMixable": true,
+          "notes": "Mapped onto the 'synth' family because the procedural fallback for it is the translucent/rim-lit variant, which is the closest match to a ghost."
+        },
+        {
+          "key": "monster-slime-pink",
+          "displayName": "Pink slime",
+          "packId": "quaternius-monsters-v1",
+          "modelId": "pink_slime",
+          "family": "slime",
+          "archetype": "slime",
+          "mount": "avatar",
+          "style": "toon",
+          "partMixable": true,
+          "notes": "1,030 tris — the smallest model shipped."
+        },
+        {
+          "key": "monster-slime-green",
+          "displayName": "Green blob",
+          "packId": "quaternius-monsters-v1",
+          "modelId": "green_blob",
+          "family": "slime",
+          "archetype": "slime",
+          "mount": "avatar",
+          "style": "toon",
+          "partMixable": true,
+          "notes": "1,520 tris."
+        },
+        {
+          "key": "monster-mushroom-king",
+          "displayName": "Mushroom king",
+          "packId": "quaternius-monsters-v1",
+          "modelId": "mushroom_king",
+          "family": "humanoid",
+          "archetype": "humanoid",
+          "mount": "avatar",
+          "style": "toon",
+          "partMixable": true,
+          "notes": "86 joints — over the Quest bone budget."
+        },
+        {
+          "key": "monster-tribal",
+          "displayName": "Tribal",
+          "packId": "quaternius-monsters-v1",
+          "modelId": "tribal",
+          "family": "humanoid",
+          "archetype": "humanoid",
+          "mount": "avatar",
+          "style": "toon",
+          "partMixable": true,
+          "notes": "5,252 tris / 38 joints."
+        },
+        {
+          "key": "monster-skeleton-warrior",
+          "displayName": "Skeleton warrior (KayKit)",
+          "packId": "kaykit-skeletons-v1",
+          "modelId": "skeleton_warrior",
+          "family": "humanoid",
+          "archetype": "humanoid",
+          "mount": "avatar",
+          "style": "toon",
+          "partMixable": true,
+          "notes": "Atlas-textured; recolour unavailable. Ships a separate jaw MESH node but NO jaw bone (the manifest's hasJawBone claim was wrong until the audit was fixed), so lip-sync uses the mouth-strip channel."
+        },
+        {
+          "key": "monster-skeleton-mage",
+          "displayName": "Skeleton mage (KayKit)",
+          "packId": "kaykit-skeletons-v1",
+          "modelId": "skeleton_mage",
+          "family": "humanoid",
+          "archetype": "humanoid",
+          "mount": "avatar",
+          "style": "toon",
+          "partMixable": true,
+          "notes": "Atlas-textured; recolour unavailable."
+        },
+        {
+          "key": "monster-skeleton-rogue",
+          "displayName": "Skeleton rogue (KayKit)",
+          "packId": "kaykit-skeletons-v1",
+          "modelId": "skeleton_rogue",
+          "family": "humanoid",
+          "archetype": "humanoid",
+          "mount": "avatar",
+          "style": "toon",
+          "partMixable": true,
+          "notes": "Atlas-textured; recolour unavailable."
+        },
+        {
+          "key": "monster-skeleton-minion",
+          "displayName": "Skeleton minion (KayKit)",
+          "packId": "kaykit-skeletons-v1",
+          "modelId": "skeleton_minion",
+          "family": "humanoid",
+          "archetype": "humanoid",
+          "mount": "avatar",
+          "style": "toon",
+          "partMixable": true,
+          "notes": "Atlas-textured; recolour unavailable."
+        }
+      ]
+    },
+    {
+      "id": "import",
+      "displayName": "Import",
+      "summary": "Bring your own VRM/GLB. Imported bytes are read in the browser and handed straight to the embedded engine — they are NEVER uploaded to the BFF. The 100Avatars corpus below is the shipped VRM ingest reference; free bases are LINKED, never bundled.",
+      "proceduralFamilies": ["humanoid"],
+      "entries": [
+        {
+          "key": "filler-jimmy",
+          "displayName": "100Avatars — Jimmy",
+          "packId": "polygonalmind-100avatars-v1",
+          "modelId": "100avatars_003_jimmy",
+          "family": "humanoid",
+          "archetype": "humanoid",
+          "mount": "avatar",
+          "style": "toon",
+          "partMixable": true,
+          "notes": "CC-BY-4.0 — attribution mandatory. Disclosed upstream: the rigs are Mixamo auto-rigger output redistributed by the copyright holder; scoped to the VRM importer corpus."
+        },
+        {
+          "key": "filler-skull",
+          "displayName": "100Avatars — Skull",
+          "packId": "polygonalmind-100avatars-v1",
+          "modelId": "100avatars_005_skull",
+          "family": "humanoid",
+          "archetype": "humanoid",
+          "mount": "avatar",
+          "style": "toon",
+          "partMixable": true,
+          "notes": "CC-BY-4.0 — attribution mandatory."
+        },
+        {
+          "key": "filler-cactusboy",
+          "displayName": "100Avatars — Cactus boy",
+          "packId": "polygonalmind-100avatars-v1",
+          "modelId": "100avatars_009_cactusboy",
+          "family": "humanoid",
+          "archetype": "humanoid",
+          "mount": "avatar",
+          "style": "toon",
+          "partMixable": true,
+          "notes": "CC-BY-4.0 — attribution mandatory."
+        },
+        {
+          "key": "filler-froggy",
+          "displayName": "100Avatars — Froggy",
+          "packId": "polygonalmind-100avatars-v1",
+          "modelId": "100avatars_010_froggy",
+          "family": "amphibian",
+          "archetype": "amphibian",
+          "mount": "avatar",
+          "style": "toon",
+          "partMixable": true,
+          "notes": "CC-BY-4.0 — attribution mandatory."
+        },
+        {
+          "key": "filler-teddy",
+          "displayName": "100Avatars — Teddy",
+          "packId": "polygonalmind-100avatars-v1",
+          "modelId": "100avatars_011_teddy",
+          "family": "ursine",
+          "archetype": "ursine",
+          "mount": "avatar",
+          "style": "toon",
+          "partMixable": true,
+          "notes": "CC-BY-4.0 — attribution mandatory."
+        },
+        {
+          "key": "filler-mint",
+          "displayName": "100Avatars — Mint",
+          "packId": "polygonalmind-100avatars-v1",
+          "modelId": "100avatars_013_mint",
+          "family": "humanoid",
+          "archetype": "humanoid",
+          "mount": "avatar",
+          "style": "toon",
+          "partMixable": true,
+          "notes": "CC-BY-4.0 — attribution mandatory."
+        },
+        {
+          "key": "filler-skelly",
+          "displayName": "100Avatars — Skelly",
+          "packId": "polygonalmind-100avatars-v1",
+          "modelId": "100avatars_029_skelly",
+          "family": "humanoid",
+          "archetype": "humanoid",
+          "mount": "avatar",
+          "style": "toon",
+          "partMixable": true,
+          "notes": "CC-BY-4.0 — attribution mandatory."
+        },
+        {
+          "key": "filler-polybot",
+          "displayName": "100Avatars — Polybot",
+          "packId": "polygonalmind-100avatars-v1",
+          "modelId": "100avatars_051_polybot",
+          "family": "robot",
+          "archetype": "robot",
+          "mount": "avatar",
+          "style": "toon",
+          "partMixable": true,
+          "notes": "CC-BY-4.0 — attribution mandatory."
+        }
+      ]
+    }
+  ],
+
+  "blocked": [
+    {
+      "id": "quaternius-animal-head-graft",
+      "wanted": "Graft a CC0 Quaternius animal head (Fox/Wolf/Husky/Shiba) onto the Universal Base Characters humanoid rig via BoneAttachment3D, per legal-inventory.md's hybrid recommendation.",
+      "verdict": "NOT POSSIBLE AT RUNTIME — measured, not assumed.",
+      "evidence": "Every quadruped in quaternius-animals-v1 is ONE skinned mesh with no separable head node: wolf.glb contains exactly one mesh ('Wolf', 4 primitives) bound to a single 51-joint skin, and its head geometry is skin-weighted to the 'Head' joint rather than living in its own node. BoneAttachment3D attaches whole NODES, so there is nothing to attach; isolating the head means splitting the mesh by bone weight, which is offline mesh surgery.",
+      "blocker": "Blender (or an equivalent weight-aware mesh splitter) is not installed in this environment, and gltf-transform has no split-by-skin-weight operation.",
+      "shippedInstead": "The 'body' mount: the CC0 mesh body carries a fully PROCEDURAL beast head (kemono-ubc-body-male/female entries above), plus the three Ultimate Monsters chibi bipeds as complete meshes. The species silhouette rides on the procedural ears/horns/muzzle, which technique.md notes is where species identity actually lives."
+    },
+    {
+      "id": "kaykit-atlas-recolor",
+      "wanted": "Per-region recolour on the KayKit Adventurers/Skeletons and 100Avatars lines.",
+      "verdict": "NOT SHIPPED — materialPolicy 'preserve'.",
+      "evidence": "Each of those characters renders from ONE material backed by a single baked atlas, so binding it to a flat house material would paint the entire character one colour.",
+      "blocker": "The fix is either an atlas palette-swap shader (needs the atlas cell layout, an art task) or re-UVing onto the palette strip (a Blender job).",
+      "shippedInstead": "The vendor material is preserved and the UI marks these entries 'fixed colours'."
+    },
+    {
+      "id": "oga-base-rigged-stylized-humanoid-yw",
+      "wanted": "The CC0 'Base Rigged Stylized Humanoid Character (YW)' as a second anime base.",
+      "verdict": "NOT VENDORED (already recorded in index.json notShipped).",
+      "evidence": "The only geometry in the OGA archive is a .blend file — no FBX/glTF/DAE export exists.",
+      "blocker": "Blender required.",
+      "shippedInstead": "The two VRoid CC0 bases plus Godette cover the anime lane."
+    }
+  ]
+}

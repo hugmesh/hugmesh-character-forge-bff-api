@@ -1,0 +1,155 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# GitHub-side COMPILE + TEST GATE (the org exemplar rolled out from forum-bff).
+#
+# WHY THIS EXISTS
+# Merges happen on GitHub (`gh pr merge`), but the existing test pipeline runs on the
+# in-cluster GitLab mirror (.gitlab-ci.yml) — and GitHub never waits for GitLab. So a
+# PR could merge with a BROKEN main and GitLab only fail afterwards. This workflow
+# makes the compile + test a REQUIRED, merge-blocking GitHub status check.
+#
+# RUNNER — must be SELF-HOSTED in-cluster (tailnet).
+# The private deps (hugmesh-parent / hugmesh-commons) live ONLY in the in-cluster
+# GitLab group Maven registry, which a github.com-hosted runner cannot reach (Tailscale-
+# only). So this runs on a self-hosted runner registered to the repo/org that sits on the
+# tailnet and has Docker (for the Testcontainers full-context tests) — the same host class
+# as the GitLab `hugmesh-x86` runner.
+#
+# SCOPE — ALL THREE LANES OF THIS REPO ARE GATED HERE.
+# This repo ships three suites in one tree (DESIGN §4): the Spring BFF at the root, the
+# Angular remote under frontend/, and the Godot maker under godot/. The workflow used to
+# claim the latter two "ship their own pipelines" and skip them — they do not: there is no
+# other pipeline in this repo or anywhere else that runs `ng test` or
+# `godot -s res://tests/run_tests.gd` for this code. The result was that ~64 karma specs
+# and ~254 Godot assertions were never executed by any gate, which is exactly how the
+# save-path break (the client mirror emitting values the BFF answers 400 on) and a Godot
+# project that did not even PARSE both reached main.
+#
+# PREREQS (one-time, per the org / repo settings):
+#   1. Register a self-hosted runner (labels: self-hosted, hugmesh-x86) on the tailnet
+#      with Docker available (mirrors the GitLab privileged shell runner).
+#   2. Add repo/org SECRETS that map to the settings.xml ${env.*} placeholders:
+#        GITLAB_MAVEN_TOKEN  -> a read-scoped token for the GitLab group Maven registry
+#        GITLAB_API_V4_URL   -> the in-cluster GitLab API v4 URL
+#        GITLAB_GROUP_ID     -> the HugMesh GitLab group id
+#   3. Install the two extra lane toolchains ON THE RUNNER (both jobs below fail LOUDLY
+#      with the exact reason when they are missing — never silently skip):
+#        * a Chrome/Chromium binary for headless karma (`chromium` or `google-chrome`);
+#          the `frontend` job auto-detects it, or set the CHROME_BIN repo variable.
+#        * the official Godot 4.7-stable linux editor binary for the headless GDScript
+#          suite; put it on PATH as `godot` or set the GODOT_BIN repo variable.
+#          (Export TEMPLATES are NOT needed — `make -C godot test` never exports.)
+#   4. Branch protection on `main`: require "build", "frontend" and "godot" to pass.
+# ─────────────────────────────────────────────────────────────────────────────
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Cancel a superseded run when a PR is updated, so the gate always reflects the latest commit.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: build (Spring BFF)
+    # Self-hosted, in-cluster (tailnet) — see the RUNNER note above. Has Docker for Testcontainers.
+    runs-on: [self-hosted, hugmesh-x86]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 25 (matches the GitLab CI eclipse-temurin:25 image)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      # `mvnw verify` compiles main + test sources AND runs the suite. `verify` also
+      # runs the Testcontainers full-context tests against the host Docker daemon (Ryuk
+      # disabled — the runner reaps its own short-lived containers, matching .gitlab-ci.yml).
+      # settings.xml resolves the private hugmesh-parent/commons from the GitLab group
+      # Maven registry via the secrets mapped to its ${env.*} placeholders (NO secret in git).
+      #
+      # NOTE this also runs ClientContractFixturesTest, the SERVER half of the shared
+      # cross-language contract (frontend/src/app/character-forge/contract/
+      # server-contract.fixtures.json). Its client half lives in the `frontend` job below —
+      # the pair is only meaningful when BOTH run, which is the point of gating all three.
+      - name: Build + test (merge gate)
+        env:
+          CI_JOB_TOKEN: ${{ secrets.GITLAB_MAVEN_TOKEN }}
+          CI_API_V4_URL: ${{ secrets.GITLAB_API_V4_URL }}
+          GITLAB_GROUP_ID: ${{ secrets.GITLAB_GROUP_ID }}
+          TESTCONTAINERS_RYUK_DISABLED: "true"
+          MAVEN_OPTS: "-Dapi.version=1.43"
+        run: ./mvnw -B -s settings.xml clean verify
+
+  frontend:
+    name: frontend (Angular remote — karma)
+    runs-on: [self-hosted, hugmesh-x86]
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node 24 (matches the frontend Dockerfile builder stage)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install (locked)
+        run: npm ci
+
+      # karma.conf.js resolves CHROME_BIN itself (env → the usual chromium/chrome paths)
+      # and ABORTS with an explicit message when none is found. It must never quietly
+      # report success without a browser.
+      - name: Unit tests (ng test / karma, headless)
+        env:
+          CHROME_BIN: ${{ vars.CHROME_BIN }}
+        run: npm test
+
+      # A remote that does not BUILD is not shippable, and the type-level half of the
+      # mirror contract (the `as const` vocabularies, the Char3dConfig shape) only gets
+      # checked by a real compile.
+      - name: Production build
+        run: npm run build
+
+  godot:
+    name: godot (character maker — headless GDScript suite)
+    runs-on: [self-hosted, hugmesh-x86]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve the Godot binary
+        env:
+          GODOT_BIN: ${{ vars.GODOT_BIN }}
+        run: |
+          set -euo pipefail
+          BIN="${GODOT_BIN:-}"
+          if [ -z "$BIN" ] && command -v godot >/dev/null 2>&1; then
+            BIN="$(command -v godot)"
+          fi
+          if [ -z "$BIN" ] || [ ! -x "$BIN" ]; then
+            echo "::error::No Godot binary. The godot/ lane carries 300+ real assertions"
+            echo "::error::(config clamping, 29-family rig distinctness, expression/jaw math,"
+            echo "::error::seeded-randomizer determinism, scene smoke) and this job will NOT"
+            echo "::error::pass without running them. Install the official Godot 4.7-stable"
+            echo "::error::linux editor binary on the runner as 'godot', or set the GODOT_BIN"
+            echo "::error::repo variable. Export templates are NOT required."
+            exit 1
+          fi
+          echo "GODOT=$BIN" >> "$GITHUB_ENV"
+          "$BIN" --version
+
+      # --import registers the class_name scripts + imports resources; without it the
+      # suite cannot even resolve Char3DConfig / CharacterAssembler.
+      - name: Import pass
+        run: make -C godot import GODOT="$GODOT"
+
+      - name: Headless behaviour tests
+        run: make -C godot test GODOT="$GODOT"

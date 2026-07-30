@@ -1,0 +1,236 @@
+{
+  "packId": "base-anthro-v1",
+  "version": "2.0.0",
+  "displayName": "Base Anthro v1",
+  "canvas": { "width": 1024, "height": 1024 },
+  "licenseSpdx": "CC-BY-SA-4.0",
+  "slots": [
+    {
+      "slot": "body",
+      "zOrder": 20,
+      "required": true,
+      "anchor": { "x": 0.5, "y": 0.5 },
+      "parts": [
+        {
+          "id": "body_canine_01",
+          "displayName": "Canine Body",
+          "file": "parts/body/body_canine_01.svg",
+          "category": "base",
+          "headArchetype": "canid",
+          "tintRegions": [
+            { "region": "fur", "svgClass": "region-fur", "defaultPalette": "#C9A06A" }
+          ],
+          "anchorOverride": null,
+          "offset": { "x": 0, "y": 0 }
+        }
+      ]
+    },
+    {
+      "slot": "head",
+      "zOrder": 60,
+      "required": true,
+      "anchor": { "x": 0.5, "y": 0.35 },
+      "parts": [
+        {
+          "id": "head_canine_01",
+          "displayName": "Canine Head",
+          "file": "parts/head/head_canine_01.svg",
+          "category": "head",
+          "headArchetype": "canid",
+          "tintRegions": [
+            { "region": "fur", "svgClass": "region-fur", "defaultPalette": "#C9A06A" }
+          ],
+          "anchorOverride": null,
+          "offset": { "x": 0, "y": 0 }
+        }
+      ]
+    },
+    {
+      "slot": "brows",
+      "zOrder": 90,
+      "required": false,
+      "anchor": { "x": 0.5, "y": 0.245 },
+      "parts": [
+        {
+          "id": "brows_neutral_01",
+          "displayName": "Brows (Neutral)",
+          "file": "parts/brows/brows_neutral_01.svg",
+          "category": "feature",
+          "compatibleHeads": ["*"],
+          "tags": ["expression", "neutral"],
+          "tintRegions": [
+            { "region": "line", "svgClass": "region-line", "defaultPalette": "#4A3526" }
+          ],
+          "anchorOverride": null,
+          "offset": { "x": 0, "y": 0 }
+        },
+        {
+          "id": "brows_happy_01",
+          "displayName": "Brows (Happy)",
+          "file": "parts/brows/brows_happy_01.svg",
+          "category": "feature",
+          "compatibleHeads": ["*"],
+          "tags": ["expression", "happy"],
+          "tintRegions": [
+            { "region": "line", "svgClass": "region-line", "defaultPalette": "#4A3526" }
+          ],
+          "anchorOverride": null,
+          "offset": { "x": 0, "y": 0 }
+        },
+        {
+          "id": "brows_sad_01",
+          "displayName": "Brows (Sad)",
+          "file": "parts/brows/brows_sad_01.svg",
+          "category": "feature",
+          "compatibleHeads": ["*"],
+          "tags": ["expression", "sad"],
+          "tintRegions": [
+            { "region": "line", "svgClass": "region-line", "defaultPalette": "#4A3526" }
+          ],
+          "anchorOverride": null,
+          "offset": { "x": 0, "y": 0 }
+        },
+        {
+          "id": "brows_angry_01",
+          "displayName": "Brows (Angry)",
+          "file": "parts/brows/brows_angry_01.svg",
+          "category": "feature",
+          "compatibleHeads": ["*"],
+          "tags": ["expression", "angry"],
+          "tintRegions": [
+            { "region": "line", "svgClass": "region-line", "defaultPalette": "#4A3526" }
+          ],
+          "anchorOverride": null,
+          "offset": { "x": 0, "y": 0 }
+        }
+      ]
+    },
+    {
+      "slot": "eyes",
+      "zOrder": 100,
+      "required": true,
+      "anchor": { "x": 0.5, "y": 0.32 },
+      "parts": [
+        {
+          "id": "eyes_round_01",
+          "displayName": "Round Eyes",
+          "file": "parts/eyes/eyes_round_01.svg",
+          "category": "eyes",
+          "compatibleHeads": ["canid", "felid", "ursine_musteline", "humanoid"],
+          "tags": ["expression", "neutral"],
+          "tintRegions": [
+            { "region": "iris", "svgClass": "region-iris", "defaultPalette": "#3A78C2" }
+          ],
+          "anchorOverride": null,
+          "offset": { "x": 0, "y": 0 }
+        },
+        {
+          "id": "eyes_happy_01",
+          "displayName": "Happy Eyes",
+          "file": "parts/eyes/eyes_happy_01.svg",
+          "category": "eyes",
+          "compatibleHeads": ["canid", "felid", "ursine_musteline", "humanoid"],
+          "tags": ["expression", "happy"],
+          "tintRegions": [
+            { "region": "iris", "svgClass": "region-iris", "defaultPalette": "#3A78C2" }
+          ],
+          "anchorOverride": null,
+          "offset": { "x": 0, "y": 0 }
+        },
+        {
+          "id": "eyes_sad_01",
+          "displayName": "Sad Eyes",
+          "file": "parts/eyes/eyes_sad_01.svg",
+          "category": "eyes",
+          "compatibleHeads": ["canid", "felid", "ursine_musteline", "humanoid"],
+          "tags": ["expression", "sad"],
+          "tintRegions": [
+            { "region": "iris", "svgClass": "region-iris", "defaultPalette": "#3A78C2" }
+          ],
+          "anchorOverride": null,
+          "offset": { "x": 0, "y": 0 }
+        },
+        {
+          "id": "eyes_angry_01",
+          "displayName": "Angry Eyes",
+          "file": "parts/eyes/eyes_angry_01.svg",
+          "category": "eyes",
+          "compatibleHeads": ["canid", "felid", "ursine_musteline", "humanoid"],
+          "tags": ["expression", "angry"],
+          "tintRegions": [
+            { "region": "iris", "svgClass": "region-iris", "defaultPalette": "#3A78C2" }
+          ],
+          "anchorOverride": null,
+          "offset": { "x": 0, "y": 0 }
+        }
+      ]
+    },
+    {
+      "slot": "mouth",
+      "zOrder": 110,
+      "required": false,
+      "anchor": { "x": 0.5, "y": 0.43 },
+      "parts": [
+        {
+          "id": "mouth_neutral_01",
+          "displayName": "Mouth (Neutral)",
+          "file": "parts/mouth/mouth_neutral_01.svg",
+          "category": "feature",
+          "compatibleHeads": ["*"],
+          "tags": ["expression", "neutral"],
+          "tintRegions": [
+            { "region": "line", "svgClass": "region-line", "defaultPalette": "#4A3526" }
+          ],
+          "anchorOverride": null,
+          "offset": { "x": 0, "y": 0 }
+        },
+        {
+          "id": "mouth_happy_01",
+          "displayName": "Mouth (Happy)",
+          "file": "parts/mouth/mouth_happy_01.svg",
+          "category": "feature",
+          "compatibleHeads": ["*"],
+          "tags": ["expression", "happy"],
+          "tintRegions": [
+            { "region": "line", "svgClass": "region-line", "defaultPalette": "#4A3526" }
+          ],
+          "anchorOverride": null,
+          "offset": { "x": 0, "y": 0 }
+        },
+        {
+          "id": "mouth_sad_01",
+          "displayName": "Mouth (Sad)",
+          "file": "parts/mouth/mouth_sad_01.svg",
+          "category": "feature",
+          "compatibleHeads": ["*"],
+          "tags": ["expression", "sad"],
+          "tintRegions": [
+            { "region": "line", "svgClass": "region-line", "defaultPalette": "#4A3526" }
+          ],
+          "anchorOverride": null,
+          "offset": { "x": 0, "y": 0 }
+        },
+        {
+          "id": "mouth_angry_01",
+          "displayName": "Mouth (Angry)",
+          "file": "parts/mouth/mouth_angry_01.svg",
+          "category": "feature",
+          "compatibleHeads": ["*"],
+          "tags": ["expression", "angry"],
+          "tintRegions": [
+            { "region": "line", "svgClass": "region-line", "defaultPalette": "#4A3526" }
+          ],
+          "anchorOverride": null,
+          "offset": { "x": 0, "y": 0 }
+        }
+      ]
+    }
+  ],
+  "expressionSlots": ["eyes", "brows", "mouth"],
+  "expressions": [
+    { "id": "neutral", "path": "expressions/neutral.json" },
+    { "id": "happy", "path": "expressions/happy.json" },
+    { "id": "sad", "path": "expressions/sad.json" },
+    { "id": "angry", "path": "expressions/angry.json" }
+  ]
+}

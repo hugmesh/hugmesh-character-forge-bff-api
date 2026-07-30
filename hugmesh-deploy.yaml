@@ -1,0 +1,37 @@
+# hugmesh-deploy.yaml — per-repo deploy descriptor (Phase 6 catalog). NOTE: in
+# the internally-hosted copy of this repo the filename is kept literal as the
+# pre-rebrand name because the catalog ApplicationSet's scmProvider discovery
+# convention matches on that exact (old-brand) filename (owned by
+# hugmesh-generator, currently unseeded/inert — see below); renaming it there
+# without a matching scanner-config change would silently drop that repo from
+# discovery once the Forgejo catalog goes live. This public-mirror copy
+# completes the rename, so the filename here has been updated too — re-sync
+# the two once the generator's own discovery convention is migrated. Same
+# carve-out as hugmesh-forum-bff-api.
+#
+# Discovered by the catalog ApplicationSet (hugmesh-generator
+# specs/cluster/apps/13-service-catalog.yaml): its scmProvider gitea generator
+# scans the in-cluster Forgejo org for repos carrying THIS file + a `deploy/`
+# kustomize dir and generates one ArgoCD Application (source path: deploy/).
+#
+# DUAL-HOME / SHIPS DARK: the central manifest lives at hugmesh-generator
+# specs/cluster/manifests/character-forge/ (the character-forge optional-services
+# slug) and remains the authoritative source. This file + deploy/ are the
+# Forgejo-cutover copy (forum-bff precedent): the live GitHub-rooted ArgoCD
+# ignores it, and the (currently unseeded) Forgejo catalog matches nothing, so it
+# changes nothing running. Keep the two in sync until cutover.
+name: hugmesh-character-forge-bff-api      # Application name
+namespace: hugmesh-backend                 # target k8s namespace (existing tier ns) — left
+                                              # unchanged, real cluster namespace
+image: hugmesh-systems/character-forge-bff-api # image repo (tag pinned in deploy/ kustomize)
+port: 8080
+replicas: 1
+# Gateway route the admin/BFF seeds into the routing DB (Phase 2 core). The
+# character-forge BFF is ClusterIP-only and reachable solely via the fe-gateway's
+# same-origin /bff/character-forge/** route, which enforces ROLE_USER from the
+# route DB. Declared BEFORE the /bff/** admin-bff catch-all (first-declared-order
+# match, see generator 20-gateway-fe.yaml).
+route:
+  gateway: hugmesh-fe-gateway
+  path: /bff/character-forge/**
+  stripPrefix: 0

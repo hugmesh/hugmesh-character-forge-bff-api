@@ -1,0 +1,28 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: hugmesh-backend
+resources:
+  - deployment.yaml
+  - service.yaml
+  - hpa.yaml
+# First-party images pull from the in-cluster GitLab container registry
+# (registry.hugmesh.systems = the GitLab chart's hosts.domain default; project
+# path = <group>/<repo>). The CI in each repo pushes :<branch> + :<sha>; we track
+# the moving :main here for dev. Pulls need the gitlab-registry imagePullSecret
+# (ESO-materialized, see manifests/external-secrets).
+images:
+  # NOTE: on the internally-hosted copy of this repo, newName is kept pointing
+  # at the REAL, currently-published GitLab registry path under the pre-rebrand
+  # group/project name — the GitLab group/project has not been renamed yet
+  # there, so retargeting it would break every image pull until that migration
+  # lands (same carve-out as hugmesh-forum-bff-api). This public-mirror copy
+  # completes the rename, so the path below has been updated too — re-sync
+  # once the internal GitLab group/project migration lands.
+  - { name: hugmesh-systems/character-forge-bff-api, newName: registry.hugmesh.systems/hugmesh/hugmesh-character-forge-bff-api, newTag: main }
+patches:
+  - target: { kind: Deployment }
+    patch: |
+      - op: add
+        path: /spec/template/spec/imagePullSecrets
+        value:
+          - name: gitlab-registry

@@ -1,0 +1,347 @@
+{
+  "components" : {
+    "schemas" : {
+      "CharacterView" : {
+        "properties" : {
+          "active" : {
+            "type" : "boolean"
+          },
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "definition" : {
+            "type" : "object"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "updatedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "CreateCharacter" : {
+        "properties" : {
+          "definition" : {
+            "type" : "object"
+          },
+          "name" : {
+            "maxLength" : 120,
+            "minLength" : 0,
+            "type" : "string"
+          }
+        },
+        "required" : [ "definition", "name" ],
+        "type" : "object"
+      },
+      "LookupEntry" : {
+        "properties" : {
+          "definition" : {
+            "type" : "object"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "LookupRequest" : {
+        "properties" : {
+          "subjects" : {
+            "items" : {
+              "type" : "string"
+            },
+            "maxItems" : 50,
+            "minItems" : 1,
+            "type" : "array"
+          }
+        },
+        "required" : [ "subjects" ],
+        "type" : "object"
+      },
+      "LookupResponse" : {
+        "properties" : {
+          "configs" : {
+            "additionalProperties" : {
+              "$ref" : "#/components/schemas/LookupEntry"
+            },
+            "type" : "object"
+          }
+        },
+        "type" : "object"
+      },
+      "UpdateCharacter" : {
+        "properties" : {
+          "definition" : {
+            "type" : "object"
+          },
+          "name" : {
+            "maxLength" : 120,
+            "minLength" : 0,
+            "type" : "string"
+          }
+        },
+        "required" : [ "definition", "name" ],
+        "type" : "object"
+      }
+    }
+  },
+  "info" : {
+    "description" : "Character-forge BFF API (/bff/character-forge/**) — owner-scoped 3D character (Char3DConfig) CRUD with full server-side schema validation, the single ACTIVE character per owner, the batched subject→active-config lookup the XR chat room resolves avatars with, and the pure VnCharacter→Char3DConfig /map function.",
+    "title" : "hugmesh-character-forge-bff-api",
+    "version" : "0.1.0"
+  },
+  "openapi" : "3.0.1",
+  "paths" : {
+    "/bff/character-forge/characters" : {
+      "get" : {
+        "operationId" : "listMyCharacters",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/CharacterView"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "List the caller's characters (oldest first, bounded by the 32-per-owner cap).",
+        "tags" : [ "CharacterForge" ]
+      },
+      "post" : {
+        "operationId" : "createCharacter",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateCharacter"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CharacterView"
+                }
+              }
+            },
+            "description" : "Created"
+          }
+        },
+        "summary" : "Create a character {name, definition:Char3DConfig} → 201. The definition is fully server-validated and stored in canonical form; the 33rd character per owner is a 409.",
+        "tags" : [ "CharacterForge" ]
+      }
+    },
+    "/bff/character-forge/characters/active" : {
+      "get" : {
+        "operationId" : "getMyActiveCharacter",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CharacterView"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "The caller's ACTIVE character (404 when none is marked active).",
+        "tags" : [ "CharacterForge" ]
+      }
+    },
+    "/bff/character-forge/characters/lookup" : {
+      "post" : {
+        "operationId" : "lookupActiveCharacters",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/LookupRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LookupResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Batch-resolve the ACTIVE character configs for up to 50 subjects → {configs:{subject:{name,definition}}}; subjects with no active character are absent from the map.",
+        "tags" : [ "CharacterForge" ]
+      }
+    },
+    "/bff/character-forge/characters/{id}" : {
+      "delete" : {
+        "operationId" : "deleteCharacter",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        },
+        "summary" : "Delete one of the caller's characters (owner-only, foreign id → 404) → 204.",
+        "tags" : [ "CharacterForge" ]
+      },
+      "get" : {
+        "operationId" : "getCharacter",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CharacterView"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "One of the caller's characters by id (owner-only; a foreign or unknown id is a 404, never a 403).",
+        "tags" : [ "CharacterForge" ]
+      },
+      "put" : {
+        "operationId" : "updateCharacter",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UpdateCharacter"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CharacterView"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Replace name + definition of one of the caller's characters (re-validated; canonical form stored; owner-only, foreign id → 404). Activation is NOT settable here — use /active.",
+        "tags" : [ "CharacterForge" ]
+      }
+    },
+    "/bff/character-forge/characters/{id}/active" : {
+      "put" : {
+        "operationId" : "activateCharacter",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CharacterView"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Mark one of the caller's characters as THE active one (single active per owner+brand — the previous active is cleared atomically-enough, with a partial unique index backstopping races).",
+        "tags" : [ "CharacterForge" ]
+      }
+    },
+    "/bff/character-forge/map" : {
+      "post" : {
+        "operationId" : "mapVnCharacterToChar3d",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Map a VnCharacter JSON to its canonical Char3DConfig (pure function; 400 on a non-object body or unknown packId).",
+        "tags" : [ "CharacterForgeMap" ]
+      }
+    }
+  },
+  "servers" : [ {
+    "description" : "same-origin via the fe-gateway (/bff/character-forge/**)",
+    "url" : "/"
+  } ],
+  "tags" : [ {
+    "description" : "Owner-scoped 3D character (Char3DConfig) CRUD with full server-side schema validation, the single ACTIVE character per owner, and the batched subject→active-config lookup (1..50 subjects) the XR chat room resolves avatars with. Authenticated + ROLE_USER; owner always the JWT subject; foreign id → 404.",
+    "name" : "CharacterForge"
+  }, {
+    "description" : "Pure VnCharacter→Char3DConfig mapping (no persistence): the SVG VN parameterization (packId, slots, palette, defaultExpression) mapped onto the 3D config vocabulary via the vendored pack manifests. The output is always a valid, canonical Char3DConfig.",
+    "name" : "CharacterForgeMap"
+  } ]
+}

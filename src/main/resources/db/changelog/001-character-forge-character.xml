@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <!--
+        001 — character_forge_character: one row per saved 3D character.
+
+        * id — NATIVE uuid PK, DB-GENERATED via gen_random_uuid() (the org-wide
+          DB-generated-PK decision, forum-bff changelog-004 / mod-bff #36 /
+          admin-bff #133; here the column is uuid from day one, so no ::text cast).
+          The repository INSERT omits id and RETURNING id reads it back.
+        * owner_subject — the IMMUTABLE Casdoor sub (NEVER localpart; the only
+          collision-safe key). Owner-scoping predicate on every single-row read.
+        * domain — the brand/tenant, stamped SERVER-SIDE from the owner's
+          validated-issuer brand (NEVER a request field), following the forum-bff
+          003-domain-scoping treatment exactly: NOT NULL DEFAULT 'default' keeps
+          single-tenant clusters unchanged; SUPERADMIN (null scope) is unscoped.
+        * name — display name, API-validated to ≤120 chars (no control chars).
+        * active — the owner's SINGLE active character per (owner_subject, domain);
+          see the partial unique index below.
+        * definition — jsonb; ALWAYS the canonical output of Char3DConfigValidator
+          (unknown keys rejected, numerics clamped, hexes/enums checked, ≤16KB), so
+          the column only ever holds bounded parametric data.
+    -->
+
+    <!-- FIRST: ensure gen_random_uuid() is available. Built-in on PG13+, but install
+         pgcrypto defensively (idempotent + harmless if already present) - mirrors the
+         forum-bff/mod-bff/admin-bff exemplars. -->
+    <changeSet id="001-pgcrypto-extension" author="hugmesh">
+        <preConditions onFail="MARK_RAN" onError="MARK_RAN">
+            <dbms type="postgresql"/>
+        </preConditions>
+        <comment>Install pgcrypto so gen_random_uuid() is available as the
+                 character_forge_character.id column DEFAULT. IF NOT EXISTS - idempotent.</comment>
+        <sql>CREATE EXTENSION IF NOT EXISTS pgcrypto;</sql>
+    </changeSet>
+
+    <changeSet id="001-character-forge-character" author="hugmesh">
+        <createTable tableName="character_forge_character">
+            <column name="id" type="uuid" defaultValueComputed="gen_random_uuid()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="owner_subject" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="domain" type="varchar(64)" defaultValue="default">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="varchar(120)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="active" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="definition" type="jsonb">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="timestamp with time zone" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamp with time zone" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- The owner-list / count / lookup access paths. -->
+        <createIndex tableName="character_forge_character" indexName="ix_character_forge_owner">
+            <column name="owner_subject"/>
+            <column name="domain"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- ONE ACTIVE PER (owner, domain) — a PARTIAL unique index (rows WHERE active
+         only), which Liquibase's createIndex cannot express, so raw SQL with an
+         explicit rollback. This is the fail-closed BACKSTOP under the service's
+         clear-then-set swap: a concurrent double-activate collides here (duplicate
+         key) instead of ever persisting two actives. -->
+    <changeSet id="001-single-active-partial-index" author="hugmesh">
+        <comment>Partial unique index: at most one active character per owner+domain.</comment>
+        <sql>
+            CREATE UNIQUE INDEX ux_character_forge_one_active
+                ON character_forge_character (owner_subject, domain)
+                WHERE active;
+        </sql>
+        <rollback>
+            DROP INDEX ux_character_forge_one_active;
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

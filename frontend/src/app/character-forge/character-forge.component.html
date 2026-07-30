@@ -1,0 +1,76 @@
+<section class="character-forge" aria-labelledby="cf-title">
+  <h1 id="cf-title">Character Forge</h1>
+  <p class="lede">
+    Forge a 3D character from the same parameters as your VN character —
+    families, parts and colours map one-to-one. Import a VN character, tune the
+    parameters, and save it for the 3D chat rooms.
+  </p>
+
+  <p class="status" role="status" aria-live="polite" data-testid="cf-status">{{ status() }}</p>
+
+  <div class="forge-header" data-testid="cf-header">
+    <label class="seed">
+      <span>Seed</span>
+      <input
+        type="number"
+        min="0"
+        data-testid="cf-seed"
+        [value]="seed()"
+        (input)="onSeed($event)"
+        aria-label="Randomizer seed"
+      />
+    </label>
+    <button
+      type="button"
+      class="surprise"
+      data-testid="cf-surprise"
+      aria-label="Surprise me — forge a random character from the seed"
+      (click)="randomize()"
+    >Surprise me</button>
+  </div>
+
+  <div class="forge" data-testid="cf-forge">
+    <div class="preview">
+      <snap-engine-canvas />
+      <fieldset class="preview-controls">
+        <legend>Preview</legend>
+        <label class="row">
+          <span>Expression</span>
+          <select data-testid="cf-expression" (change)="onExpression($event)" aria-label="Preview expression">
+            @for (e of expressions; track e) {
+              <option [value]="e">{{ e }}</option>
+            }
+          </select>
+        </label>
+        <label class="row">
+          <span>Mouth</span>
+          <input
+            type="range" min="0" max="1" step="0.05" value="0"
+            data-testid="cf-openness"
+            (input)="onOpenness($event)"
+            aria-label="Mouth openness"
+          />
+        </label>
+        <button
+          type="button"
+          data-testid="cf-snapshot"
+          [attr.aria-disabled]="engine.ready() ? null : 'true'"
+          aria-describedby="cf-snapshot-help"
+          (click)="snapshot()"
+        >Snapshot PNG</button>
+        @if (!engine.ready()) {
+          <span id="cf-snapshot-help" class="hint">
+            Snapshots need the 3D engine — unavailable until the engine bundle
+            loads.
+          </span>
+        }
+      </fieldset>
+    </div>
+    <div class="controls">
+      <snap-pack-selector />
+      <snap-config-editor />
+      <snap-import-vn />
+      <snap-save-panel />
+    </div>
+  </div>
+</section>

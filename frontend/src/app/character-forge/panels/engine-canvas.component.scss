@@ -1,0 +1,35 @@
+:host {
+  display: block;
+}
+
+.engine-host {
+  position: relative;
+  border: 1px solid var(--hug-border, #333);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--hug-bg-1, #12121e);
+}
+
+.engine-canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  max-height: 70vh;
+}
+
+.engine-absent {
+  padding: 1.5rem;
+
+  h2 {
+    margin-top: 0;
+  }
+
+  p {
+    color: var(--hug-text-muted, #a8acc4);
+    max-width: 46rem;
+  }
+
+  code {
+    color: var(--hug-accent-soft, #b388ff);
+  }
+}

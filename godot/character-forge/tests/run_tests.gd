@@ -1,0 +1,2651 @@
+extends SceneTree
+
+# Headless behavior tests for the Character Forge Godot project.
+#
+# Run:  godot --headless --path godot/character-forge -s res://tests/run_tests.gd
+# (or `make test` from godot/). Exits non-zero on any failure so CI can gate.
+#
+# These are REAL assertions on behavior (sanitize clamping, per-family rig
+# distinctness, expression/jaw math, seeded-randomizer determinism), not
+# existence checks. The tests/ dir is excluded from the Web export via the
+# preset's exclude_filter, so none of this ships in the bundle.
+
+var _pass := 0
+var _fail := 0
+var _ran := false
+
+
+## Tests run on the FIRST frame, not in _initialize(): during _initialize the
+## root viewport has not entered the tree yet, so add_child() would never fire
+## _ready on scene instances (the scene-smoke test depends on it).
+## _run_all is a COROUTINE (the GLB round-trip test awaits the loader's chunked
+## fixup, which yields on process_frame). It therefore has to keep the main loop
+## alive — returning true here would quit the tree before the coroutine resumed
+## — so _process always returns false and _run_all calls quit() itself.
+func _process(_delta: float) -> bool:
+	if _ran:
+		return false
+	_ran = true
+	_run_all()
+	return false
+
+
+func _run_all() -> void:
+	_test_sanitize_clamps()
+	_test_sanitize_drops_unknown_keys()
+	_test_try_parse_hard_failures()
+	_test_region_color()
+	_test_mirror_never_emits_what_the_server_rejects()
+	_test_source_echo_matches_the_server_contract()
+	_test_display_name_strips_bidi_and_control_chars()
+	_test_default_materials_match_the_shared_contract_fixture()
+	_test_all_families_build_distinct_heads()
+	_test_expressions_change_the_rig()
+	_test_openness_drives_jaw()
+	_test_randomizer_deterministic_and_coherent()
+	_test_studio_scene_instantiates()
+
+	# ── v2 ──────────────────────────────────────────────────────────────────
+	_test_extended_region_clamps()
+	_test_palette_cell_math()
+	_test_palette_derivations_preserve_defaults()
+	_test_palette_image_contents()
+	_test_material_set_shares_one_palette()
+	_test_outline_toggle()
+	_test_proportion_bands()
+	_test_proportion_preset_resolution()
+	_test_proportion_eye_layout()
+	_test_loft_muzzle_sections()
+	_test_loft_geometry()
+	_test_registry_resolution()
+	_test_registry_license_discipline()
+	_test_glb_slot_map_and_regions()
+	_test_glb_mipmap_fixup()
+	_test_glb_material_swap()
+	_test_glb_bone_attachment()
+	_test_lipsync_frame_selection()
+	_test_lipsync_channel_resolution()
+	_test_lipsync_visemes()
+	_test_lipsync_drives_a_skeleton()
+	_test_v2_head_geometry()
+	_test_v2_body_geometry()
+	_test_vrm_addon_vendored()
+	_test_mouth_quad_factory()
+	_test_shader_contract()
+	_test_studio_v2_controls()
+	_test_blocking_measurement()
+	_test_line_is_darkest()
+	_test_blocked_avatars_pass_their_lane()
+	_test_triangle_budget()
+
+	# ── vendored packs -> registry -> mounted avatar ─────────────────────────
+	_test_pack_catalogue_loads()
+	_test_pack_entries_all_register()
+	_test_pack_registry_routing()
+	_test_pack_hidden_meshes_exist()
+	_test_pack_mount_avatar()
+	_test_pack_mount_preserves_atlas_materials()
+	_test_pack_mount_body_graft()
+	_test_pack_mount_composed_outfit()
+	_test_pack_mount_vrm_and_license()
+	_test_pack_mount_failure_is_soft()
+	_test_byo_import_round_trip()
+	_test_bridge_pack_surface()
+	_test_studio_pack_controls()
+
+	await _test_glb_round_trip()
+
+	print("")
+	print("tests: %d passed, %d failed" % [_pass, _fail])
+	quit(1 if _fail > 0 else 0)
+
+
+func _check(cond: bool, label: String) -> void:
+	if cond:
+		_pass += 1
+	else:
+		_fail += 1
+		push_error("FAIL: " + label)
+		print("FAIL: " + label)
+
+
+# ── Char3DConfig ─────────────────────────────────────────────────────────────
+
+func _test_sanitize_clamps() -> void:
+	var cfg := Char3DConfig.sanitize({
+		"name": " Zeta ",
+		"body": {"archetype": "dragon", "build": 5.0, "height": 0.1},
+		"head": {"family": "dragon", "snoutLength": -2.0, "variant": "x".repeat(200)},
+		"materials": {"fur": "#abc", "accent": "not-a-color", "iris": "#00FF00aa"},
+		"style": "anime",
+	})
+	_check(cfg.name == "Zeta", "sanitize trims name edges")
+	_check(cfg.body.build == 1.0, "build clamped high to 1.0")
+	_check(cfg.body.height == 0.5, "height clamped low to 0.5")
+	_check(cfg.head.snoutLength == 0.0, "snoutLength clamped low to 0.0")
+	_check(cfg.head.variant.length() == Char3DConfig.MAX_VARIANT_LEN,
+			"variant truncated to MAX_VARIANT_LEN")
+	_check(cfg.materials.fur == "#abc", "3-digit hex accepted")
+	_check(cfg.materials.accent == Char3DConfig.DEFAULT_MATERIALS.accent,
+			"invalid hex rejected -> default kept")
+	_check(cfg.materials.iris == "#00FF00aa", "8-digit hex accepted")
+	_check(cfg.style == "anime", "valid style kept")
+
+	var bad := Char3DConfig.sanitize({
+		"body": {"archetype": "chimera"},
+		"head": {"family": "chimera"},
+		"style": "photoreal",
+	})
+	_check(bad.head.family == "canid", "unknown family falls back to default")
+	_check(bad.style == "toon", "unknown style falls back to default")
+
+
+func _test_sanitize_drops_unknown_keys() -> void:
+	var cfg := Char3DConfig.sanitize({"evil": true, "parts": {"tail": "tail_fox_01", "hat": "x"}})
+	_check(not cfg.has("evil"), "unknown top-level key dropped")
+	_check(not cfg.parts.has("hat"), "unknown part slot dropped")
+	_check(cfg.parts.tail == "tail_fox_01", "known part slot kept")
+
+
+func _test_try_parse_hard_failures() -> void:
+	_check(Char3DConfig.try_parse("[1,2,3]") == null, "non-object JSON root -> null")
+	_check(Char3DConfig.try_parse("{nope") == null, "malformed JSON -> null")
+	var huge := '{"name":"' + "a".repeat(Char3DConfig.MAX_DEFINITION_BYTES) + '"}'
+	_check(Char3DConfig.try_parse(huge) == null, "oversize definition -> null")
+	var ok: Variant = Char3DConfig.try_parse('{"head":{"family":"felid"}}')
+	_check(ok is Dictionary and ok.head.family == "felid", "valid JSON parses + sanitizes")
+	_check(Char3DConfig.parse_or_default("garbage").head.family == "canid",
+			"parse_or_default degrades to defaults")
+
+
+func _test_region_color() -> void:
+	var cfg := Char3DConfig.defaults()
+	cfg.materials.fur = "#ff0000"
+	var c := Char3DConfig.region_color(cfg, "fur")
+	_check(c.is_equal_approx(Color(1, 0, 0)), "region_color decodes #ff0000")
+	_check(Char3DConfig.region_color({}, "iris") ==
+			Color.from_string(Char3DConfig.DEFAULT_MATERIALS.iris, Color.WHITE),
+			"region_color falls back to the region default")
+
+
+# ── mirror-vs-server contract ────────────────────────────────────────────────
+#
+# REGRESSION: studio.gd:193 posts JSON.stringify(assembler.config) straight at the
+# host, which POSTs it verbatim to /bff/character-forge/characters. So a value this
+# CLAMP mirror lets through that the server's Char3DConfigValidator REJECTS is an
+# unconditional 400 on save — the character can never be stored, activated or
+# looked up, and the XR room can never dress that participant. Every assertion
+# below names the exact server rule it mirrors.
+
+func _test_mirror_never_emits_what_the_server_rejects() -> void:
+	# SHORT_STR_PATTERN ^[A-Za-z0-9 _-]{1,40}$ — punctuation/markup must DROP to
+	# null, not survive truncated (the old _opt_str kept "Lop-ears!" verbatim).
+	var cfg := Char3DConfig.sanitize({
+		"head": {
+			"family": "lapine",
+			"variant": "<script>alert(1)</script>",
+			"earStyle": "Lop-ears!",
+			"hornStyle": "long lop ears",
+		},
+	})
+	_check(cfg.head.variant == "", "hostile variant drops to the '' unset encoding")
+	_check(cfg.head.earStyle == null, "earStyle failing SHORT_STR_PATTERN drops to null")
+	_check(cfg.head.hornStyle == "long lop ears", "a legal short descriptor survives")
+
+	# A >40 value is TRUNCATED (server rejects >40), and what is left must still
+	# match — truncate-then-check, never check-then-truncate.
+	var long_ok := Char3DConfig.sanitize({"head": {"variant": "a".repeat(60)}})
+	_check(long_ok.head.variant.length() == 40 and Char3DConfig.valid_short_str(long_ok.head.variant),
+			"over-long variant truncated to a value the server still accepts")
+
+	# PART_ID_PATTERN ^[A-Za-z0-9_-]{1,64}$ for parts.*
+	var parts := Char3DConfig.sanitize({
+		"parts": {"tail": "tail fox 01", "wings": "wings_dragon_01", "ears": "a".repeat(80)},
+	})
+	_check(parts.parts.tail == null, "part id with spaces drops to null (server 400s on it)")
+	_check(parts.parts.wings == "wings_dragon_01", "a legal part id survives")
+	_check(parts.parts.ears == null or Char3DConfig.valid_part_id(parts.parts.ears),
+			"over-long part id never survives in a shape the server rejects")
+
+	# Full-match semantics: PCRE2 `$` also matches before a trailing newline, but
+	# java.util.regex matches() does not.
+	_check(not Char3DConfig.valid_part_id("tail_fox_01\n"),
+			"trailing newline is NOT a valid part id (Matcher#matches parity)")
+	_check(not Char3DConfig.valid_short_str("ok\nevil"), "embedded newline rejected")
+	_check(not Char3DConfig.valid_key("Head"), "KEY_PATTERN is lower-slug only")
+	_check(Char3DConfig.valid_key("head"), "a lower-slug key is valid")
+
+
+func _test_source_echo_matches_the_server_contract() -> void:
+	# packId is an ENUM server-side. A source echo whose packId is not one of the
+	# four shipped packs used to be emitted WITHOUT a packId at all -> the server
+	# answered 400 "definition.source.packId must be one of [...]" and the whole
+	# save failed. Now the unusable echo is dropped instead.
+	var foreign := Char3DConfig.sanitize({"source": {"packId": "custom-pack-v1", "slots": {}}})
+	_check(not foreign.has("source"), "source echo with a non-enum packId is dropped entirely")
+
+	var cfg := Char3DConfig.sanitize({
+		"source": {
+			"packId": "menagerie-v1",
+			"slots": {
+				"head": "head_wolf_01",
+				"Ears": "ears_lop_01",        # uppercase KEY -> server 400
+				"body": "body canid",         # invalid part id VALUE -> server 400
+				"tail": null,                 # explicit clear -> kept as null
+			},
+			"palette": {"fur": "#8b5a2b", "Accent": "#d2b48c", "detail": "nope"},
+			"defaultExpression": "rage",
+		},
+	})
+	_check(cfg.has("source"), "a valid source echo is kept")
+	_check(cfg.source.packId == "menagerie-v1", "packId echoed")
+	_check(cfg.source.slots.get("head") == "head_wolf_01", "valid slot kept")
+	_check(not cfg.source.slots.has("Ears"), "uppercase slot key dropped (KEY_PATTERN)")
+	_check(not cfg.source.slots.has("body"), "slot value failing PART_ID_PATTERN dropped")
+	_check(cfg.source.slots.has("tail") and cfg.source.slots["tail"] == null,
+			"an explicit null slot is preserved (server accepts null)")
+	_check(cfg.source.palette.get("fur") == "#8b5a2b", "valid palette region kept")
+	_check(not cfg.source.palette.has("Accent"), "uppercase palette key dropped (KEY_PATTERN)")
+	_check(not cfg.source.palette.has("detail"), "non-hex palette value dropped")
+	_check(cfg.source.defaultExpression == "neutral", "non-canonical expression clamps to neutral")
+
+
+func _test_display_name_strips_bidi_and_control_chars() -> void:
+	# The server REJECTS these outright in a display name (they are the invisible /
+	# bidi-override spoofing set), so the mirror must strip them before the config
+	# is posted.
+	var rlo := Char3DConfig.sanitize({"name": "Alice" + String.chr(0x202E) + "eciloB"})
+	_check(rlo.name == "AliceeciloB", "U+202E RIGHT-TO-LEFT OVERRIDE stripped from the name")
+	# NOTE 0x0000 is absent on purpose: a GDScript String cannot hold a NUL — the
+	# engine substitutes U+FFFD at construction — so it can never reach the BFF from
+	# here. Every OTHER forbidden code point is a real, reachable value.
+	for cp in [0x0009, 0x001B, 0x007F, 0x00AD, 0x200B, 0x200F, 0x2066, 0x2069, 0xFEFF]:
+		var probe := Char3DConfig.sanitize({"name": "a" + String.chr(cp) + "b"})
+		_check(probe.name == "ab", "code point 0x%X stripped from the name" % cp)
+	_check(Char3DConfig.sanitize({"name": String.chr(0x202E)}).name == "Untitled",
+			"a name made only of forbidden characters falls back to Untitled")
+	_check(Char3DConfig.sanitize({"name": "Zed"}).name == "Zed", "an ordinary name is untouched")
+
+
+func _test_default_materials_match_the_shared_contract_fixture() -> void:
+	# The unset-region palette exists in THREE copies (this one, the Angular
+	# DEFAULT_MATERIALS, Char3DConfigValidator.DEFAULT_MATERIALS). They disagreed on
+	# accent/detail/iris, so one stored character rendered in three different colour
+	# schemes depending on which surface drew it. The shared fixture is the pin.
+	var path := ProjectSettings.globalize_path("res://").path_join(
+			"../../frontend/src/app/character-forge/contract/server-contract.fixtures.json")
+	var text := FileAccess.get_file_as_string(path)
+	_check(text != "", "shared contract fixture readable at %s" % path)
+	if text == "":
+		return
+	var parsed: Variant = JSON.parse_string(text)
+	_check(parsed is Dictionary, "shared contract fixture parses")
+	if not (parsed is Dictionary):
+		return
+	var expected: Variant = parsed.get("serverContract", {}).get("defaultMaterials")
+	_check(expected is Dictionary, "fixture carries serverContract.defaultMaterials")
+	if not (expected is Dictionary):
+		return
+	for region in Char3DConfig.MATERIAL_REGIONS:
+		_check(Char3DConfig.DEFAULT_MATERIALS.get(region) == expected.get(region),
+				"DEFAULT_MATERIALS.%s == the shared contract (%s vs %s)"
+				% [region, Char3DConfig.DEFAULT_MATERIALS.get(region), expected.get(region)])
+	# The other bounded vocabularies must not drift from the server either.
+	var contract: Dictionary = parsed["serverContract"]
+	_check(Char3DConfig.SHORT_STR_PATTERN == contract.get("shortStrPattern"),
+			"SHORT_STR_PATTERN == the server's")
+	_check(Char3DConfig.PART_ID_PATTERN == contract.get("partIdPattern"),
+			"PART_ID_PATTERN == the server's")
+	_check(Char3DConfig.KEY_PATTERN == contract.get("keyPattern"), "KEY_PATTERN == the server's")
+	_check(Char3DConfig.FAMILIES == Array(contract.get("families", [])),
+			"FAMILIES == the server's vocabulary")
+	_check(Char3DConfig.EXPRESSIONS == Array(contract.get("expressions", [])),
+			"EXPRESSIONS == the server's vocabulary")
+	_check(Char3DConfig.SOURCE_PACKS == Array(contract.get("packIds", [])),
+			"SOURCE_PACKS == the server's pack enum")
+	_check(Char3DConfig.MAX_NAME_LEN == int(contract.get("maxNameLength", -1)),
+			"MAX_NAME_LEN == the server's cap")
+	_check(Char3DConfig.MAX_DEFINITION_BYTES == int(contract.get("maxDefinitionBytes", -1)),
+			"MAX_DEFINITION_BYTES == the server's cap")
+	_check(Char3DConfig.MAX_SOURCE_SLOTS == int(contract.get("maxSourceSlots", -1)),
+			"MAX_SOURCE_SLOTS == the server's cap")
+	_check(Char3DConfig.MAX_SOURCE_REGIONS == int(contract.get("maxSourcePalette", -1)),
+			"MAX_SOURCE_REGIONS == the server's cap")
+
+
+# ── CharacterAssembler ───────────────────────────────────────────────────────
+
+## Every one of the 29 families must build AND produce a visually distinct
+## head: we fingerprint the head subtree (node names + mesh classes + scales)
+## and assert all 29 fingerprints are unique.
+func _test_all_families_build_distinct_heads() -> void:
+	var signatures := {}
+	for family in Char3DConfig.FAMILIES:
+		var a := CharacterAssembler.new()
+		get_root().add_child(a)
+		var cfg := Char3DConfig.defaults()
+		cfg.head.family = family
+		cfg.body.archetype = family
+		cfg.head.variant = ""  # no per-variant jitter: distinctness must come from the family spec
+		a.apply_config(cfg)
+		var head: Node3D = a.get_node_or_null("Rig/Body/NeckTop/Head")
+		_check(head != null, "family %s builds a head" % family)
+		var jaw_ok: bool = a._refs.get("jaw") != null
+		_check(jaw_ok, "family %s has a jaw" % family)
+		if head != null:
+			var sig := _head_signature(head)
+			_check(not signatures.has(sig),
+					"family %s head distinct from %s" % [family, signatures.get(sig, "-")])
+			signatures[sig] = family
+		get_root().remove_child(a)
+		a.free()
+	_check(signatures.size() == Char3DConfig.FAMILIES.size(),
+			"all %d families produced unique head signatures" % Char3DConfig.FAMILIES.size())
+
+
+func _head_signature(node: Node) -> String:
+	var parts := []
+	_collect_sig(node, "", parts)
+	parts.sort()
+	return ";".join(parts)
+
+
+func _collect_sig(node: Node, prefix: String, out: Array) -> void:
+	for child in node.get_children():
+		var entry: String = prefix + "/" + child.name
+		if child is MeshInstance3D:
+			var mi := child as MeshInstance3D
+			# The mesh AABB is part of the fingerprint: two lofted v2 muzzles
+			# sit at the same node position and scale, so without it the whole
+			# procedural-v2 geometry would be invisible to this test.
+			entry += ":" + mi.mesh.get_class() + ":" + str(mi.scale.snappedf(0.001)) \
+					+ ":" + str(mi.position.snappedf(0.001)) \
+					+ ":" + str(mi.mesh.get_aabb().size.snappedf(0.0005))
+		out.append(entry)
+		_collect_sig(child, entry, out)
+
+
+func _test_expressions_change_the_rig() -> void:
+	var a := CharacterAssembler.new()
+	get_root().add_child(a)
+	a.apply_config(Char3DConfig.defaults())
+
+	_check(a.EXPRESSION_PRESETS.size() == 10 and Char3DConfig.EXPRESSIONS.size() == 10,
+			"exactly 10 canonical expression presets")
+	for label in Char3DConfig.EXPRESSIONS:
+		_check(a.EXPRESSION_PRESETS.has(label), "preset exists for '%s'" % label)
+
+	var eye_l: Node3D = a._refs["eye_l"]
+	var eye_r: Node3D = a._refs["eye_r"]
+	a.set_expression("wink")
+	_check(eye_l.scale.y < 0.2 and eye_r.scale.y > 0.8,
+			"wink closes the left eye only")
+	a.set_expression("surprised")
+	_check(eye_l.scale.y > 1.2, "surprised widens the eyes")
+	var jaw: Node3D = a._refs["jaw"]
+	var surprised_jaw := jaw.rotation_degrees.x
+	a.set_expression("neutral")
+	_check(jaw.rotation_degrees.x < surprised_jaw, "surprised drops the jaw vs neutral")
+	a.set_expression("not-a-label")
+	_check(a.expression == "neutral", "unknown expression label ignored")
+	get_root().remove_child(a)
+	a.free()
+
+
+func _test_openness_drives_jaw() -> void:
+	var a := CharacterAssembler.new()
+	get_root().add_child(a)
+	a.apply_config(Char3DConfig.defaults())
+	var jaw: Node3D = a._refs["jaw"]
+	a.set_openness(0.0)
+	var closed := jaw.rotation_degrees.x
+	a.set_openness(1.0)
+	var open := jaw.rotation_degrees.x
+	_check(open > closed + 10.0, "openness 0->1 pitches the jaw open (amplitude contract)")
+	a.set_openness(7.5)
+	_check(a.openness == 1.0, "openness clamped to 1.0")
+	a.set_openness(-3.0)
+	_check(a.openness == 0.0, "openness clamped to 0.0")
+	get_root().remove_child(a)
+	a.free()
+
+
+# ── CharRandomizer ───────────────────────────────────────────────────────────
+
+func _test_randomizer_deterministic_and_coherent() -> void:
+	var a := CharRandomizer.randomize_config(1234)
+	var b := CharRandomizer.randomize_config(1234)
+	_check(JSON.stringify(a) == JSON.stringify(b), "same seed -> identical config")
+
+	var differs := false
+	for seed_value in range(10):
+		if JSON.stringify(CharRandomizer.randomize_config(seed_value)) != JSON.stringify(a):
+			differs = true
+			break
+	_check(differs, "different seeds -> different configs")
+
+	# Archetype coherence: a chosen tail/wings part must come from the pool of
+	# the ESTABLISHED family (randomize.ts ordering: archetype first).
+	var coherent := true
+	for seed_value in range(60):
+		var cfg := CharRandomizer.randomize_config(seed_value)
+		_check(cfg.head.family in Char3DConfig.FAMILIES, "seed %d family valid" % seed_value)
+		_check(cfg.body.archetype == cfg.head.family, "seed %d body matches head" % seed_value)
+		if cfg.parts.tail != null \
+				and not (cfg.parts.tail in CharRandomizer.FAMILY_TAILS.get(cfg.head.family, [])):
+			coherent = false
+		if cfg.parts.wings != null \
+				and not (cfg.parts.wings in CharRandomizer.FAMILY_WINGS.get(cfg.head.family, [])):
+			coherent = false
+	_check(coherent, "tails/wings always drawn from the established family's pool")
+
+
+# ── Scene smoke ──────────────────────────────────────────────────────────────
+
+## studio.tscn must instantiate + _ready without errors in headless mode
+## (builds the UI, the assembler and the snapshot viewport).
+func _test_studio_scene_instantiates() -> void:
+	var scene: PackedScene = load("res://scenes/studio.tscn")
+	_check(scene != null, "studio.tscn loads")
+	if scene == null:
+		return
+	var studio := scene.instantiate()
+	get_root().add_child(studio)
+	var assembler: Node = studio.get("assembler")
+	_check(assembler is CharacterAssembler, "studio owns a CharacterAssembler")
+	_check(studio.get_node_or_null("UI/UiRoot") != null, "built-in editor UI constructed")
+	if assembler is CharacterAssembler:
+		_check(assembler.config.head.family in Char3DConfig.FAMILIES,
+				"studio boots with a valid default config")
+	get_root().remove_child(studio)
+	studio.free()
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# ASSEMBLER V2 — palette, materials, proportions, loft, registry, GLB loader,
+# lip-sync. Every assertion below checks a VALUE the production code computed,
+# never that a symbol exists.
+# ═════════════════════════════════════════════════════════════════════════════
+
+func _approx(a: float, b: float, eps: float = 0.0005) -> bool:
+	return absf(a - b) <= eps
+
+
+# ── Char3DConfig: the extended kemono regions ────────────────────────────────
+
+func _test_extended_region_clamps() -> void:
+	_check(Char3DConfig.ALL_MATERIAL_REGIONS.size()
+			== Char3DConfig.MATERIAL_REGIONS.size() + Char3DConfig.EXTENDED_MATERIAL_REGIONS.size(),
+			"ALL_MATERIAL_REGIONS = canonical + extended, no duplicates")
+	for region in Char3DConfig.ALL_MATERIAL_REGIONS:
+		_check(CharForgePalette.CELLS.has(region), "region '%s' has a palette cell" % region)
+
+	var cfg := Char3DConfig.sanitize({"materials": {
+		"innerMuzzle": "#ff8800",
+		"socks": "nope",
+		"innerEar": "#0f0",
+		"tailTip": 42,
+		"bogusRegion": "#ffffff",
+	}})
+	_check(cfg.materials.get("innerMuzzle") == "#ff8800", "valid extended hex kept")
+	_check(cfg.materials.get("innerEar") == "#0f0", "3-digit extended hex kept")
+	_check(not cfg.materials.has("socks"), "invalid extended hex NOT stored (stays derived)")
+	_check(not cfg.materials.has("tailTip"), "non-string extended value NOT stored")
+	_check(not cfg.materials.has("bogusRegion"), "unknown region key dropped")
+
+	# defaults() must not pre-fill the extended regions, or derivation dies.
+	for region in Char3DConfig.EXTENDED_MATERIAL_REGIONS:
+		_check(not Char3DConfig.defaults().materials.has(region),
+				"defaults() leaves '%s' absent so it derives" % region)
+
+
+# ── CharForgePalette ─────────────────────────────────────────────────────────
+
+func _test_palette_cell_math() -> void:
+	# The documented contract: UV of cell (col,row) is ((col+.5)/8,(row+.5)/8).
+	var seen := {}
+	for region in CharForgePalette.CELLS:
+		var cell: Vector2i = CharForgePalette.CELLS[region]
+		var key := "%d,%d" % [cell.x, cell.y]
+		_check(not seen.has(key), "cell %s used by only one region (%s vs %s)"
+				% [key, region, seen.get(key, "-")])
+		seen[key] = region
+		_check(cell.x >= 0 and cell.x < CharForgePalette.GRID_SIZE
+				and cell.y >= 0 and cell.y < CharForgePalette.GRID_SIZE,
+				"cell for '%s' is inside the 8x8 grid" % region)
+		var uv := CharForgePalette.region_uv(region)
+		_check(_approx(uv.x, (float(cell.x) + 0.5) / 8.0)
+				and _approx(uv.y, (float(cell.y) + 0.5) / 8.0),
+				"region_uv('%s') is the cell centre" % region)
+	_check(CharForgePalette.region_uv("no-such-region")
+			== CharForgePalette.region_uv("fur"),
+			"unknown region falls back to the fur cell")
+	# Row 0 holds the 7 canonical regions, row 1 the extended ones.
+	for region in Char3DConfig.MATERIAL_REGIONS:
+		_check(CharForgePalette.CELLS[region].y == 0, "'%s' lives on row 0" % region)
+	for region in Char3DConfig.EXTENDED_MATERIAL_REGIONS:
+		_check(CharForgePalette.CELLS[region].y == 1, "'%s' lives on row 1" % region)
+
+
+## The derivations exist so that adding the extended regions changed NOTHING
+## about how an old config looks. Assert the exact previous colours.
+func _test_palette_derivations_preserve_defaults() -> void:
+	var cfg := Char3DConfig.defaults()
+	cfg.materials.fur = "#804020"
+	cfg.materials.accent = "#00bcd4"
+	cfg.materials.skin = "#ffdbac"
+
+	_check(CharForgePalette.region_color(cfg, "innerEar")
+			== Color.from_string("#ffdbac", Color.WHITE),
+			"innerEar derives from skin (the material the inner ear used before)")
+	_check(CharForgePalette.region_color(cfg, "socks")
+			== Color.from_string("#00bcd4", Color.WHITE),
+			"socks derives from accent (sock markings used accent before)")
+	_check(CharForgePalette.region_color(cfg, "tailTip")
+			== Color.from_string("#00bcd4", Color.WHITE),
+			"tailTip derives from accent (tail tips used accent before)")
+	var expected_inner := Color.from_string("#804020", Color.WHITE) \
+			.lightened(CharForgePalette.INNER_MUZZLE_LIGHTEN)
+	_check(CharForgePalette.region_color(cfg, "innerMuzzle").is_equal_approx(expected_inner),
+			"innerMuzzle derives from fur lightened (kemono lighter inner muzzle)")
+
+	# An explicit value always beats the derivation; an INVALID one never does.
+	cfg.materials["socks"] = "#123456"
+	_check(CharForgePalette.region_color(cfg, "socks")
+			== Color.from_string("#123456", Color.WHITE), "explicit extended hex wins")
+	cfg.materials["socks"] = "garbage"
+	_check(CharForgePalette.region_color(cfg, "socks")
+			== Color.from_string("#00bcd4", Color.WHITE),
+			"invalid extended hex falls back to the derivation, not to white")
+
+
+func _test_palette_image_contents() -> void:
+	var cfg := Char3DConfig.defaults()
+	cfg.materials.fur = "#ff0000"
+	cfg.materials.line = "#0000ff"
+	cfg.materials.iris = "#00ff00"
+	var img := CharForgePalette.build_image(cfg)
+	_check(img.get_width() == 8 and img.get_height() == 8, "palette image is 8x8")
+	_check(img.get_pixel(0, 0).is_equal_approx(Color(1, 0, 0)), "fur cell holds the fur colour")
+	_check(img.get_pixel(4, 0).is_equal_approx(Color(0, 1, 0)), "iris cell holds the iris colour")
+	# Unused/reserved cells are deliberately the LINE colour so a mis-mapped UV
+	# island reads as linework instead of a random colour.
+	_check(img.get_pixel(7, 0).is_equal_approx(Color(0, 0, 1)), "unused row-0 cell = line colour")
+	_check(img.get_pixel(5, 5).is_equal_approx(Color(0, 0, 1)), "reserved cell = line colour")
+
+	# update_texture must be an in-place rewrite of the SAME texture object.
+	# NOTE: ImageTexture.get_image() is a RenderingServer readback and returns
+	# stale data under the headless dummy rasterizer, so the uploaded bytes are
+	# asserted through the Image update_texture RETURNS (which is byte-for-byte
+	# what was handed to the GPU), and the texture identity through its RID.
+	var tex := CharForgePalette.build_texture(cfg)
+	var before := tex.get_rid()
+	cfg.materials.fur = "#00ffff"
+	var uploaded := CharForgePalette.update_texture(tex, cfg)
+	_check(tex.get_rid() == before, "recolor updates the texture in place (same RID)")
+	_check(uploaded.get_pixel(0, 0).is_equal_approx(Color(0, 1, 1)),
+			"in-place update actually changed the fur cell")
+	_check(uploaded.get_width() == 8 and uploaded.get_height() == 8,
+			"the in-place update keeps the 8x8 layout (no reallocation)")
+
+
+# ── CharForgeMaterials ───────────────────────────────────────────────────────
+
+func _test_material_set_shares_one_palette() -> void:
+	var cfg := Char3DConfig.defaults()
+	cfg.style = "anime"
+	var mats := CharForgeMaterials.for_config(cfg)
+	var texture_ids := {}
+	for region in Char3DConfig.ALL_MATERIAL_REGIONS:
+		var mat := mats.region(region)
+		_check(mat != null and mat.shader == CharForgeMaterials.HOUSE_SHADER,
+				"'%s' uses the house toon shader" % region)
+		texture_ids[mat.get_shader_parameter("palette_tex")] = true
+		var cell: Vector2 = mat.get_shader_parameter("palette_cell")
+		_check(cell == CharForgePalette.region_uv(region),
+				"'%s' material samples its own palette cell" % region)
+	_check(texture_ids.size() == 1,
+			"all %d region materials share ONE palette texture" % Char3DConfig.ALL_MATERIAL_REGIONS.size())
+	_check(mats.region("fur").get_shader_parameter("band_cuts")
+			== CharForgeMaterials.STYLE_PARAMS["anime"]["band_cuts"],
+			"style params applied (anime = 3-band ramp)")
+	_check(mats.region("no-such-region") == mats.region("fur"),
+			"unknown region falls back to fur rather than null")
+
+	# Recolour touches the palette only — the materials must be untouched.
+	var fur_mat := mats.region("fur")
+	cfg.materials.fur = "#123456"
+	mats.recolor(cfg)
+	_check(mats.region("fur") == fur_mat, "recolor does not replace materials")
+	_check(mats.palette_image.get_pixel(0, 0)
+			.is_equal_approx(Color.from_string("#123456", Color.WHITE)),
+			"recolor rewrote the fur cell of the shared palette")
+
+	var trans := mats.variant("fur", {"alpha": 0.5})
+	_check(trans.shader == CharForgeMaterials.HOUSE_TRANS_SHADER,
+			"alpha variant switches to the transparent house shader")
+	_check(_approx(trans.get_shader_parameter("alpha_mul"), 0.5), "alpha uniform set")
+	_check(mats.variant("iris", {"emission": 1.4}).get_shader_parameter("emission_boost") == 1.4,
+			"emission variant sets emission_boost")
+
+
+func _test_outline_toggle() -> void:
+	var was := CharForgeMaterials.outline_enabled
+	CharForgeMaterials.outline_enabled = false
+	var off := CharForgeMaterials.for_config(Char3DConfig.defaults())
+	_check(off.region("fur").next_pass == null,
+			"outline quality toggle DEFAULTS OFF (no next_pass)")
+
+	CharForgeMaterials.outline_enabled = true
+	var on := CharForgeMaterials.for_config(Char3DConfig.defaults())
+	var other := CharForgeMaterials.for_config(Char3DConfig.defaults())
+	_check(on.region("fur").next_pass != null, "enabling the toggle adds the outline next_pass")
+	var shared: Array = []
+	for region in ["fur", "accent", "line", "iris"]:
+		shared.append(on.region(region).next_pass)
+	shared.append(other.region("fur").next_pass)
+	var unique := {}
+	for m in shared:
+		unique[m] = true
+	_check(unique.size() == 1,
+			"every material fleet-wide shares ONE outline instance (no shader switch)")
+	_check(shared[0].shader == CharForgeMaterials.OUTLINE_SHADER,
+			"the shared outline material uses the inverted-hull shader")
+	CharForgeMaterials.outline_enabled = was
+
+
+# ── CharForgeProportions ─────────────────────────────────────────────────────
+
+func _test_proportion_bands() -> void:
+	# Every preset must report values inside the band its source document
+	# specifies, for EVERY legal build/height/snout/style combination.
+	var checked := 0
+	for family in ["canid", "felid", "humanoid", "moth"]:
+		for height in [0.5, 0.75, 0.76, 1.0, 1.5]:
+			for build in [0.0, 0.5, 1.0]:
+				for snout in [0.0, 0.5, 1.0]:
+					for style in Char3DConfig.STYLES:
+						var cfg := Char3DConfig.defaults()
+						cfg.head.family = family
+						cfg.body.archetype = family
+						cfg.body.height = height
+						cfg.body.build = build
+						cfg.head.snoutLength = snout
+						cfg.style = style
+						var row := CharForgeProportions.for_config(cfg)
+						checked += 1
+						var band := CharForgeProportions.heads_band(row.preset)
+						if float(row.headsTall) < band.x - 0.0001 \
+								or float(row.headsTall) > band.y + 0.0001:
+							_check(false, "%s/%s headsTall %.2f outside %s"
+									% [family, row.preset, row.headsTall, str(band)])
+							return
+						if row.preset != "legacy":
+							var eye: float = row.eyeWidthRatio
+							if eye < CharForgeProportions.EYE_WIDTH_BAND.x - 0.0001 \
+									or eye > CharForgeProportions.EYE_WIDTH_BAND.y + 0.0001:
+								_check(false, "eyeWidthRatio %.3f outside the 0.28-0.35 band" % eye)
+								return
+							var lid: float = row.upperLidAngleDeg
+							if lid > CharForgeProportions.UPPER_LID_BAND.y + 0.0001 or lid < 0.0:
+								_check(false, "upperLidAngleDeg %.2f outside 0..15" % lid)
+								return
+							var clusters: int = row.hairClusters
+							if clusters < 5 or clusters > 9:
+								_check(false, "hairClusters %d outside 5..9" % clusters)
+								return
+							if row.muzzleDepthRatio > 0.0:
+								var d: float = row.muzzleDepthRatio
+								if d < CharForgeProportions.MUZZLE_DEPTH_BAND.x - 0.0001 \
+										or d > CharForgeProportions.MUZZLE_DEPTH_BAND.y + 0.0001:
+									_check(false, "muzzleDepthRatio %.3f outside 0.15-0.25" % d)
+									return
+	_check(true, "all %d proportion rows stay inside their documented bands" % checked)
+
+	# snoutLength must sweep the muzzle band monotonically, end to end.
+	var low := Char3DConfig.defaults()
+	low.head.snoutLength = 0.0
+	var high := Char3DConfig.defaults()
+	high.head.snoutLength = 1.0
+	var low_row := CharForgeProportions.for_config(low)
+	var high_row := CharForgeProportions.for_config(high)
+	_check(_approx(low_row.muzzleDepthRatio, CharForgeProportions.MUZZLE_DEPTH_BAND.x),
+			"snoutLength 0 -> the shallow end of the muzzle band")
+	_check(_approx(high_row.muzzleDepthRatio, CharForgeProportions.MUZZLE_DEPTH_BAND.y),
+			"snoutLength 1 -> the deep end of the muzzle band")
+	_check(float(high_row.muzzleTaper) > float(low_row.muzzleTaper),
+			"a longer muzzle tapers harder into the cheeks")
+	_check(float(high_row.muzzleTaper) <= 0.55, "taper capped short of a cone")
+
+
+func _test_proportion_preset_resolution() -> void:
+	var cases := [
+		["canid", 1.0, "standard_kemono"],
+		["canid", 0.75, "chibi_kemono"],
+		["felid", 0.5, "chibi_kemono"],
+		["humanoid", 1.0, "heroic_jrpg"],
+		["humanoid", 0.6, "chibi_jrpg"],
+		["moth", 1.0, "legacy"],
+		["slime", 0.5, "legacy"],
+		["robot", 1.0, "legacy"],
+	]
+	for case in cases:
+		var cfg := Char3DConfig.defaults()
+		cfg.head.family = case[0]
+		cfg.body.archetype = case[0]
+		cfg.body.height = case[1]
+		var row := CharForgeProportions.for_config(cfg)
+		_check(row.preset == case[2],
+				"%s at height %.2f -> %s (got %s)" % [case[0], case[1], case[2], row.preset])
+
+	# The legacy preset MUST leave the head at exactly its pre-v2 size, or this
+	# change silently restyles 13 families.
+	var legacy := Char3DConfig.defaults()
+	legacy.head.family = "moth"
+	legacy.body.archetype = "moth"
+	var legacy_row := CharForgeProportions.for_config(legacy)
+	_check(_approx(legacy_row.headScale, 1.0), "legacy headScale is exactly 1.0")
+	_check(not CharForgeProportions.is_v2(legacy), "legacy families are not v2")
+
+	# Chibi heads are BIGGER than heroic ones — the whole point of the tables.
+	var chibi := Char3DConfig.defaults()
+	chibi.head.family = "humanoid"
+	chibi.body.archetype = "humanoid"
+	chibi.body.height = 0.6
+	var heroic := Char3DConfig.defaults()
+	heroic.head.family = "humanoid"
+	heroic.body.archetype = "humanoid"
+	_check(float(CharForgeProportions.for_config(chibi).headScale)
+			> float(CharForgeProportions.for_config(heroic).headScale) * 1.5,
+			"a 2.5-head chibi has a far larger head than a 6.5-head hero")
+	_check(bool(CharForgeProportions.for_config(Char3DConfig.defaults()).digitigrade),
+			"kemono presets are digitigrade")
+	_check(not bool(CharForgeProportions.for_config(heroic).digitigrade),
+			"JRPG presets are plantigrade")
+
+
+func _test_proportion_eye_layout() -> void:
+	var cfg := Char3DConfig.defaults()
+	var row := CharForgeProportions.for_config(cfg)
+	var face_half := 0.17
+	var layout := CharForgeProportions.eye_layout(row, face_half)
+	var eye_width: float = float(layout.halfWidth) * 2.0
+	_check(_approx(eye_width / (face_half * 2.0), float(row.eyeWidthRatio)),
+			"one eye spans exactly eyeWidthRatio of the face width")
+	# The inner gap must be the documented multiple of the eye width.
+	var inner_gap: float = (float(layout.centerX) * 2.0) - eye_width
+	_check(_approx(inner_gap / eye_width, float(row.eyeGapEyeWidths)),
+			"inner-corner gap is eyeGapEyeWidths eye-widths")
+	_check(float(layout.centerX) + float(layout.halfWidth) < face_half * 1.05,
+			"eyes stay on the face rather than wrapping around the skull")
+	# Low-set: eyes below the head's vertical midline.
+	_check(float(row.eyeLineRatio) > 0.5, "kemono eyes sit LOW on the face")
+
+
+# ── CharForgeLoft ────────────────────────────────────────────────────────────
+
+func _test_loft_muzzle_sections() -> void:
+	for taper in [0.0, 0.4, 1.0]:
+		var sections := CharForgeLoft.muzzle_sections(0.08, 0.06, 0.045, taper)
+		_check(sections.size() == 5, "muzzle has 5 sections (taper %.1f)" % taper)
+		var base_rx: float = float(sections[1].rx)
+		var previous_z := -1.0
+		for section in sections:
+			_check(float(section.z) >= previous_z, "sections advance monotonically along +Z")
+			previous_z = float(section.z)
+			# NEVER A CONE: the narrowest ring keeps a real radius.
+			_check(float(section.rx) >= base_rx * CharForgeLoft.MIN_TIP_FRACTION * 0.85,
+					"ring radius stays >= the min-tip fraction (taper %.1f)" % taper)
+		# "tapers into the cheeks": section 0 is WIDER than the base ring.
+		_check(float(sections[0].rx) > base_rx,
+				"the cheek ring is wider than the muzzle base (taper %.1f)" % taper)
+		_check(float(sections[4].rx) < base_rx, "the tip is narrower than the base")
+		_check(_approx(float(sections[4].z), 0.08), "the last ring sits at the full depth")
+	# A max-taper muzzle must still be plush, not a spike.
+	var sharp := CharForgeLoft.muzzle_sections(0.08, 0.06, 0.045, 1.0)
+	_check(float(sharp[4].rx) / float(sharp[1].rx) > 0.3,
+			"even maximum taper leaves a plush tip (never a cone)")
+
+
+func _test_loft_geometry() -> void:
+	var uv := CharForgePalette.region_uv("fur")
+	var mesh := CharForgeLoft.muzzle(0.08, 0.06, 0.045, 0.4, uv, Color(1, 0, 0))
+	_check(mesh is ArrayMesh and mesh.get_surface_count() == 1, "muzzle bakes to one ArrayMesh surface")
+	var tris := CharForgeLoft.triangle_count(mesh)
+	# 4 quad bands * 12 segments * 2 tris + 12 cap tris.
+	_check(tris == 4 * CharForgeLoft.DEFAULT_SEGMENTS * 2 + CharForgeLoft.DEFAULT_SEGMENTS,
+			"muzzle triangle count matches the loft topology (got %d)" % tris)
+	var arrays: Array = mesh.surface_get_arrays(0)
+	var uvs: PackedVector2Array = arrays[Mesh.ARRAY_TEX_UV]
+	var colors: PackedColorArray = arrays[Mesh.ARRAY_COLOR]
+	var normals: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
+	_check(uvs.size() > 0 and colors.size() == uvs.size() and normals.size() == uvs.size(),
+			"every vertex carries a UV, a colour and a generated normal")
+	var all_cell := true
+	for value in uvs:
+		if not value.is_equal_approx(uv):
+			all_cell = false
+			break
+	_check(all_cell, "every lofted vertex samples the SAME palette cell (1 draw call)")
+	_check(colors[0].is_equal_approx(Color(1, 0, 0)), "region colour written as a vertex colour")
+
+	var aabb := mesh.get_aabb()
+	_check(_approx(aabb.size.z, 0.08, 0.002), "the mesh is exactly as deep as requested")
+	_check(aabb.size.x > aabb.size.z, "the muzzle is WIDER than it is deep (plush, not a snout)")
+
+	# The ear grows along +Y after the Z->Y re-commit.
+	var ear := CharForgeLoft.rounded_tri_ear(0.17, 0.055, 0.018, uv, Color(0, 1, 0))
+	var ear_aabb := ear.get_aabb()
+	_check(_approx(ear_aabb.size.y, 0.17, 0.002), "rounded-tri ear is as tall as requested")
+	_check(ear_aabb.size.x > ear_aabb.size.z, "the ear is a wide blade, not a cone")
+	_check(CharForgeLoft.triangle_count(ear) > 0, "the ear bakes real triangles")
+
+	# Degenerate input must not crash or emit garbage.
+	_check(CharForgeLoft.triangle_count(CharForgeLoft.ring_loft([], uv, Color.WHITE)) == 0,
+			"an empty section list yields an empty mesh")
+	_check(CharForgeLoft.triangle_count(
+			CharForgeLoft.ring_loft([{"z": 0.0}], uv, Color.WHITE)) == 0,
+			"a single section cannot be lofted")
+
+	# lathe(): a revolved profile, the other curved-geometry primitive the
+	# technique report names (CSGPolygon3D SPIN's SurfaceTool equivalent).
+	var profile := PackedVector2Array([Vector2(0.02, 0.0), Vector2(0.03, 0.05),
+			Vector2(0.018, 0.10), Vector2(0.004, 0.14)])
+	var horn := CharForgeLoft.lathe(profile, uv, Color(0, 0, 1))
+	var horn_aabb := horn.get_aabb()
+	_check(CharForgeLoft.triangle_count(horn) > 0, "lathe bakes real triangles")
+	_check(_approx(horn_aabb.size.y, 0.14, 0.002),
+			"the lathed profile is as tall as its last (radius, height) pair")
+	_check(_approx(horn_aabb.size.x, 0.06, 0.004),
+			"the lathed profile is as wide as twice its widest radius")
+	_check(horn_aabb.size.x > horn_aabb.size.z * 0.9
+			and horn_aabb.size.x < horn_aabb.size.z * 1.1,
+			"a revolved profile is radially symmetric in X and Z")
+	var horn_arrays: Array = horn.surface_get_arrays(0)
+	var horn_uvs: PackedVector2Array = horn_arrays[Mesh.ARRAY_TEX_UV]
+	_check(horn_uvs.size() > 0 and horn_uvs[0].is_equal_approx(uv),
+			"lathed vertices carry the palette cell UV too")
+	_check(CharForgeLoft.triangle_count(
+			CharForgeLoft.lathe(PackedVector2Array([Vector2(0.01, 0.0)]), uv, Color.WHITE)) == 0,
+			"a one-point profile cannot be revolved")
+
+
+# ── CharForgeRegistry ────────────────────────────────────────────────────────
+
+func _test_registry_resolution() -> void:
+	var registry := CharForgeRegistry.default_registry()
+	for family in Char3DConfig.FAMILIES:
+		_check(registry.resolve_head(family).basis == CharForgeRegistry.BASIS_PROCEDURAL,
+				"'%s' defaults to the procedural basis" % family)
+	_check(registry.resolve_head("not-a-family").basis == CharForgeRegistry.BASIS_PROCEDURAL,
+			"an unknown family resolves to procedural, never null")
+	_check(not registry.needs_mesh("canid", "canid"), "an empty registry needs no GLB loader")
+
+	# The proportion tables are fail-soft on malformed input, like the rest of
+	# the client-side mirror: a half-built dictionary must not crash a rebuild.
+	for hostile in [{}, {"head": 5, "body": "x"}, {"head": {"family": 7},
+			"body": {"height": "tall"}}, {"style": 9}]:
+		var row := CharForgeProportions.for_config(hostile)
+		_check(row.has("headsTall") and row.has("headScale"),
+				"a hostile config still yields a complete proportion row")
+		_check(float(row.headScale) > 0.0, "a hostile config yields a usable head scale")
+
+	var good := {
+		"basis": "mesh",
+		"glb": "res://assets/heads/wolf.glb",
+		"rig": CharForgeRegistry.RIG_HUMANOID,
+		"slots": {"HM_Fur": "fur", "hm_iris": "iris"},
+		"visemes": true,
+		"licenseSpdx": "CC0-1.0",
+		"attribution": "Quaternius",
+		"sourceUrl": "https://quaternius.com/packs/universalbasecharacters.html",
+		"retrievedAt": "2026-07-29",
+	}
+	_check(registry.register_head("canid", good), "a fully-provenanced mesh basis registers")
+	var resolved := registry.resolve_head("canid")
+	_check(resolved.basis == CharForgeRegistry.BASIS_MESH, "canid now resolves to the mesh basis")
+	_check(resolved.slots.has("hm_fur") and resolved.slots["hm_fur"] == "fur",
+			"slot names are lower-cased on the way in")
+	_check(resolved.visemes == true, "the viseme capability flag survives")
+	_check(registry.needs_mesh("canid", "moth"), "needs_mesh sees the head basis")
+	_check(registry.resolve_head("felid").basis == CharForgeRegistry.BASIS_PROCEDURAL,
+			"registering one family does not affect the others")
+	_check(registry.attributions().size() == 1
+			and registry.attributions()[0].licenseSpdx == "CC0-1.0",
+			"mesh entries are enumerable for a CC-BY credits screen")
+
+	# resolve_* must hand back a COPY: a caller mutating it cannot poison the
+	# registry for the next avatar.
+	var copy := registry.resolve_head("canid")
+	copy["basis"] = "procedural"
+	copy.slots.clear()
+	_check(registry.resolve_head("canid").basis == CharForgeRegistry.BASIS_MESH
+			and not registry.resolve_head("canid").slots.is_empty(),
+			"resolve_head returns a deep copy")
+
+
+func _test_registry_license_discipline() -> void:
+	var base := {
+		"basis": "mesh",
+		"glb": "res://a.glb",
+		"rig": CharForgeRegistry.RIG_HUMANOID,
+		"slots": {"hm_fur": "fur"},
+		"licenseSpdx": "CC0-1.0",
+		"attribution": "Someone",
+		"sourceUrl": "https://example.invalid/a",
+		"retrievedAt": "2026-07-29",
+	}
+	var registry := CharForgeRegistry.default_registry()
+	_check(registry.register_head("canid", base), "the control entry registers")
+
+	# Each rejection below is a licence/provenance rule enforced IN CODE.
+	var rejections := {
+		"licenseSpdx": ["CC-BY-NC-4.0", "proprietary", ""],
+		"attribution": [""],
+		"sourceUrl": [""],
+		"retrievedAt": ["", "2026-7-29", "yesterday", "2026-99-99", "2026-00-10", "2026-07-00"],
+		"glb": ["/etc/passwd", "http://evil.invalid/a.glb", "res://a.txt"],
+		"rig": ["", "quadruped"],
+	}
+	for field in rejections:
+		for value in rejections[field]:
+			var entry := base.duplicate(true)
+			entry[field] = value
+			var fresh := CharForgeRegistry.default_registry()
+			_check(not fresh.register_head("felid", entry),
+					"mesh basis REJECTED for %s = '%s'" % [field, str(value)])
+			_check(fresh.resolve_head("felid").basis == CharForgeRegistry.BASIS_PROCEDURAL,
+					"a rejected entry leaves felid procedural (%s)" % field)
+			_check(not fresh.last_errors.is_empty(), "the rejection reports a reason (%s)" % field)
+
+	var no_slots := base.duplicate(true)
+	no_slots["slots"] = {"hm_fur": "not-a-region"}
+	var fresh2 := CharForgeRegistry.default_registry()
+	_check(not fresh2.register_head("felid", no_slots),
+			"a slot map pointing at an unknown region is rejected")
+	_check(not CharForgeRegistry.default_registry().register_head("dragonoid", base),
+			"an unknown family cannot be registered at all")
+	# A procedural entry needs no provenance — it ships no bytes.
+	_check(CharForgeRegistry.default_registry().register_head("felid", {"basis": "procedural"}),
+			"a procedural entry needs no licence fields")
+	for license in CharForgeRegistry.ALLOWED_LICENSES:
+		_check(license in ["CC0-1.0", "CC-BY-3.0", "CC-BY-4.0", "MIT"],
+				"the licence allow-list holds only the research-approved ids (%s)" % license)
+
+
+# ── CharForgeGlbLoader ───────────────────────────────────────────────────────
+
+func _test_glb_slot_map_and_regions() -> void:
+	var map := CharForgeGlbLoader.normalize_slot_map({})
+	for slot in CharForgeRegistry.DEFAULT_SLOT_MAP:
+		_check(map.has(slot), "the default ingest contract exposes '%s'" % slot)
+	var custom := CharForgeGlbLoader.normalize_slot_map(
+			{"slots": {"WolfCoat": "fur", "Bogus": "not-a-region"}})
+	_check(custom.get("wolfcoat") == "fur", "a registry slot map is merged in, lower-cased")
+	_check(not custom.has("bogus"), "a slot pointing at an unknown region is dropped")
+	_check(custom.has("hm_iris"), "the default contract still applies alongside a custom map")
+
+	var cases := {
+		"hm_fur": "fur",
+		"HM_Fur": "fur",
+		"hm_innerEar": "innerEar",
+		"hm_fur.001": "fur",
+		"WolfCoat": "fur",
+		"Eye_L": "iris",
+		"body_mesh": "fur",
+		"MyHairMat": "hair",
+		"": "",
+		"zzz_unknown": "",
+	}
+	for name in cases:
+		_check(CharForgeGlbLoader.region_for_material_name(name, custom) == cases[name],
+				"material '%s' -> region '%s'" % [name, cases[name]])
+
+
+func _test_glb_mipmap_fixup() -> void:
+	var state := GLTFState.new()
+	var img := Image.create(16, 16, false, Image.FORMAT_RGBA8)
+	img.fill(Color.RED)
+	_check(not img.has_mipmaps(), "the fixture texture starts WITHOUT mipmaps")
+	var with_mips := Image.create(16, 16, true, Image.FORMAT_RGBA8)
+	with_mips.fill(Color.BLUE)
+	state.set_images([ImageTexture.create_from_image(img),
+			ImageTexture.create_from_image(with_mips)])
+
+	var fixed := CharForgeGlbLoader.fix_texture_mipmaps(state)
+	_check(fixed == 1, "exactly the one un-mipmapped texture was rebuilt (got %d)" % fixed)
+	var images: Array = state.get_images()
+	_check(images.size() == 2, "the image list keeps its length and order")
+	_check(images[0].get_image().has_mipmaps(), "engine bug #100481 worked around: mipmaps generated")
+	_check(images[0].get_image().get_pixel(0, 0).is_equal_approx(Color.RED),
+			"the rebuilt texture keeps its pixels")
+	_check(images[1].get_image().get_pixel(0, 0).is_equal_approx(Color.BLUE),
+			"an already-mipmapped texture is left alone")
+	_check(CharForgeGlbLoader.fix_texture_mipmaps(state) == 0,
+			"the fixup is idempotent (second pass rebuilds nothing)")
+	_check(CharForgeGlbLoader.fix_texture_mipmaps(GLTFState.new()) == 0,
+			"a document with no images is handled")
+
+
+func _test_glb_material_swap() -> void:
+	var mats := CharForgeMaterials.for_config(Char3DConfig.defaults())
+	var root := Node3D.new()
+	var mesh := BoxMesh.new()
+	var authored := StandardMaterial3D.new()
+	authored.resource_name = "hm_iris"
+	mesh.surface_set_material(0, authored)
+	var mi := MeshInstance3D.new()
+	mi.name = "Body"
+	mi.mesh = mesh
+	root.add_child(mi)
+
+	var unknown_mesh := BoxMesh.new()
+	var unknown_mat := StandardMaterial3D.new()
+	unknown_mat.resource_name = "zzz_mystery"
+	unknown_mesh.surface_set_material(0, unknown_mat)
+	var mi2 := MeshInstance3D.new()
+	mi2.name = "Nested"
+	mi2.mesh = unknown_mesh
+	mi.add_child(mi2)
+
+	var swapped := CharForgeGlbLoader.swap_materials(root, mats,
+			CharForgeGlbLoader.normalize_slot_map({}))
+	_check(swapped == 2, "both surfaces were rebound, including the nested one (got %d)" % swapped)
+	_check(mi.get_surface_override_material(0) == mats.region("iris"),
+			"the hm_iris slot picked up the shared IRIS material")
+	_check(mi2.get_surface_override_material(0) == mats.region("fur"),
+			"an unrecognised slot falls back to fur, never to null")
+	_check(mi.get_surface_override_material(0).get_shader_parameter("palette_cell")
+			== CharForgePalette.region_uv("iris"),
+			"the swapped material samples the iris palette cell")
+	root.free()
+
+
+func _test_glb_bone_attachment() -> void:
+	var skeleton := Skeleton3D.new()
+	for bone in ["Hips", "Spine", "Chest", "Neck", "Head", "Jaw"]:
+		skeleton.add_bone(bone)
+	get_root().add_child(skeleton)
+
+	_check(CharForgeGlbLoader.bone_for_slot(skeleton, "ears") == "Head", "ears bind to Head")
+	_check(CharForgeGlbLoader.bone_for_slot(skeleton, "tail") == "Hips", "tail binds to Hips")
+	# UpperChest is absent, so the wings candidate list must fall through.
+	_check(CharForgeGlbLoader.bone_for_slot(skeleton, "wings") == "Chest",
+			"wings fall through UpperChest to Chest")
+	_check(CharForgeGlbLoader.bone_for_slot(skeleton, "no-such-slot") == "",
+			"an unknown slot binds to nothing")
+	_check(CharForgeGlbLoader.bone_for_slot(null, "ears") == "", "a null skeleton is tolerated")
+	_check(CharForgeGlbLoader.find_jaw_bone(skeleton) == "Jaw", "the jaw bone is discovered")
+
+	var part := Node3D.new()
+	part.name = "TailPart"
+	var attachment := CharForgeGlbLoader.attach_part(skeleton, "Hips", part)
+	_check(attachment != null, "attach_part created an attachment")
+	_check(attachment.bone_idx == skeleton.find_bone("Hips"),
+			"the BoneAttachment3D bound to the RIGHT bone index")
+	_check(attachment.get_parent() == skeleton and part.get_parent() == attachment,
+			"the part hangs off the attachment, which hangs off the skeleton")
+	_check(CharForgeGlbLoader.attach_part(skeleton, "Tail", Node3D.new()) == null,
+			"attaching to a missing bone returns null instead of a phantom bone")
+
+	var loader := CharForgeGlbLoader.new()
+	get_root().add_child(loader)
+	var rig := Node3D.new()
+	rig.add_child(skeleton.duplicate())
+	get_root().add_child(rig)
+	var ear := Node3D.new()
+	ear.name = "Ear"
+	var wing := Node3D.new()
+	wing.name = "Wing"
+	var result := loader.attach_parts(rig, {"ears": ear, "no-such-slot": wing})
+	_check(result.bound.has("ears"), "attach_parts bound the ear to the rig's Head bone")
+	_check(result.unbound == ["no-such-slot"], "unbindable slots are reported, not silently lost")
+	_check(CharForgeGlbLoader.find_skeleton(rig) != null, "the skeleton is found under the root")
+	_check(CharForgeGlbLoader.find_skeleton(Node3D.new()) == null,
+			"a rig-less root yields no skeleton")
+
+	get_root().remove_child(rig)
+	rig.free()
+	get_root().remove_child(loader)
+	loader.free()
+	get_root().remove_child(skeleton)
+	skeleton.free()
+
+
+# ── CharForgeLipSync ─────────────────────────────────────────────────────────
+
+func _test_lipsync_frame_selection() -> void:
+	# The 5-frame strip: frame 0 below the first threshold, then one frame per
+	# threshold crossed, and never out of range.
+	_check(CharForgeLipSync.mouth_frame(0.0) == 0, "silence shows the closed frame")
+	_check(CharForgeLipSync.mouth_frame(0.079) == 0, "just under the first threshold: frame 0")
+	_check(CharForgeLipSync.mouth_frame(0.08) == 1, "the first threshold enters frame 1")
+	_check(CharForgeLipSync.mouth_frame(0.28) == 2, "second threshold -> frame 2")
+	_check(CharForgeLipSync.mouth_frame(0.52) == 3, "third threshold -> frame 3")
+	_check(CharForgeLipSync.mouth_frame(0.76) == 4, "fourth threshold -> frame 4")
+	_check(CharForgeLipSync.mouth_frame(1.0) == 4, "full openness stays on the last frame")
+	_check(CharForgeLipSync.mouth_frame(9.0) == 4 and CharForgeLipSync.mouth_frame(-9.0) == 0,
+			"out-of-range openness is clamped, never out of frame range")
+	var previous := -1
+	for i in range(101):
+		var frame := CharForgeLipSync.mouth_frame(float(i) / 100.0)
+		_check(frame >= previous, "frame selection is monotonic at openness %.2f" % (float(i) / 100.0))
+		_check(frame >= 0 and frame < CharForgeLipSync.MOUTH_FRAMES, "frame in range")
+		previous = frame
+
+	# Hysteresis: a value sitting just past a boundary must NOT flip the frame.
+	_check(CharForgeLipSync.frame_with_hysteresis(0, 0.09) == 0,
+			"a hair over the threshold does not flip the frame up")
+	_check(CharForgeLipSync.frame_with_hysteresis(0, 0.13) == 1,
+			"clearing the threshold by the margin does flip up")
+	_check(CharForgeLipSync.frame_with_hysteresis(1, 0.07) == 1,
+			"a hair under the threshold does not flip the frame down")
+	_check(CharForgeLipSync.frame_with_hysteresis(1, 0.03) == 0,
+			"dropping below the threshold by the margin does flip down")
+	_check(CharForgeLipSync.frame_with_hysteresis(2, 0.30) == 2, "staying put is stable")
+
+	# The jaw formula is the pre-existing one, exactly.
+	_check(_approx(CharForgeLipSync.jaw_angle_deg(0.0), 3.0), "a closed jaw rests at 3 degrees")
+	_check(_approx(CharForgeLipSync.jaw_angle_deg(1.0), 27.0), "full openness = 27 degrees")
+	_check(_approx(CharForgeLipSync.jaw_angle_deg(0.0, 1.0), 13.0),
+			"an expression's jaw_base adds its own 10-degree range")
+	_check(_approx(CharForgeLipSync.jaw_angle_deg(5.0, 5.0), 37.0),
+			"both inputs are clamped before they are applied")
+
+
+func _test_lipsync_channel_resolution() -> void:
+	var J := CharForgeLipSync.CHANNEL_JAW
+	var S := CharForgeLipSync.CHANNEL_STRIP
+	var V := CharForgeLipSync.CHANNEL_VISEMES
+	_check(CharForgeLipSync.resolve_channels(true, true, false, false) == [J],
+			"the jaw is the mandatory channel and wins over the strip")
+	_check(CharForgeLipSync.resolve_channels(false, true, false, false) == [S],
+			"no jaw bone -> the mouth strip is the fallback")
+	_check(CharForgeLipSync.resolve_channels(false, false, false, false) == [],
+			"a mesh with neither channel drives nothing")
+	_check(CharForgeLipSync.resolve_channels(true, false, true, true) == [J, V],
+			"flagged+resolved visemes ride ALONGSIDE the jaw")
+	_check(CharForgeLipSync.resolve_channels(true, false, true, false) == [J],
+			"a viseme flag with no resolved shapes is ignored")
+	_check(CharForgeLipSync.resolve_channels(true, false, false, true) == [J],
+			"resolved shapes the manifest never flagged are ignored")
+	_check(CharForgeLipSync.resolve_channels(false, true, true, true) == [S, V],
+			"strip + visemes coexist when there is no jaw")
+
+
+func _test_lipsync_visemes() -> void:
+	var weights := CharForgeLipSync.viseme_weights(0.6, "ih")
+	_check(weights.size() == 5, "every VRM viseme is present in the output")
+	_check(_approx(weights["ih"], 0.6), "the chosen vowel carries the amplitude")
+	for name in ["aa", "ou", "ee", "oh"]:
+		_check(_approx(weights[name], 0.0),
+				"'%s' is driven to zero so a held shape is released" % name)
+	_check(_approx(CharForgeLipSync.viseme_weights(0.5, "NOT-A-VOWEL")["aa"], 0.5),
+			"an unknown vowel falls back to 'aa'")
+	_check(_approx(CharForgeLipSync.viseme_weights(3.0, "aa")["aa"], 1.0),
+			"viseme weights are clamped to 1")
+
+	# Blend-shape resolution across the VRM 1.0 / VRM 0.x / VRoid namings.
+	var mi := MeshInstance3D.new()
+	mi.mesh = _blend_shape_mesh(["Fcl_MTH_A", "I", "ou", "Blink", "Fcl_MTH_E"])
+	_check(CharForgeLipSync.resolve_viseme_index(mi, "aa") == 0, "VRoid 'Fcl_MTH_A' resolves to aa")
+	_check(CharForgeLipSync.resolve_viseme_index(mi, "ih") == 1, "VRM 0.x 'I' resolves to ih")
+	_check(CharForgeLipSync.resolve_viseme_index(mi, "ou") == 2, "VRM 1.0 'ou' resolves directly")
+	_check(CharForgeLipSync.resolve_viseme_index(mi, "ee") == 4, "'Fcl_MTH_E' resolves to ee")
+	_check(CharForgeLipSync.resolve_viseme_index(mi, "oh") == -1, "an absent viseme reports -1")
+	_check(CharForgeLipSync.resolve_viseme_index(null, "aa") == -1, "a null mesh reports -1")
+
+	var sync := CharForgeLipSync.new()
+	_check(sync.bind_visemes(mi, false) == 0, "an unflagged manifest binds nothing")
+	_check(sync.bind_visemes(mi, true) == 4, "4 of the 5 visemes resolved on this mesh")
+	sync.vowel = "aa"
+	sync.set_openness(0.75)
+	_check(CharForgeLipSync.CHANNEL_VISEMES in sync.active_channels(),
+			"the viseme channel is live once bound")
+	_check(_approx(mi.get_blend_shape_value(0), 0.75), "the aa shape was actually driven")
+	_check(_approx(mi.get_blend_shape_value(1), 0.0), "the ih shape was driven to zero")
+	mi.free()
+
+
+func _test_lipsync_drives_a_skeleton() -> void:
+	var skeleton := Skeleton3D.new()
+	skeleton.add_bone("Head")
+	skeleton.add_bone("Jaw")
+	get_root().add_child(skeleton)
+	var sync := CharForgeLipSync.new()
+	_check(not sync.bind_jaw_bone(skeleton, "NoSuchBone"), "binding a missing jaw bone fails")
+	_check(sync.bind_jaw_bone(skeleton, "Jaw"), "the jaw bone binds")
+	_check(sync.active_channels() == [CharForgeLipSync.CHANNEL_JAW],
+			"a rig with a jaw uses the jaw channel")
+
+	var jaw_idx := skeleton.find_bone("Jaw")
+	sync.set_openness(0.0)
+	var closed := skeleton.get_bone_pose_rotation(jaw_idx)
+	sync.set_openness(1.0)
+	var open := skeleton.get_bone_pose_rotation(jaw_idx)
+	_check(not closed.is_equal_approx(open), "openness rotates the jaw BONE, not just a node")
+	var swing := rad_to_deg(closed.angle_to(open))
+	_check(swing > 20.0 and swing < 30.0,
+			"the bone swings the documented ~24 degrees (got %.1f)" % swing)
+
+	# Mouth strip: the material's frame_index uniform must actually move.
+	var strip := ShaderMaterial.new()
+	strip.shader = load("res://shaders/mouth_strip.gdshader")
+	var strip_sync := CharForgeLipSync.new()
+	strip_sync.bind_mouth_strip(strip)
+	_check(strip_sync.active_channels() == [CharForgeLipSync.CHANNEL_STRIP],
+			"with no jaw the strip is the active channel")
+	strip_sync.set_openness(0.9)
+	_check(strip.get_shader_parameter("frame_index") == 4,
+			"a loud frame is pushed to the strip shader")
+	_check(strip_sync.strip_frame() == 4, "the driver reports the frame it displayed")
+	strip_sync.set_openness(0.0)
+	_check(strip.get_shader_parameter("frame_index") == 0, "silence returns the mouth to frame 0")
+
+	get_root().remove_child(skeleton)
+	skeleton.free()
+
+
+# ── Assembler v2 integration ─────────────────────────────────────────────────
+
+func _test_v2_head_geometry() -> void:
+	var cfg := Char3DConfig.defaults()          # canid, height 1.0 -> kemono
+	var a := CharacterAssembler.new()
+	get_root().add_child(a)
+	a.apply_config(cfg)
+
+	_check(a.proportions.preset == "standard_kemono", "a default canid takes the kemono preset")
+	var head: Node3D = a.get_node_or_null("Rig/Body/NeckTop/Head")
+	var muzzle: MeshInstance3D = head.get_node_or_null("Muzzle")
+	_check(muzzle != null and muzzle.mesh is ArrayMesh,
+			"the crude capsule/box muzzle was replaced by a lofted ArrayMesh")
+	_check(head.get_node_or_null("InnerMuzzle") != null,
+			"the lighter inner-muzzle colour block is built")
+	var inner: MeshInstance3D = head.get_node_or_null("InnerMuzzle")
+	_check(inner.material_override.get_shader_parameter("palette_cell")
+			== CharForgePalette.region_uv("innerMuzzle"),
+			"the inner muzzle samples the innerMuzzle palette cell")
+
+	# A deeper snout must produce a physically deeper mesh.
+	var deep := cfg.duplicate(true)
+	deep.head.snoutLength = 1.0
+	var shallow := cfg.duplicate(true)
+	shallow.head.snoutLength = 0.0
+	a.apply_config(shallow)
+	var shallow_depth: float = (a.get_node("Rig/Body/NeckTop/Head/Muzzle") as MeshInstance3D) \
+			.mesh.get_aabb().size.z
+	a.apply_config(deep)
+	var deep_depth: float = (a.get_node("Rig/Body/NeckTop/Head/Muzzle") as MeshInstance3D) \
+			.mesh.get_aabb().size.z
+	_check(deep_depth > shallow_depth * 1.5,
+			"snoutLength 0->1 measurably deepens the lofted muzzle (%.4f -> %.4f)"
+			% [shallow_depth, deep_depth])
+
+	# Eyes + the upper-lid expression channel.
+	a.apply_config(cfg)
+	_check(a._refs.has("lid_l") and a._refs.has("lid_r"), "v2 heads build real upper-lid nodes")
+	var lid_l: Node3D = a._refs["lid_l"]
+	var neutral: float = float(a._refs["lid_neutral"])
+	_check(neutral >= CharForgeProportions.UPPER_LID_BAND.x
+			and neutral <= CharForgeProportions.UPPER_LID_BAND.y,
+			"the neutral lid droop is inside the documented 10-15 degree band")
+	a.set_expression("neutral")
+	var lid_neutral := lid_l.rotation_degrees.x
+	a.set_expression("sleepy")
+	var lid_sleepy := lid_l.rotation_degrees.x
+	a.set_expression("surprised")
+	var lid_surprised := lid_l.rotation_degrees.x
+	_check(lid_sleepy > lid_neutral + 10.0, "sleepy drops the upper lid heavily")
+	_check(lid_surprised < lid_neutral, "surprised lifts the upper lid")
+
+	# Rounded-triangular ears with their own inner-ear region.
+	var ear_l: Node3D = a._refs["ear_l"]
+	var ear_mesh: MeshInstance3D = ear_l.get_node_or_null("Ear")
+	var ear_inner: MeshInstance3D = ear_l.get_node_or_null("Inner")
+	_check(ear_mesh != null and ear_mesh.mesh is ArrayMesh,
+			"kemono ears are lofted rounded triangles, not prisms")
+	_check(ear_inner != null and ear_inner.material_override.get_shader_parameter("palette_cell")
+			== CharForgePalette.region_uv("innerEar"),
+			"the inner ear samples the innerEar palette cell")
+
+	# A legacy family must be untouched by all of the above.
+	var legacy := Char3DConfig.defaults()
+	legacy.head.family = "moth"
+	legacy.body.archetype = "moth"
+	a.apply_config(legacy)
+	_check(a.proportions.preset == "legacy", "moth stays on the legacy preset")
+	_check(not a._refs.has("lid_l"), "legacy heads build no lid nodes")
+	_check(a.get_node("Rig/Body/NeckTop/Head").scale.is_equal_approx(Vector3.ONE),
+			"a legacy head is at exactly its pre-v2 scale")
+
+	get_root().remove_child(a)
+	a.free()
+
+
+func _test_v2_body_geometry() -> void:
+	var a := CharacterAssembler.new()
+	get_root().add_child(a)
+
+	# Digitigrade legs for kemono.
+	a.apply_config(Char3DConfig.defaults())
+	var body: Node3D = a.get_node("Rig/Body")
+	for part in ["ThighL", "ShinL", "AnkleL", "PawL", "ThighR", "PawR"]:
+		_check(body.get_node_or_null(part) != null, "digitigrade leg part '%s' built" % part)
+	_check(body.get_node_or_null("LegL") == null, "the plantigrade capsule leg is gone")
+	var ankle: MeshInstance3D = body.get_node("AnkleL")
+	var paw: MeshInstance3D = body.get_node("PawL")
+	_check(ankle.position.y > paw.position.y,
+			"the ankle is RAISED above the paw — the thing that makes a leg digitigrade")
+
+	# Plantigrade for a JRPG humanoid, with spike-cluster hair.
+	var hero := Char3DConfig.defaults()
+	hero.head.family = "humanoid"
+	hero.body.archetype = "humanoid"
+	a.apply_config(hero)
+	body = a.get_node("Rig/Body")
+	_check(body.get_node_or_null("LegL") != null and body.get_node_or_null("ThighL") == null,
+			"a JRPG hero keeps plantigrade legs")
+	var hair_mount: Node3D = a._refs["hair_mount"]
+	var spikes := 0
+	for child in hair_mount.get_children():
+		if String(child.name).begins_with("Spike"):
+			spikes += 1
+	_check(spikes >= 5 and spikes <= 9,
+			"JRPG hair is 5-9 asymmetric spike clusters (got %d)" % spikes)
+	_check(hair_mount.get_node_or_null("Cap") != null, "the spike clusters sit on a cranium cap")
+
+	# Asymmetry is the documented requirement: mirrored clusters would read wrong.
+	var lengths := {}
+	for child in hair_mount.get_children():
+		if child is MeshInstance3D and String(child.name).begins_with("Spike"):
+			lengths[snappedf((child as MeshInstance3D).mesh.get_aabb().size.y, 0.0001)] = true
+	_check(lengths.size() > 1, "the spike clusters are asymmetric (varied lengths)")
+
+	# Hand scale actually moves with the proportion table. The size is read
+	# BEFORE the next apply_config, which frees the whole previous rig.
+	var hero_hand: float = (body.get_node("HandL") as MeshInstance3D).mesh.get_aabb().size.x
+	a.apply_config(Char3DConfig.defaults())
+	var kemono_hand: float = (a.get_node("Rig/Body/HandL") as MeshInstance3D).mesh.get_aabb().size.x
+	_check(hero_hand > kemono_hand,
+			"the JRPG 1.4-1.6x hand is larger than the kemono mitt (%.4f > %.4f)"
+			% [hero_hand, kemono_hand])
+
+	# Basis indirection: registering a mesh basis must SIGNAL, keeping the
+	# procedural rig on screen in the meantime.
+	var seen: Array = []
+	a.mesh_basis_required.connect(func(kind, entry): seen.append([kind, entry.glb]))
+	var registry := CharForgeRegistry.default_registry()
+	_check(registry.register_head("canid", {
+		"basis": "mesh", "glb": "res://x.glb", "rig": CharForgeRegistry.RIG_HUMANOID,
+		"slots": {"hm_fur": "fur"}, "licenseSpdx": "CC0-1.0", "attribution": "Q",
+		"sourceUrl": "https://example.invalid", "retrievedAt": "2026-07-29"}),
+		"the test mesh basis registered")
+	a.registry = registry
+	a.apply_config(Char3DConfig.defaults())
+	_check(seen == [["head", "res://x.glb"]], "a mesh basis emits mesh_basis_required once")
+	_check(a.get_node_or_null("Rig/Body/NeckTop/Head") != null,
+			"the procedural rig is STILL built while the GLB is fetched")
+	_check(a.resolved_bases().head.basis == CharForgeRegistry.BASIS_MESH,
+			"resolved_bases reports the mesh basis")
+
+	# Recolour without a rebuild.
+	var head_node: Node = a.get_node("Rig/Body/NeckTop/Head")
+	_check(a.recolor({"fur": "#010203", "socks": "#040506", "bogus": "#ffffff"}),
+			"recolor accepted the change")
+	_check(a.get_node("Rig/Body/NeckTop/Head") == head_node,
+			"recolor did NOT rebuild the rig")
+	_check(a.materials.palette_image.get_pixel(0, 0)
+			.is_equal_approx(Color.from_string("#010203", Color.WHITE)),
+			"recolor rewrote the fur cell")
+	_check(a.materials.palette_image
+			.get_pixel(CharForgePalette.CELLS["socks"].x, CharForgePalette.CELLS["socks"].y)
+			.is_equal_approx(Color.from_string("#040506", Color.WHITE)),
+			"recolor rewrote the extended socks cell")
+	_check(not a.config.materials.has("bogus"), "recolor ignores unknown regions")
+
+	get_root().remove_child(a)
+	a.free()
+
+
+# ── VRM ingest ───────────────────────────────────────────────────────────────
+
+func _test_vrm_addon_vendored() -> void:
+	_check(CharForgeVrmIngest.available(), "the vendored godot-vrm addon is present")
+	_check(FileAccess.file_exists("res://addons/vrm/LICENSE"),
+			"the addon's MIT LICENSE is kept in-tree")
+	_check(FileAccess.file_exists("res://addons/Godot-MToon-Shader/LICENSE"),
+			"the MToon shader's LICENSE is kept in-tree")
+	# The manifest is the machine-readable half of the licence discipline.
+	var manifest_text := FileAccess.get_file_as_string("res://addons/THIRD_PARTY_MANIFEST.json")
+	var manifest: Variant = JSON.parse_string(manifest_text)
+	_check(manifest is Dictionary and manifest.entries.size() >= 2,
+			"THIRD_PARTY_MANIFEST.json lists the vendored trees")
+	var paths := {}
+	for entry in manifest.entries:
+		paths[entry.path] = true
+		for field in ["licenseSpdx", "attribution", "sourceUrl", "retrievedAt"]:
+			_check(entry.has(field) and not String(entry[field]).is_empty(),
+					"manifest entry '%s' carries %s" % [entry.path, field])
+		_check(entry.licenseSpdx in CharForgeRegistry.ALLOWED_LICENSES,
+				"'%s' is licensed under an allow-listed id (%s)" % [entry.path, entry.licenseSpdx])
+	_check(paths.has("addons/vrm/") and paths.has("addons/Godot-MToon-Shader/"),
+			"both vendored trees are declared")
+	# The non-CC sample models must NOT have come along with the addon.
+	_check(not DirAccess.dir_exists_absolute("res://addons/vrm/vrm_samples"),
+			"the non-CC vrm_samples models were NOT vendored")
+
+	# MToon detection drives the house-shader swap on web.
+	var mtoon := ShaderMaterial.new()
+	mtoon.resource_name = "Body_MToon"
+	_check(CharForgeVrmIngest.is_mtoon(mtoon), "an MToon-named material is detected")
+	var house := CharForgeMaterials.for_config(Char3DConfig.defaults()).region("fur")
+	_check(not CharForgeVrmIngest.is_mtoon(house), "a house material is not mistaken for MToon")
+	_check(not CharForgeVrmIngest.is_mtoon(null), "a null material is tolerated")
+
+	var mats := CharForgeMaterials.for_config(Char3DConfig.defaults())
+	var mesh := BoxMesh.new()
+	var authored := ShaderMaterial.new()
+	authored.resource_name = "hm_hair_MToon"
+	mesh.surface_set_material(0, authored)
+	var mi := MeshInstance3D.new()
+	mi.mesh = mesh
+	var swapped := CharForgeVrmIngest.swap_mtoon(mi, mats, CharForgeGlbLoader.normalize_slot_map({}))
+	_check(swapped == 1, "the MToon surface was swapped for the house shader")
+	_check(mi.get_surface_override_material(0) == mats.region("hair"),
+			"the swapped surface picked up the hair region from its slot name")
+
+	var plain := BoxMesh.new()
+	var plain_mat := StandardMaterial3D.new()
+	plain_mat.resource_name = "hm_fur"
+	plain.surface_set_material(0, plain_mat)
+	var mi2 := MeshInstance3D.new()
+	mi2.mesh = plain
+	_check(CharForgeVrmIngest.swap_mtoon(mi2, mats, CharForgeGlbLoader.normalize_slot_map({})) == 0,
+			"a non-MToon surface is left for the normal loader fixup")
+	# The swap policy: web ALWAYS gets the house shader (MToon on WebGL2 is
+	# undocumented upstream — technique.md gap); desktop previews keep MToon so
+	# the imported look stays comparable against ours.
+	_check(CharForgeVrmIngest.should_swap_on_this_platform() == OS.has_feature("web"),
+			"MToon is swapped for the house shader on web and only on web")
+	mi.free()
+	mi2.free()
+
+
+## A minimal mesh carrying real blend shapes. ArrayMesh requires every surface
+## to supply one array set PER declared blend shape, so SurfaceTool.commit()
+## cannot be used against a mesh that already has shapes.
+func _blend_shape_mesh(shape_names: Array) -> ArrayMesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for v in [Vector3.ZERO, Vector3.RIGHT, Vector3.UP]:
+		st.set_normal(Vector3.BACK)
+		st.add_vertex(v)
+	var base: ArrayMesh = st.commit()
+	var arrays: Array = base.surface_get_arrays(0)
+	var mesh := ArrayMesh.new()
+	for name in shape_names:
+		mesh.add_blend_shape(name)
+	var blends: Array = []
+	for i in range(shape_names.size()):
+		var shape: Array = []
+		shape.resize(Mesh.ARRAY_MAX)
+		shape[Mesh.ARRAY_VERTEX] = arrays[Mesh.ARRAY_VERTEX]
+		shape[Mesh.ARRAY_NORMAL] = arrays[Mesh.ARRAY_NORMAL]
+		shape[Mesh.ARRAY_TANGENT] = arrays[Mesh.ARRAY_TANGENT]
+		blends.append(shape)
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays, blends)
+	return mesh
+
+
+# ── Mouth-strip fallback plumbing ────────────────────────────────────────────
+
+func _test_mouth_quad_factory() -> void:
+	var quad := CharForgeLipSync.make_mouth_quad(0.12, 0.05)
+	_check(quad is MeshInstance3D and quad.mesh is QuadMesh, "the mouth quad is a QuadMesh")
+	_check((quad.mesh as QuadMesh).size.is_equal_approx(Vector2(0.12, 0.05)),
+			"the quad is sized as requested")
+	var mat := CharForgeLipSync.mouth_quad_material(quad)
+	_check(mat != null and mat.shader == CharForgeLipSync.MOUTH_STRIP_SHADER,
+			"the quad carries the mouth-strip shader")
+	_check(mat.get_shader_parameter("frame_index") == 0, "the quad starts on the closed frame")
+	_check(CharForgeLipSync.mouth_quad_material(null) == null, "a null quad yields no material")
+
+	# Driving it end to end: the quad the factory built is what the driver moves.
+	var sync := CharForgeLipSync.new()
+	sync.bind_mouth_strip(mat)
+	sync.set_openness(0.6)
+	_check(mat.get_shader_parameter("frame_index") == 3,
+			"the factory quad is driven by the amplitude contract")
+	# Degenerate size must not produce a zero-area quad.
+	var tiny := CharForgeLipSync.make_mouth_quad(0.0, -1.0)
+	_check((tiny.mesh as QuadMesh).size.x > 0.0 and (tiny.mesh as QuadMesh).size.y > 0.0,
+			"a degenerate size is clamped to something drawable")
+	quad.free()
+	tiny.free()
+
+
+# ── Runtime GLB loader, end to end ───────────────────────────────────────────
+
+## Builds a real GLB in memory (GLTFDocument.append_from_scene +
+## generate_buffer) and pushes it back through the loader, so the parse + the
+## whole mandatory fixup pass are exercised against actual glTF bytes rather
+## than against a hand-made node tree. No asset is vendored to do this, which
+## matters: the licence discipline forbids committing third-party GLBs, so a
+## synthesized one is the only honest way to test this path in-repo.
+func _test_glb_round_trip() -> void:
+	var source := Node3D.new()
+	source.name = "Rig"
+	var box := BoxMesh.new()
+	var authored := StandardMaterial3D.new()
+	authored.resource_name = "hm_iris"
+	box.surface_set_material(0, authored)
+	var mi := MeshInstance3D.new()
+	mi.name = "Body"
+	mi.mesh = box
+	source.add_child(mi)
+	mi.owner = source
+	get_root().add_child(source)
+
+	var doc := GLTFDocument.new()
+	var state := GLTFState.new()
+	var export_err := doc.append_from_scene(source, state)
+	_check(export_err == OK, "the GLB fixture exported cleanly")
+	var bytes := doc.generate_buffer(state)
+	_check(bytes.size() > 0, "the GLB fixture has bytes (%d)" % bytes.size())
+	get_root().remove_child(source)
+	source.free()
+
+	var loader := CharForgeGlbLoader.new()
+	get_root().add_child(loader)
+	var failures: Array = []
+	loader.load_failed.connect(func(reason): failures.append(reason))
+	var loaded_roots: Array = []
+	loader.loaded.connect(func(root): loaded_roots.append(root))
+
+	var mats := CharForgeMaterials.for_config(Char3DConfig.defaults())
+	var entry := {"slots": {"hm_iris": "iris"}}
+	var root: Node3D = await loader.load_from_buffer(bytes, mats, entry)
+	_check(root != null, "real GLB bytes parsed into a Node3D")
+	_check(failures.is_empty(), "a good load emits no failure")
+	_check(loaded_roots.size() == 1 and loaded_roots[0] == root, "the loaded signal carried the root")
+	if root != null:
+		var rebuilt: MeshInstance3D = null
+		for node in [root] + _descendants(root):
+			if node is MeshInstance3D:
+				rebuilt = node as MeshInstance3D
+				break
+		_check(rebuilt != null, "the mesh survived the round trip")
+		if rebuilt != null:
+			var applied := rebuilt.get_surface_override_material(0)
+			_check(applied == mats.region("iris"),
+					"fixup (b) rebound the hm_iris surface to the shared iris material")
+			_check(applied.get_shader_parameter("palette_tex") == mats.palette_texture,
+					"the rebound surface samples the avatar's shared palette texture")
+		root.free()
+
+	# Failure paths must FAIL, not half-load.
+	failures.clear()
+	_check(await loader.load_from_buffer(PackedByteArray(), mats, entry) == null,
+			"an empty buffer is rejected")
+	_check(failures.size() == 1 and failures[0].contains("empty"), "the empty buffer reports why")
+
+	failures.clear()
+	var garbage := PackedByteArray()
+	garbage.resize(64)
+	garbage.fill(0x41)
+	_check(await loader.load_from_buffer(garbage, mats, entry) == null, "garbage bytes are rejected")
+	_check(failures.size() == 1, "garbage reports exactly one failure")
+
+	failures.clear()
+	var oversize := PackedByteArray()
+	oversize.resize(CharForgeGlbLoader.MAX_BYTES + 1)
+	_check(await loader.load_from_buffer(oversize, mats, entry) == null,
+			"an asset over the runtime cap is rejected BEFORE it is parsed")
+	_check(failures.size() == 1 and failures[0].contains("cap"),
+			"the oversize rejection names the cap")
+
+	# FIXUP (d): the offscreen pre-warm frame must hand the node back to the
+	# parent it came from, not strand it inside the throwaway SubViewport.
+	var warm_host := Node3D.new()
+	get_root().add_child(warm_host)
+	var subject := Node3D.new()
+	subject.name = "PrewarmSubject"
+	warm_host.add_child(subject)
+	await loader.prewarm(subject)
+	_check(is_instance_valid(subject), "pre-warm did not destroy the node")
+	_check(subject.get_parent() == warm_host,
+			"pre-warm returned the node to its original parent")
+	_check(loader.get_child_count() == 0, "the pre-warm SubViewport was cleaned up")
+	get_root().remove_child(warm_host)
+	warm_host.free()
+
+	# VRM ingest: registration is PROCESS-GLOBAL, so a failed VRM parse must not
+	# leave the extension installed and change how the next plain GLB parses.
+	_check(CharForgeVrmIngest.parse(PackedByteArray()) == null, "an empty VRM buffer is rejected")
+	_check(CharForgeVrmIngest.parse(garbage) == null, "VRM garbage is rejected")
+	var after: Node3D = await loader.load_from_buffer(bytes, mats, entry)
+	_check(after != null,
+			"a plain GLB still parses after a failed VRM ingest (the extension was unregistered)")
+	if after != null:
+		after.free()
+
+	get_root().remove_child(loader)
+	loader.free()
+
+
+func _descendants(node: Node) -> Array:
+	var out: Array = []
+	for child in node.get_children():
+		out.append(child)
+		out.append_array(_descendants(child))
+	return out
+
+
+# ── Shaders ──────────────────────────────────────────────────────────────────
+
+## Godot runs the shader PREPROCESSOR and the ShaderLanguage parse when the
+## resource loads, even under the headless dummy rasterizer — so the include
+## graph, the transparent #define split and the uniform contract are all
+## genuinely verifiable here. What is NOT verifiable locally is the GLSL
+## compile on WebGL2/Quest; technique.md already flags that as an on-device
+## smoke test, and no assertion here should be read as covering it.
+func _test_shader_contract() -> void:
+	var opaque: Shader = CharForgeMaterials.HOUSE_SHADER
+	var trans: Shader = CharForgeMaterials.HOUSE_TRANS_SHADER
+	var core := "res://shaders/house_toon_core.gdshaderinc"
+	_check(FileAccess.file_exists(core), "the shared house-toon core include exists")
+
+	var opaque_uniforms := {}
+	for u in opaque.get_shader_uniform_list():
+		opaque_uniforms[u.name] = true
+	var trans_uniforms := {}
+	for u in trans.get_shader_uniform_list():
+		trans_uniforms[u.name] = true
+
+	# If the #include failed to resolve, the uniform list would be empty — so
+	# this is a real assertion that the preprocessor stitched the core in.
+	for name in ["palette_tex", "palette_cell", "albedo_tint", "band_cuts", "band_softness",
+			"shadow_tone", "rim_color", "rim_strength", "rim_power", "matcap_tex",
+			"matcap_strength", "emission_boost"]:
+		_check(opaque_uniforms.has(name), "the opaque house shader exposes '%s'" % name)
+		_check(trans_uniforms.has(name), "the transparent variant exposes '%s' too" % name)
+	_check(trans_uniforms.has("alpha_mul"),
+			"HOUSE_TOON_TRANSPARENT adds the alpha uniform to the transparent variant")
+	_check(not opaque_uniforms.has("alpha_mul"),
+			"the opaque variant has NO alpha uniform — it must never render transparent")
+	_check(opaque_uniforms.size() + 1 == trans_uniforms.size(),
+			"alpha_mul is the ONLY difference between the two variants")
+	_check(opaque.get_mode() == Shader.MODE_SPATIAL and trans.get_mode() == Shader.MODE_SPATIAL,
+			"both house variants are spatial shaders")
+
+	var outline_uniforms := {}
+	for u in CharForgeMaterials.OUTLINE_SHADER.get_shader_uniform_list():
+		outline_uniforms[u.name] = true
+	_check(outline_uniforms.has("outline_width") and outline_uniforms.has("outline_color"),
+			"the inverted-hull outline exposes its width/colour uniforms")
+	var strip_uniforms := {}
+	for u in CharForgeLipSync.MOUTH_STRIP_SHADER.get_shader_uniform_list():
+		strip_uniforms[u.name] = true
+	_check(strip_uniforms.has("frame_index") and strip_uniforms.has("strip_tex"),
+			"the mouth strip exposes frame_index + strip_tex")
+
+	# COMPATIBILITY DISCIPLINE, asserted on the source: DIFFUSE_LIGHT must only
+	# ever be ADDED to. Negative values clamp to black in the Compatibility
+	# renderer, so any subtraction is a silent breakage on the only web
+	# renderer we have.
+	var source := FileAccess.get_file_as_string(core)
+	_check(not source.is_empty(), "the core include is readable")
+	var accumulates := false
+	for raw_line in source.split("\n"):
+		var line: String = raw_line.strip_edges()
+		if line.begins_with("//") or not line.contains("DIFFUSE_LIGHT"):
+			continue
+		_check(not line.contains("DIFFUSE_LIGHT -="),
+				"DIFFUSE_LIGHT is never subtracted from (Compatibility clamps negatives)")
+		if line.contains("DIFFUSE_LIGHT +="):
+			accumulates = true
+	_check(accumulates, "the custom light() actually accumulates into DIFFUSE_LIGHT")
+	_check(source.contains("filter_nearest"),
+			"the palette sampler enforces nearest filtering AT THE SAMPLER")
+	_check(source.contains("repeat_disable"), "the palette sampler disables repeat")
+
+
+# ── Studio GUI wiring for the v2 surfaces ────────────────────────────────────
+
+func _test_studio_v2_controls() -> void:
+	var scene: PackedScene = load("res://scenes/studio.tscn")
+	var studio := scene.instantiate()
+	get_root().add_child(studio)
+	var ui: Dictionary = studio.get("_ui")
+
+	# Every palette region — canonical AND extended — must be editable.
+	for region in Char3DConfig.ALL_MATERIAL_REGIONS:
+		_check(ui.has("color_" + region), "the studio exposes a colour picker for '%s'" % region)
+	var socks_picker: ColorPickerButton = ui["color_socks"]
+	_check(socks_picker.color.is_equal_approx(
+			CharForgePalette.region_color(studio.assembler.config, "socks")),
+			"an unset extended region shows its DERIVED colour, not a flat default")
+
+	# The outline quality toggle must be present and OFF.
+	_check(ui.has("outline"), "the studio exposes the outline quality toggle")
+	_check(not (ui["outline"] as CheckButton).button_pressed,
+			"the outline toggle starts OFF")
+
+	# Editing a colour must recolour in place rather than rebuild the rig.
+	var head_before: Node = studio.assembler.get_node("Rig/Body/NeckTop/Head")
+	# 0.2/0.4/0.6 are exactly representable as 8-bit channels, so the
+	# Color -> #hex -> Color round trip the config format performs is lossless
+	# and the assertion below is about plumbing rather than about rounding.
+	var picked := Color(0.2, 0.4, 0.6)
+	studio._on_color_changed(picked, "socks")
+	_check(studio.assembler.get_node("Rig/Body/NeckTop/Head") == head_before,
+			"a colour edit does not rebuild the rig")
+	_check(studio.assembler.config.materials.get("socks") == "#" + picked.to_html(false),
+			"the colour edit was stored on the config as a hex string")
+	var cell: Vector2i = CharForgePalette.CELLS["socks"]
+	_check(studio.assembler.materials.palette_image.get_pixel(cell.x, cell.y)
+			.is_equal_approx(picked),
+			"the colour edit reached the shared palette")
+
+	_check(ui.has("proportions") and (ui["proportions"] as Label).text.contains("kemono"),
+			"the studio reports which proportion preset is active")
+
+	get_root().remove_child(studio)
+	studio.free()
+
+
+# ── Perf budget ──────────────────────────────────────────────────────────────
+
+# ── PROCEDURAL V2: colour blocking ───────────────────────────────────────────
+
+## The measurement machinery CharForgeBlocking grades with. Every number here is
+## checked against a hand-computable value, so a broken area/share calculation
+## cannot make the grading tests below pass by accident.
+func _test_blocking_measurement() -> void:
+	# Exact surface areas: a 1x1x1 box is 6, and the basis is applied to the
+	# triangle EDGES (not as an average scale factor), so stretching x by 2
+	# gives a 2x1x1 box = 10, not 6*2.
+	var box := BoxMesh.new()
+	box.size = Vector3.ONE
+	_check(_approx(CharForgeBlocking.mesh_area(box, Basis.IDENTITY), 6.0, 0.001),
+			"a unit box measures 6.0 surface area")
+	_check(_approx(CharForgeBlocking.mesh_area(box, Basis.IDENTITY.scaled(Vector3(2, 1, 1))),
+			10.0, 0.001),
+			"a non-uniformly scaled box measures its true area (10.0), not area x scale")
+
+	# region_of: the material's resource_name is the region channel.
+	var mi := MeshInstance3D.new()
+	mi.mesh = box
+	_check(CharForgeBlocking.region_of(mi) == "_other", "an unmaterialed mesh is _other")
+	var mat := StandardMaterial3D.new()
+	mat.resource_name = "charforge_socks"
+	mi.material_override = mat
+	_check(CharForgeBlocking.region_of(mi) == "socks", "region_of reads the charforge_ prefix")
+	mat.resource_name = "charforge_bogus"
+	_check(CharForgeBlocking.region_of(mi) == "_other",
+			"a charforge_ name that is not a real region is _other, not a new region")
+	mat.resource_name = "some_imported_material"
+	_check(CharForgeBlocking.region_of(mi) == "_other", "a foreign material name is _other")
+	mi.free()
+
+	# Shares over a hand-built two-mesh rig: 1 unit box (fur) + 1 box scaled 2x
+	# in every axis (accent, area 24) => 6/30 and 24/30.
+	var root := Node3D.new()
+	var fur_mat := StandardMaterial3D.new()
+	fur_mat.resource_name = "charforge_fur"
+	var accent_mat := StandardMaterial3D.new()
+	accent_mat.resource_name = "charforge_accent"
+	var a_node := MeshInstance3D.new()
+	a_node.mesh = box
+	a_node.material_override = fur_mat
+	root.add_child(a_node)
+	var b_node := MeshInstance3D.new()
+	b_node.mesh = box
+	b_node.material_override = accent_mat
+	b_node.scale = Vector3(2, 2, 2)
+	root.add_child(b_node)
+	var shares := CharForgeBlocking.measure(root)
+	_check(_approx(float(shares.fur), 0.2, 0.001) and _approx(float(shares.accent), 0.8, 0.001),
+			"measure returns true area shares (got fur=%.3f accent=%.3f)"
+			% [shares.get("fur", -1.0), shares.get("accent", -1.0)])
+	# The scoping knob the skin band depends on.
+	var scoped := CharForgeBlocking.measure(root, [b_node])
+	_check(_approx(float(scoped.fur), 1.0, 0.001) and not scoped.has("accent"),
+			"measure(skip) excludes a whole subtree")
+	_check(CharForgeBlocking.measure(Node3D.new()).is_empty(),
+			"a rig with no geometry measures {} rather than dividing by zero")
+	root.free()
+
+	# cloth_shares renormalises the three garment regions against EACH OTHER.
+	var cloth := CharForgeBlocking.cloth_shares(
+			{"fur": 0.3, "accent": 0.15, "detail": 0.05, "skin": 0.5})
+	_check(_approx(float(cloth.fur), 0.6) and _approx(float(cloth.accent), 0.3)
+			and _approx(float(cloth.detail), 0.1),
+			"cloth_shares renormalises fur/accent/detail against the cloth total")
+	_check(CharForgeBlocking.cloth_shares({"skin": 1.0}).is_empty(),
+			"cloth_shares is empty when nothing is clothed")
+
+	# The graders must REJECT the exact shape of the bug they exist for: a rig
+	# whose accent and detail regions have literally zero area.
+	var bare := CharForgeBlocking.check_jrpg({"skin": 0.85, "hair": 0.15})
+	_check(not bare.ok and String(bare.reasons[0]).contains("no cloth region"),
+			"check_jrpg rejects an avatar with no garment regions at all")
+	var overskin := CharForgeBlocking.check_jrpg({"fur": 0.3, "accent": 0.15, "detail": 0.05, "skin": 0.5})
+	_check(not overskin.ok, "check_jrpg rejects a 50%-skin body")
+	var no_socks := CharForgeBlocking.check_kemono(
+			{"fur": 0.9, "innerMuzzle": 0.05, "innerEar": 0.05})
+	_check(not no_socks.ok and String(", ".join(no_socks.reasons)).contains("socks"),
+			"check_kemono names the missing colour block")
+	_check(CharForgeBlocking.check_kemono({"fur": 0.2, "innerMuzzle": 0.3, "socks": 0.3,
+			"innerEar": 0.2}).ok == false,
+			"check_kemono rejects a coat that is no longer dominant")
+
+
+## jrpg-bases.md: "line = darkest + outline color".
+func _test_line_is_darkest() -> void:
+	var ok := {"fur": "#8b5a2b", "accent": "#00bcd4", "detail": "#d2b48c",
+			"line": "#090806", "iris": "#ff4f79", "skin": "#ffdbac", "hair": "#71635a"}
+	_check(CharForgeBlocking.is_line_darkest(ok), "a palette with the darkest line passes")
+	_check(CharForgeBlocking.enforce_line_darkest(ok).line == ok.line,
+			"enforce_line_darkest leaves a compliant palette alone")
+
+	# The real failure the randomizer produced: near-black hair under a brown line.
+	var bad := ok.duplicate()
+	bad.line = "#4a3728"
+	bad.hair = "#090806"
+	_check(not CharForgeBlocking.is_line_darkest(bad),
+			"a palette whose hair is darker than the line fails")
+	var fixed := CharForgeBlocking.enforce_line_darkest(bad)
+	_check(CharForgeBlocking.is_line_darkest(fixed),
+			"ONE pass of enforce_line_darkest fixes it (it picks the darkest offender)")
+	_check(bad.line == "#4a3728", "enforce_line_darkest does not mutate its argument")
+	var fixed_color := Color.from_string(String(fixed.line), Color.WHITE)
+	_check(fixed_color.get_luminance() < Color.from_string("#090806", Color.WHITE).get_luminance(),
+			"the corrected line is darker than the offender it was derived from")
+	_check(fixed_color.s > 0.0 or fixed_color.v > 0.0,
+			"the corrected line keeps a palette colour rather than collapsing to pure black")
+
+	# Two offenders at once: the darkest must be the one that is beaten.
+	var two := ok.duplicate()
+	two.line = "#8b8b8b"
+	two.detail = "#404040"
+	two.hair = "#101010"
+	_check(CharForgeBlocking.is_line_darkest(CharForgeBlocking.enforce_line_darkest(two)),
+			"one pass suffices when several regions are darker than the line")
+
+	# Regions the palette omits derive from present ones and only ever lighten,
+	# so an absent extended region must not be able to fail the rule.
+	var partial := {"fur": "#8b5a2b", "accent": "#00bcd4", "line": "#090806"}
+	_check(CharForgeBlocking.is_line_darkest(partial),
+			"absent extended regions do not fail the rule")
+	_check(CharForgeBlocking.is_line_darkest({"fur": "#8b5a2b"}),
+			"a palette with no line at all is vacuously compliant")
+	_check(CharForgeBlocking.enforce_line_darkest({"fur": "#8b5a2b"}).has("line") == false,
+			"enforce_line_darkest does not invent a line for a palette that has none")
+
+	# END TO END: every seeded character the randomizer can produce. 65 of these
+	# 400 violated the rule before the correction was wired in.
+	var violations := 0
+	var first := ""
+	var curated := 0
+	for seed_value in range(0, 400):
+		var cfg := CharRandomizer.randomize_config(seed_value)
+		if not CharForgeBlocking.is_line_darkest(cfg.materials):
+			violations += 1
+			if first.is_empty():
+				first = "seed %d -> %s" % [seed_value, cfg.materials]
+		if cfg.materials.line in ["#2f2f2f", "#090806", "#4a3728"]:
+			curated += 1
+	_check(violations == 0,
+			"all 400 seeded randomizer palettes keep line darkest (%d violations, first: %s)"
+			% [violations, first])
+	# ...and the correction is TARGETED: the great majority of seeds draw a line
+	# that already wins and must keep their curated colour untouched.
+	_check(curated >= 300,
+			"the line correction only fires where it is needed (%d/400 seeds kept a curated line)"
+			% curated)
+
+
+## The shipped avatars must actually satisfy the blocking rules of their lane —
+## the point of the whole pass. Before it, a default humanoid measured
+## skin=0.91 with accent and detail at EXACTLY zero.
+func _test_blocked_avatars_pass_their_lane() -> void:
+	var a := CharacterAssembler.new()
+	get_root().add_child(a)
+
+	for row in [["standard kemono", "canid", 1.0, "kemono"],
+			["chibi kemono", "canid", 0.6, "kemono"],
+			["hoofed kemono", "equine", 1.0, "kemono"],
+			["heroic JRPG", "humanoid", 1.0, "jrpg"],
+			["chibi JRPG", "humanoid", 0.6, "jrpg"]]:
+		var cfg := Char3DConfig.defaults()
+		cfg.head.family = row[1]
+		cfg.body.archetype = row[1]
+		cfg.body.height = row[2]
+		a.apply_config(cfg)
+		var report := a.blocking_report()
+		_check(report.get("lane", "") == row[3],
+				"%s takes the %s blocking lane" % [row[0], row[3]])
+		_check(bool(report.get("ok", false)),
+				"%s satisfies its lane's colour-blocking rules (%s)"
+				% [row[0], ", ".join(report.check.reasons) if report.has("check") else "no report"])
+
+	# The regression itself, stated directly: the three garment regions and the
+	# kemono colour blocks are PRESENT, not merely declared in the palette.
+	var hero := Char3DConfig.defaults()
+	hero.head.family = "humanoid"
+	hero.body.archetype = "humanoid"
+	a.apply_config(hero)
+	var body_shares: Dictionary = a.blocking_report().bodyShares
+	for region in ["fur", "accent", "detail", "skin"]:
+		_check(float(body_shares.get(region, 0.0)) > 0.0,
+				"a default hero renders real geometry in the '%s' region (%.4f)"
+				% [region, body_shares.get(region, 0.0)])
+	# Re-regioning, not layering: the torso IS the garment.
+	_check(CharForgeBlocking.region_of(a.get_node("Rig/Body/Belly") as MeshInstance3D) == "fur",
+			"the hero's torso renders as the dominant garment region")
+	_check(CharForgeBlocking.region_of(a.get_node("Rig/Body/HandL") as MeshInstance3D) == "skin",
+			"the hero's hands stay bare skin")
+	_check(CharForgeBlocking.region_of(a.get_node("Rig/Body/ForearmL") as MeshInstance3D) == "skin",
+			"the short sleeve leaves the forearm bare")
+	_check(a.get_node_or_null("Rig/Body/Belt") != null
+			and a.get_node_or_null("Rig/Body/Collar") != null,
+			"the JRPG detail trim is built")
+
+	# kemono: socks/gloves and the countershade block exist WITHOUT any markings
+	# part being chosen (they used to require marking_sock_01).
+	a.apply_config(Char3DConfig.defaults())
+	_check(a.config.parts.markings == null, "the kemono default config has no markings part")
+	_check(CharForgeBlocking.region_of(a.get_node("Rig/Body/PawL") as MeshInstance3D) == "socks",
+			"a default kemono has sock paws")
+	_check(CharForgeBlocking.region_of(a.get_node("Rig/Body/HandL") as MeshInstance3D) == "socks",
+			"a default kemono has glove hands")
+	_check(CharForgeBlocking.region_of(a.get_node("Rig/Body/Countershade") as MeshInstance3D)
+			== "innerMuzzle",
+			"the chest/belly countershade shares the inner-muzzle block")
+	# Hoofed kemono get the sock block as a fetlock cuff, never by recolouring
+	# the hoof (which stays linework).
+	var hoofed := Char3DConfig.defaults()
+	hoofed.head.family = "equine"
+	hoofed.body.archetype = "equine"
+	a.apply_config(hoofed)
+	_check(CharForgeBlocking.region_of(a.get_node("Rig/Body/FetlockL") as MeshInstance3D) == "socks",
+			"a hoofed kemono wears its sock block as a fetlock cuff")
+	_check(CharForgeBlocking.region_of(a.get_node("Rig/Body/HoofL") as MeshInstance3D) == "line",
+			"the hoof itself stays linework")
+
+	# LEGACY FAMILIES ARE UNTOUCHED — the additive discipline the whole of v2
+	# is built on.
+	var legacy := Char3DConfig.defaults()
+	legacy.head.family = "moth"
+	legacy.body.archetype = "moth"
+	a.apply_config(legacy)
+	_check(a.blocking_report().is_empty(),
+			"a legacy family reports no blocking lane (the research states none)")
+	_check(a.get_node_or_null("Rig/Body/Belt") == null
+			and a.get_node_or_null("Rig/Body/Countershade") == null
+			and a.get_node_or_null("Rig/Body/ForearmL") == null,
+			"no blocking geometry is added to a legacy rig")
+	for part in ["Hips", "Belly", "Chest", "ArmL", "LegL"]:
+		_check(CharForgeBlocking.region_of(a.get_node("Rig/Body/" + part) as MeshInstance3D) == "fur",
+				"legacy body part '%s' keeps the pre-v2 body region" % part)
+
+	get_root().remove_child(a)
+	a.free()
+
+
+## technique.md budgets ~5-15k triangles per avatar for the Quest 3 browser.
+## The procedural rig is far below that, and it must STAY below it: lofting the
+## muzzles and ears added real geometry where there were primitives, so this is
+## the guard that a future "just add more rings" change cannot quietly blow the
+## budget on the only device class that cannot absorb it.
+const AVATAR_TRIANGLE_BUDGET := 15000
+
+
+func _test_triangle_budget() -> void:
+	var worst := 0
+	var worst_family := ""
+	for family in Char3DConfig.FAMILIES:
+		var cfg := Char3DConfig.defaults()
+		cfg.head.family = family
+		cfg.body.archetype = family
+		# Load every optional slot so the count is the WORST case, not the bare rig.
+		cfg.parts.tail = "tail_fox_01"
+		cfg.parts.wings = "wings_dragon_01"
+		cfg.parts.feature = "feature_antlers_01"
+		cfg.parts.accessory = "accessory_glasses_01"
+		cfg.parts.markings = "marking_sock_01"
+		cfg.parts.hair = "hair_default_01"
+		var a := CharacterAssembler.new()
+		get_root().add_child(a)
+		a.apply_config(cfg)
+		var tris := _triangles(a)
+		if tris > worst:
+			worst = tris
+			worst_family = family
+		_check(tris > 0, "family %s produced drawable geometry" % family)
+		get_root().remove_child(a)
+		a.free()
+	_check(worst <= AVATAR_TRIANGLE_BUDGET,
+			"the heaviest fully-loaded avatar (%s, %d tris) fits the Quest-3 budget of %d"
+			% [worst_family, worst, AVATAR_TRIANGLE_BUDGET])
+	print("  [budget] heaviest fully-loaded avatar: %s at %d triangles" % [worst_family, worst])
+
+
+func _triangles(node: Node) -> int:
+	var total := 0
+	if node is MeshInstance3D and (node as MeshInstance3D).mesh != null:
+		total += (node as MeshInstance3D).mesh.get_faces().size() / 3
+	for child in node.get_children():
+		total += _triangles(child)
+	return total
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# PACK WIRING — the vendored CC0/CC-BY catalogue -> the basis registry -> a
+# mounted avatar. Everything below asserts against the COMMITTED bytes: paths
+# that must exist, licences that must be on the allow-list, node names that
+# must be in the models, geometry that must actually change on the rig.
+# ═════════════════════════════════════════════════════════════════════════════
+
+func _test_pack_catalogue_loads() -> void:
+	CharForgePacks.reload()
+	_check(CharForgePacks.load_error().is_empty(),
+			"the generated lane catalogue loads: " + CharForgePacks.load_error())
+	var lanes := CharForgePacks.lanes()
+	_check(lanes.size() == 5, "5 style lanes (anime/jrpg/kemono/monsters/import), got %d" % lanes.size())
+	var ids := PackedStringArray()
+	for lane in lanes:
+		ids.append(String(lane.id))
+	_check(ids == PackedStringArray(CharForgePacks.LANE_ORDER),
+			"lanes come back in the UI's tab order, got " + ", ".join(ids))
+
+	var entries := CharForgePacks.entries()
+	_check(entries.size() == 42, "42 catalogue entries, got %d" % entries.size())
+	var seen := {}
+	var recolorable := 0
+	for e in entries:
+		var key := String(e.key)
+		_check(not seen.has(key), "catalogue key '%s' is unique" % key)
+		seen[key] = true
+		_check(String(e.licenseSpdx) in CharForgeRegistry.ALLOWED_LICENSES,
+				"'%s' carries an allow-listed licence (%s)" % [key, e.licenseSpdx])
+		_check(not String(e.attribution).strip_edges().is_empty(),
+				"'%s' carries an attribution" % key)
+		_check(String(e.sourceUrl).begins_with("http"), "'%s' carries a source URL" % key)
+		_check(CharForgeRegistry._is_iso_date(String(e.retrievedAt)),
+				"'%s' carries an ISO retrievedAt" % key)
+		_check(FileAccess.file_exists(String(e.glb)),
+				"'%s' points at a committed file (%s)" % [key, e.glb])
+		_check(String(e.family) in Char3DConfig.FAMILIES, "'%s' names a real head family" % key)
+		_check(String(e.archetype) in Char3DConfig.FAMILIES, "'%s' names a real archetype" % key)
+		_check(String(e.style) in Char3DConfig.STYLES, "'%s' names a real style" % key)
+		if bool(e.recolorable):
+			recolorable += 1
+	_check(recolorable == 25, "25 entries are region-recolourable, got %d" % recolorable)
+
+	# The VRoid meshes must never become mixable parts (pixiv's guideline bars
+	# any app that generates or outputs models from recombined VRoid meshes).
+	for e in entries:
+		if String(e.packId) == "vroid-cc0-v1":
+			_check(not bool(e.partMixable),
+					"the VRoid entry '%s' is flagged NOT part-mixable" % e.key)
+
+	# The recorded capability gaps are carried through, not silently dropped.
+	var blocked := CharForgePacks.blocked()
+	_check(blocked.size() == 3, "3 recorded capability gaps, got %d" % blocked.size())
+	var graft_recorded := false
+	for b in blocked:
+		if String(b.get("id", "")) == "quaternius-animal-head-graft":
+			graft_recorded = true
+			_check(String(b.get("evidence", "")).length() > 40,
+					"the animal-head graft blocker carries real evidence")
+	_check(graft_recorded, "the animal-head graft is recorded as NOT POSSIBLE, with evidence")
+
+	# A vendored pack that reaches no lane must say why — otherwise 7 MB of
+	# models sit in the repo that neither the engine nor the UI can ever show.
+	var laned := {}
+	for e in entries:
+		laned[String(e.packId)] = true
+	var unlaned := CharForgePacks.unlaned()
+	_check(unlaned.size() == 2, "2 packs are vendored without a lane, got %d" % unlaned.size())
+	for pack_id in unlaned:
+		_check(not laned.has(pack_id), "'%s' really has no lane entry" % pack_id)
+		_check(String(unlaned[pack_id]).length() > 40,
+				"'%s' carries a real reason for being unlaned" % pack_id)
+	_check(unlaned.has("quaternius-animals-v1") and unlaned.has("khronos-fox-v1"),
+			"the donor quadrupeds and the loader test fixture are the two")
+
+
+func _test_pack_entries_all_register() -> void:
+	# The whole point of the registry's provenance gate is that a vendored pack
+	# passes it. Every one of the 38 entries must convert into a basis the
+	# registry ACCEPTS — a single missing licence field fails here.
+	var accepted := 0
+	for e in CharForgePacks.entries():
+		var registry := CharForgeRegistry.default_registry()
+		var basis := CharForgePacks.basis_entry(e)
+		var ok := false
+		if String(e.mount) == "body":
+			ok = registry.register_body(String(e.archetype), basis)
+		else:
+			ok = registry.register_head(String(e.family), basis)
+		_check(ok, "catalogue entry '%s' passes the licence gate: %s"
+				% [e.key, ", ".join(registry.last_errors)])
+		if ok:
+			accepted += 1
+	_check(accepted == 42, "all 42 entries register, got %d" % accepted)
+
+	# ... and the gate still bites: strip the licence and the same entry is out.
+	var stripped := CharForgePacks.basis_entry(CharForgePacks.entry("kemono-cat"))
+	stripped["licenseSpdx"] = "CC-BY-NC-4.0"
+	var gate := CharForgeRegistry.default_registry()
+	_check(not gate.register_head("felid", stripped),
+			"an NC licence is still rejected even coming from the catalogue")
+	_check(gate.resolve_head("felid").basis == CharForgeRegistry.BASIS_PROCEDURAL,
+			"a rejected entry leaves the family procedural")
+
+
+func _test_pack_registry_routing() -> void:
+	var registry := CharForgePacks.registry_for("kemono-cat")
+	_check(registry.resolve_head("felid").basis == CharForgeRegistry.BASIS_MESH,
+			"registry_for routes the entry's own family to the mesh basis")
+	_check(String(registry.resolve_head("felid").glb).ends_with("cat.glb"),
+			"the routed entry carries its committed path")
+	_check(registry.resolve_head("canid").basis == CharForgeRegistry.BASIS_PROCEDURAL,
+			"every OTHER family stays procedural")
+	_check(registry.resolve_body("felid").basis == CharForgeRegistry.BASIS_PROCEDURAL,
+			"an avatar-mount entry does not also claim the body basis")
+
+	var body := CharForgePacks.registry_for("kemono-ubc-body-male")
+	_check(body.resolve_body("humanoid").basis == CharForgeRegistry.BASIS_MESH,
+			"a body-mount entry registers on the BODY archetype")
+	_check(body.resolve_head("humanoid").basis == CharForgeRegistry.BASIS_PROCEDURAL,
+			"a body-mount entry leaves the head procedural — that IS the hybrid")
+
+	_check(CharForgePacks.registry_for("no-such-key").attributions().is_empty(),
+			"an unknown key yields the all-procedural registry")
+	_check(CharForgePacks.registry_for("").attributions().is_empty(),
+			"an empty key yields the all-procedural registry")
+
+	# The monsters lane occupies distinct families, so it can be wired whole.
+	var bound: Array = []
+	var monsters := CharForgePacks.registry_for_lane("monsters", bound)
+	_check(bound.size() == 15, "all 15 monster entries bind, got %d" % bound.size())
+	_check(monsters.resolve_head("dragon").basis == CharForgeRegistry.BASIS_MESH,
+			"the monsters lane puts a mesh on the dragon family")
+	_check(monsters.attributions().size() >= 2,
+			"the lane registry enumerates its attributions for the credits screen")
+
+	# CC-BY attribution has to be reachable for a user-visible credit.
+	var credits := CharForgePacks.attributions()
+	var required := 0
+	for row in credits:
+		if bool(row.required):
+			required += 1
+			_check(not String(row.attribution).is_empty(),
+					"a CC-BY credit names its author")
+	_check(required >= 2, "the CC-BY packs (Godette, 100Avatars) demand visible credit")
+
+
+func _test_pack_hidden_meshes_exist() -> void:
+	# hiddenMeshes are node names measured out of the committed GLBs. build-lanes
+	# cannot check them (pack.json records materials, not nodes), so this is the
+	# check that a typo does not silently leave a knight holding seven weapons.
+	var checked := 0
+	for e in CharForgePacks.entries():
+		var names: Variant = e.get("hiddenMeshes", [])
+		if not (names is Array) or names.is_empty():
+			continue
+		var root := CharForgeMount.instantiate_asset(String(e.glb))
+		_check(root != null, "'%s' instantiates for the prop check" % e.key)
+		if root == null:
+			continue
+		var present := {}
+		for node in CharForgeMount._walk(root):
+			if node is MeshInstance3D:
+				present[String(node.name)] = true
+		for wanted in names:
+			_check(present.has(String(wanted)),
+					"'%s' really has a mesh node named '%s'" % [e.key, wanted])
+			checked += 1
+		var hidden := CharForgeMount.hide_meshes(root, PackedStringArray(names))
+		_check(hidden == names.size(),
+				"hide_meshes hid all %d props of '%s' (hid %d)" % [names.size(), e.key, hidden])
+		root.free()
+	_check(checked == 26, "26 prop meshes are named across the KayKit entries, got %d" % checked)
+
+
+func _test_pack_mount_avatar() -> void:
+	var host := CharacterAssembler.new()
+	get_root().add_child(host)
+	host.apply_config(Char3DConfig.defaults())
+	var procedural_height := CharForgeMount.measure_height(host)
+	_check(procedural_height > 0.5, "the procedural avatar has a measurable height")
+
+	var mount := CharForgeMount.new(host)
+	get_root().add_child(mount)
+	var entry := CharForgePacks.basis_entry(CharForgePacks.entry("kemono-cat"))
+	var root := mount.mount("head", entry)
+	_check(root != null, "the chibi cat mounts")
+	if root == null:
+		get_root().remove_child(mount)
+		mount.free()
+		get_root().remove_child(host)
+		host.free()
+		return
+
+	_check(root.name == CharForgeMount.MOUNT_NODE_NAME, "the mesh mounts under PackMesh")
+	_check(root.get_parent() == host, "the mesh is parented to the assembler")
+	_check(not host.rig_ref("rig").visible, "the procedural rig is hidden behind a whole avatar")
+	_check(CharForgeGlbLoader.find_skeleton(root) != null, "the mounted cat brought its rig")
+	var mounted_height := CharForgeMount.measure_height(root)
+	_check(absf(mounted_height - procedural_height) < procedural_height * 0.05,
+			"the mounted avatar is scaled to the procedural height (%.2f vs %.2f)"
+			% [mounted_height, procedural_height])
+
+	var report := mount.mount_report()
+	_check(report.mounted, "the mount reports itself mounted")
+	_check(report.recolorable, "the flat-colour Quaternius cat is recolourable")
+	_check(int(report.surfacesRebound) == 5,
+			"all 5 cat surfaces were rebound to house materials, got %d" % report.surfacesRebound)
+	_check(String(report.licenseSpdx) == "CC0-1.0", "the report carries the licence")
+	_check(String(report.attribution).contains("Quaternius"), "the report carries the credit")
+
+	# Every rebound surface must be a HOUSE material — that is what makes the
+	# palette recolour reach an imported mesh at all.
+	var house := 0
+	var foreign := 0
+	for node in CharForgeMount._walk(root):
+		if not (node is MeshInstance3D):
+			continue
+		var mi := node as MeshInstance3D
+		for i in range(mi.mesh.get_surface_count()):
+			var mat: Material = mi.get_surface_override_material(i)
+			if mat != null and mat == host.materials.region("fur"):
+				house += 1
+			elif mat != null:
+				house += 1 if mat is ShaderMaterial and (mat as ShaderMaterial).shader \
+						== CharForgeMaterials.HOUSE_SHADER else 0
+				foreign += 0 if mat is ShaderMaterial and (mat as ShaderMaterial).shader \
+						== CharForgeMaterials.HOUSE_SHADER else 1
+	_check(house == 5 and foreign == 0,
+			"all 5 surfaces run the house toon shader (house=%d foreign=%d)" % [house, foreign])
+
+	# Recolour must still work THROUGH the mounted mesh: the palette is shared.
+	var before: Color = host.materials.palette_image.get_pixel(
+			CharForgePalette.CELLS["fur"].x, CharForgePalette.CELLS["fur"].y)
+	_check(host.recolor({"fur": "#123456"}), "recolour applies with a mesh mounted")
+	var after: Color = host.materials.palette_image.get_pixel(
+			CharForgePalette.CELLS["fur"].x, CharForgePalette.CELLS["fur"].y)
+	_check(not before.is_equal_approx(after), "the shared palette changed under the mounted mesh")
+
+	# Clearing restores the procedural avatar rather than leaving an empty stage.
+	mount.clear()
+	_check(host.rig_ref("rig").visible, "clearing the mount un-hides the procedural rig")
+	_check(mount.current_key.is_empty(), "clearing forgets the mounted key")
+
+	get_root().remove_child(mount)
+	mount.free()
+	get_root().remove_child(host)
+	host.free()
+
+
+func _test_pack_mount_preserves_atlas_materials() -> void:
+	var host := CharacterAssembler.new()
+	get_root().add_child(host)
+	host.apply_config(Char3DConfig.defaults())
+	var mount := CharForgeMount.new(host)
+	get_root().add_child(mount)
+
+	var entry := CharForgePacks.basis_entry(CharForgePacks.entry("jrpg-knight"))
+	_check(bool(entry.preserveMaterials), "the atlas-textured knight declares preserveMaterials")
+	var root := mount.mount("head", entry)
+	_check(root != null, "the knight mounts")
+	var report := mount.mount_report()
+	_check(int(report.surfacesRebound) == 0,
+			"a preserved-material entry rebinds NOTHING (got %d)" % report.surfacesRebound)
+	_check(not report.recolorable, "the report says the knight cannot be recoloured")
+	_check(int(report.meshesHidden) == 7,
+			"the knight's 7 weapons/shields are hidden (got %d)" % report.meshesHidden)
+
+	# The vendor atlas material survived — a house material here would have
+	# painted the whole knight one flat colour.
+	var kept := 0
+	for node in CharForgeMount._walk(root):
+		if node is MeshInstance3D and (node as MeshInstance3D).visible:
+			var mi := node as MeshInstance3D
+			for i in range(mi.mesh.get_surface_count()):
+				if mi.get_surface_override_material(i) == null:
+					kept += 1
+	_check(kept == 8, "all 8 visible knight surfaces kept the vendor atlas (got %d)" % kept)
+
+	get_root().remove_child(mount)
+	mount.free()
+	get_root().remove_child(host)
+	host.free()
+
+
+func _test_pack_mount_body_graft() -> void:
+	# legal-inventory.md's hybrid: CC0 humanoid BODY + our procedural beast head,
+	# grafted from code because no CC0 rigged anthro biped exists to buy.
+	var host := CharacterAssembler.new()
+	get_root().add_child(host)
+	var cfg := Char3DConfig.defaults()
+	cfg.head.family = "canid"
+	cfg.body.archetype = "humanoid"
+	host.apply_config(cfg)
+	var head := host.rig_ref("head")
+	_check(head != null, "the procedural canid head exists before the graft")
+
+	var mount := CharForgeMount.new(host)
+	get_root().add_child(mount)
+	var entry := CharForgePacks.basis_entry(CharForgePacks.entry("kemono-ubc-body-male"))
+	_check(not bool(entry.wholeAvatar), "a body mount is not a whole avatar")
+	var root := mount.mount("body", entry)
+	_check(root != null, "the CC0 body mounts")
+
+	var attachment := head.get_parent()
+	_check(attachment is BoneAttachment3D,
+			"the procedural head now hangs off a BoneAttachment3D")
+	if attachment is BoneAttachment3D:
+		_check((attachment as BoneAttachment3D).bone_name == "Head",
+				"the graft bound to the rig's Head bone, got '%s'"
+				% (attachment as BoneAttachment3D).bone_name)
+		_check(attachment.name == CharForgeMount.HEAD_GRAFT_NAME,
+				"the graft node is named for what it is")
+		_check(attachment.get_parent() is Skeleton3D,
+				"the attachment was added to the loaded SKELETON, not to the scene root")
+	_check(head.visible and head.is_inside_tree(), "the grafted head is live in the tree")
+	_check(not host.rig_ref("rig").visible, "the procedural BODY is hidden under the mesh body")
+	_check(mount.last_error.is_empty(), "the graft reported no fallback: " + mount.last_error)
+
+	# The head must not inherit the body's fit-to-height scale, or a chibi body
+	# would shrink our head with it.
+	var report := mount.mount_report()
+	var expected := 1.0 / float(report.heightScale)
+	_check(absf(head.scale.x - expected) < 0.001,
+			"the graft cancels the body's %.3fx fit scale (head scale %.3f)"
+			% [report.heightScale, head.scale.x])
+
+	get_root().remove_child(mount)
+	mount.free()
+	get_root().remove_child(host)
+	host.free()
+
+
+func _test_pack_mount_vrm_and_license() -> void:
+	var host := CharacterAssembler.new()
+	get_root().add_child(host)
+	host.apply_config(Char3DConfig.defaults())
+	var mount := CharForgeMount.new(host)
+	get_root().add_child(mount)
+
+	var entry := CharForgePacks.basis_entry(CharForgePacks.entry("anime-godette"))
+	_check(String(entry.rig) == CharForgeRegistry.RIG_VRM, "Godette is registered as a VRM rig")
+	_check(String(entry.licenseSpdx) == "CC-BY-3.0", "Godette carries her CC-BY-3.0 licence")
+	var root := mount.mount("head", entry)
+	_check(root != null, "the VRM mounts through the vendored godot-vrm addon")
+	if root == null:
+		get_root().remove_child(mount)
+		mount.free()
+		get_root().remove_child(host)
+		host.free()
+		return
+
+	var license := CharForgeVrmIngest.read_license(root)
+	_check(not license.is_empty(), "the VRM's in-file licence metadata is readable")
+	_check(String(license.get("title", "")).to_lower().contains("godette"),
+			"the in-file title is the model's own, got '%s'" % license.get("title", ""))
+	_check(String(license.get("authors", "")).contains("SirRichard94"),
+			"the in-file author survives, got '%s'" % license.get("authors", ""))
+	_check(String(license.get("licenseName", "")).to_upper().contains("CC_BY"),
+			"the in-file licence name is read, got '%s'" % license.get("licenseName", ""))
+	_check(license.has("redistributionDisallowed") and license.has("creditRequired"),
+			"the licence block answers the two questions a user actually asks")
+
+	# MToon must not survive on a recolourable VRM — technique.md's verdict is
+	# that MToon on WebGL2 is unverified, so the house shader replaces it.
+	var mtoon := 0
+	for node in CharForgeMount._walk(root):
+		if not (node is MeshInstance3D):
+			continue
+		var mi := node as MeshInstance3D
+		for i in range(mi.mesh.get_surface_count()):
+			if CharForgeVrmIngest.is_mtoon(mi.get_active_material(i)):
+				mtoon += 1
+	_check(mtoon == 0, "no MToon material survived the swap (%d left)" % mtoon)
+
+	get_root().remove_child(mount)
+	mount.free()
+	get_root().remove_child(host)
+	host.free()
+
+
+func _test_pack_mount_failure_is_soft() -> void:
+	var host := CharacterAssembler.new()
+	get_root().add_child(host)
+	host.apply_config(Char3DConfig.defaults())
+	var mount := CharForgeMount.new(host)
+	get_root().add_child(mount)
+
+	var failures: Array = []
+	mount.mount_failed.connect(func(_e, reason): failures.append(reason))
+	var broken := CharForgePacks.basis_entry(CharForgePacks.entry("kemono-cat"))
+	broken["glb"] = "res://assets/packs/quaternius-monsters-v1/models/does-not-exist.glb"
+	var root := mount.mount("head", broken)
+	_check(root == null, "a missing asset mounts nothing")
+	_check(failures.size() == 1, "the failure is announced, not swallowed")
+	_check(host.rig_ref("rig").visible,
+			"the PROCEDURAL avatar stays visible when the mesh cannot be loaded")
+	_check(not mount.last_error.is_empty(), "the failure reason is recorded")
+
+	get_root().remove_child(mount)
+	mount.free()
+	get_root().remove_child(host)
+	host.free()
+
+
+func _test_byo_import_round_trip() -> void:
+	# The BYO slot, exercised exactly as the browser drives it: raw bytes in,
+	# avatar on stage, licence block out. Nothing is written to disk.
+	var host := CharacterAssembler.new()
+	get_root().add_child(host)
+	host.apply_config(Char3DConfig.defaults())
+	var mount := CharForgeMount.new(host)
+	get_root().add_child(mount)
+
+	var bytes := FileAccess.get_file_as_bytes("res://assets/packs/godette-v1/models/godette.vrm")
+	_check(bytes.size() > 1000, "test fixture bytes read")
+	var report := mount.import_bytes(bytes, "my-avatar.vrm")
+	_check(bool(report.ok), "user bytes import: " + String(report.get("reason", "")))
+	_check(bool(report.imported), "the report marks the avatar as user-imported")
+	_check(not bool(report.recolorable),
+			"an imported model keeps ITS materials — we do not repaint someone else's work")
+	_check(String(report.licenseSpdx).is_empty(),
+			"an imported file gets NO SPDX id from us — we did not vet it")
+	var license: Dictionary = report.license
+	_check(String(license.get("authors", "")).contains("SirRichard94"),
+			"the importer surfaces the file's own author")
+	_check(String(license.get("licenseName", "")).to_upper().contains("CC_BY"),
+			"the importer surfaces the file's own licence")
+	_check(not host.rig_ref("rig").visible, "the imported avatar replaced the procedural rig")
+	_check(int(report.bytes) == bytes.size(), "the report echoes the byte count")
+
+	# Failure paths: empty, garbage, and over-cap all refuse WITHOUT mounting.
+	var before := mount.current_key
+	for bad in [
+			{"bytes": PackedByteArray(), "name": "empty.vrm", "why": "an empty file"},
+			{"bytes": "not a gltf at all".to_utf8_buffer(), "name": "junk.glb", "why": "garbage bytes"},
+	]:
+		var r: Dictionary = mount.import_bytes(bad.bytes, bad.name)
+		_check(not bool(r.ok), "%s is refused" % bad.why)
+		_check(not String(r.reason).is_empty(), "%s is refused with a reason" % bad.why)
+	_check(mount.current_key == before,
+			"a refused import leaves the previously mounted avatar alone")
+
+	get_root().remove_child(mount)
+	mount.free()
+	get_root().remove_child(host)
+	host.free()
+
+
+func _test_bridge_pack_surface() -> void:
+	# The host contract (DESIGN §4) as the Angular remote consumes it.
+	var bridge: Node = get_root().get_node_or_null("/root/CharForgeBridge")
+	_check(bridge != null, "the CharForgeBridge autoload is present")
+	if bridge == null:
+		return
+	var parsed: Variant = JSON.parse_string(bridge.packs_json())
+	_check(parsed is Dictionary, "listPacks() returns parseable JSON")
+	if not (parsed is Dictionary):
+		return
+	var doc: Dictionary = parsed
+	_check(bool(doc.available), "the host catalogue reports itself available")
+	_check(doc.lanes.size() == 5, "the host catalogue carries all 5 lanes")
+	var count := 0
+	for lane in doc.lanes:
+		for e in lane.entries:
+			count += 1
+			_check(e.has("licenseSpdx") and e.has("attribution") and e.has("sourceUrl"),
+					"host entry '%s' carries its provenance" % e.key)
+			_check(e.has("tris") and e.has("joints") and e.has("bytes"),
+					"host entry '%s' carries its cost so the UI can warn" % e.key)
+	_check(count == 42, "the host catalogue carries all 42 entries, got %d" % count)
+	_check(doc.blocked.size() == 3, "the host catalogue carries the capability gaps")
+
+
+func _test_studio_pack_controls() -> void:
+	var scene: PackedScene = load("res://scenes/studio.tscn")
+	var studio := scene.instantiate()
+	get_root().add_child(studio)
+	var ui: Dictionary = studio.get("_ui")
+
+	_check(ui.has("lane") and ui.has("pack"), "the studio exposes lane + model pickers")
+	var lane_pick: OptionButton = ui["lane"]
+	_check(lane_pick.item_count == 6,
+			"the lane picker offers procedural + 5 lanes, got %d" % lane_pick.item_count)
+	var pack_pick: OptionButton = ui["pack"]
+	_check(pack_pick.disabled, "the model picker starts disabled (procedural selected)")
+
+	# Selecting the monsters lane fills the model picker with its 15 entries.
+	studio._ui.lane.select(4)
+	studio._on_lane_selected(4)
+	_check(not pack_pick.disabled, "choosing a lane enables the model picker")
+	_check(pack_pick.item_count == 16,
+			"the monsters lane offers none + 15 models, got %d" % pack_pick.item_count)
+
+	# Mounting through the studio's own entry point must move the CONFIG too:
+	# the basis registry is keyed by family, so the config has to follow.
+	studio.select_pack("monster-dragon")
+	_check(studio.assembler.config.head.family == "dragon",
+			"selecting the dragon moved the config onto the dragon family")
+	_check(studio.mount.mount_report().mounted, "the dragon actually mounted")
+	_check(studio.assembler.resolved_bases().head.basis == CharForgeRegistry.BASIS_MESH,
+			"the assembler resolves the dragon to a mesh basis")
+	_check(String(ui["pack_note"].text).contains("CC0-1.0"),
+			"the studio shows the licence of the mounted model")
+
+	# Changing the family off a whole-avatar model drops back to procedural
+	# rather than leaving a mesh that no longer matches the config.
+	studio._on_family_selected(Char3DConfig.FAMILIES.find("canid"))
+	_check(studio.assembler.config.head.family == "canid", "the family change applied")
+	_check(studio.assembler.resolved_bases().head.basis == CharForgeRegistry.BASIS_PROCEDURAL,
+			"the stale mesh basis was dropped with it")
+	_check(studio.assembler.rig_ref("rig").visible, "the procedural rig is back on stage")
+
+	# Back to procedural explicitly.
+	studio.select_pack("")
+	_check(not studio.mount.mount_report().mounted, "select_pack('') unmounts")
+
+	get_root().remove_child(studio)
+	studio.free()
+
+
+func _test_pack_mount_composed_outfit() -> void:
+	# The Quaternius modular outfits: four separate GLBs skinned to the SAME
+	# 65-bone Universal Base rig, assembled at runtime with no Blender step.
+	var entry := CharForgePacks.entry("jrpg-outfit-peasant-male")
+	_check(not entry.is_empty(), "the peasant outfit set is in the catalogue")
+	if entry.is_empty():
+		return
+	_check(entry.pieces.size() == 3, "the peasant set carries 3 extra pieces, got %d"
+			% entry.pieces.size())
+	_check(int(entry.tris) == 12894,
+			"the catalogue counts the WHOLE set's triangles (12894), got %d" % int(entry.tris))
+	for path in entry.pieces:
+		_check(FileAccess.file_exists(String(path)), "piece %s is committed" % path)
+
+	var host := CharacterAssembler.new()
+	get_root().add_child(host)
+	var cfg := Char3DConfig.defaults()
+	cfg.head.family = "humanoid"
+	cfg.body.archetype = "humanoid"
+	host.apply_config(cfg)
+	var mount := CharForgeMount.new(host)
+	get_root().add_child(mount)
+
+	var basis := CharForgePacks.basis_entry(entry)
+	_check(basis.pieces.size() == 3, "the basis entry carries the piece paths")
+	var root := mount.mount("body", basis)
+	_check(root != null, "the composed outfit mounts")
+	if root == null:
+		get_root().remove_child(mount)
+		mount.free()
+		get_root().remove_child(host)
+		host.free()
+		return
+
+	var report := mount.mount_report()
+	_check(int(report.piecesMerged) == 3,
+			"the 3 extra garment meshes merged onto the primary's skeleton, got %d"
+			% int(report.piecesMerged))
+	_check(String(report.error).is_empty(),
+			"no piece was dropped: " + String(report.error))
+
+	# Every merged mesh must hang off THE skeleton and keep a fully resolvable
+	# skin — a bind that does not resolve renders as a collapsed mesh.
+	var skeleton := CharForgeGlbLoader.find_skeleton(root)
+	_check(skeleton != null, "the set has exactly one skeleton")
+	var skinned := 0
+	var unresolved := 0
+	for child in skeleton.get_children():
+		if not (child is MeshInstance3D):
+			continue
+		var mi := child as MeshInstance3D
+		if mi.skin == null:
+			continue
+		skinned += 1
+		unresolved += CharForgeMount._unresolved_binds(mi, skeleton)
+	_check(skinned == 4, "4 skinned garment meshes sit under the skeleton, got %d" % skinned)
+	_check(unresolved == 0, "every skin bind resolves on the shared rig (%d did not)" % unresolved)
+
+	# It is a BODY mount, so our procedural head is still the head.
+	var head := host.rig_ref("head")
+	_check(head != null and head.get_parent() is BoneAttachment3D,
+			"the procedural head is grafted onto the outfit's rig")
+
+	# The GARMENTS must render exactly what the catalogue promised, or the
+	# selector's Quest-budget flag is lying. The grafted procedural head is the
+	# only other geometry under the mount, so subtracting it is the whole
+	# difference — asserting that pins both facts at once.
+	var garment_tris := _triangles(root) - _triangles(head)
+	_check(garment_tris == int(entry.tris),
+			"the mounted set renders the catalogued %d garment triangles, got %d"
+			% [int(entry.tris), garment_tris])
+
+	# The garments are flat-colour slots, so recolouring reaches them.
+	_check(report.recolorable, "the outfit set is region-recolourable")
+	_check(int(report.surfacesRebound) > 0,
+			"the primary's surfaces were rebound to house materials")
+
+	# A piece list pointing at a rig that does NOT match is refused, not merged.
+	var alien := CharForgeMount.merge_pieces(skeleton,
+			PackedStringArray(["res://assets/packs/quaternius-monsters-v1/models/cat.glb"]))
+	_check(int(alien.merged) == 0, "a piece from a different rig is not merged")
+	_check(alien.skipped.size() > 0, "and the refusal is reported")
+
+	get_root().remove_child(mount)
+	mount.free()
+	get_root().remove_child(host)
+	host.free()

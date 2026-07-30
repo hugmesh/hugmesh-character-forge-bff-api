@@ -1,0 +1,172 @@
+<div class="editor" data-testid="cf-editor">
+  <fieldset class="panel">
+    <legend>Character</legend>
+    <label class="row">
+      <span class="name">Name</span>
+      <input
+        type="text"
+        maxlength="120"
+        data-testid="cf-name"
+        [value]="state.config().name"
+        (input)="onName($event)"
+        aria-label="Character name"
+      />
+    </label>
+    <label class="row">
+      <span class="name">Style</span>
+      <select data-testid="cf-style" [value]="state.config().style" (change)="onStyle($event)" aria-label="Render style">
+        @for (s of styles; track s) {
+          <option [value]="s" [selected]="s === state.config().style">{{ s }}</option>
+        }
+      </select>
+    </label>
+  </fieldset>
+
+  <fieldset class="panel">
+    <legend>Body</legend>
+    <label class="row">
+      <span class="name">Archetype</span>
+      <select data-testid="cf-body-archetype" (change)="onArchetype($event)" aria-label="Body archetype">
+        @for (a of archetypes; track a) {
+          <option [value]="a" [selected]="a === state.config().body.archetype">{{ a }}</option>
+        }
+      </select>
+    </label>
+    <label class="row">
+      <span class="name">Build</span>
+      <input
+        type="range" min="0" max="1" step="0.05"
+        data-testid="cf-build"
+        [value]="state.config().body.build"
+        (input)="onBuild($event)"
+        aria-label="Body build (slight to heavy)"
+      />
+    </label>
+    <label class="row">
+      <span class="name">Height</span>
+      <input
+        type="range" min="0.5" max="1.5" step="0.05"
+        data-testid="cf-height"
+        [value]="state.config().body.height"
+        (input)="onHeight($event)"
+        aria-label="Body height"
+      />
+    </label>
+  </fieldset>
+
+  <fieldset class="panel">
+    <legend>Head</legend>
+    <label class="row">
+      <span class="name">Family</span>
+      <select data-testid="cf-family" (change)="onFamily($event)" aria-label="Head family">
+        @for (f of families; track f) {
+          <option [value]="f" [selected]="f === state.config().head.family">{{ f }}</option>
+        }
+      </select>
+    </label>
+    <label class="row">
+      <span class="name">Variant</span>
+      <input
+        type="text" maxlength="40"
+        data-testid="cf-variant"
+        [value]="state.config().head.variant"
+        (input)="onVariant($event)"
+        aria-label="Head variant (e.g. the VN head part id)"
+      />
+    </label>
+    <label class="row">
+      <span class="name">Snout</span>
+      <input
+        type="range" min="0" max="1" step="0.05"
+        data-testid="cf-snout"
+        [value]="state.config().head.snoutLength"
+        (input)="onSnout($event)"
+        aria-label="Snout length"
+      />
+    </label>
+    <label class="row">
+      <span class="name">Ear style</span>
+      <input
+        type="text" maxlength="40"
+        data-testid="cf-ear-style"
+        [value]="state.config().head.earStyle ?? ''"
+        (input)="onEarStyle($event)"
+        aria-label="Ear style (empty for the family default)"
+      />
+    </label>
+    <label class="row">
+      <span class="name">Horn style</span>
+      <input
+        type="text" maxlength="40"
+        data-testid="cf-horn-style"
+        [value]="state.config().head.hornStyle ?? ''"
+        (input)="onHornStyle($event)"
+        aria-label="Horn style (empty for none)"
+      />
+    </label>
+  </fieldset>
+
+  <fieldset class="panel">
+    <legend>Parts</legend>
+    @for (slot of partSlots; track slot) {
+      <label class="row">
+        <span class="name">{{ slot }}</span>
+        <select
+          [attr.data-testid]="'cf-part-' + slot"
+          (change)="onPart(slot, $event)"
+          [attr.aria-label]="slot + ' part'"
+        >
+          <option value="" [selected]="state.config().parts[slot] === null">(none)</option>
+          @for (id of partOptions()[slot]; track id) {
+            <option [value]="id" [selected]="id === state.config().parts[slot]">{{ id }}</option>
+          }
+        </select>
+      </label>
+    }
+  </fieldset>
+
+  <fieldset class="panel">
+    <legend>Materials</legend>
+    @for (region of materialRegions; track region) {
+      <label class="swatch">
+        <span class="name">{{ region }}</span>
+        <input
+          type="color"
+          [attr.data-testid]="'cf-material-' + region"
+          [value]="state.config().materials[region]"
+          (input)="onMaterial(region, $event)"
+          [attr.aria-label]="region + ' colour'"
+        />
+      </label>
+    }
+
+    <p class="hint">
+      Coat blocks (kemono): extra masks the maker DERIVES from the colours above
+      until you set one. Pinning a colour overrides the derivation; "derive"
+      hands it back.
+    </p>
+    @for (region of extendedRegions; track region) {
+      <label class="swatch extended" [class.derived]="!isPinned(region)">
+        <span class="name">{{ region }}</span>
+        <input
+          type="color"
+          [attr.data-testid]="'cf-material-' + region"
+          [value]="effectiveColor(region)"
+          (input)="onMaterial(region, $event)"
+          [attr.aria-label]="region + ' colour'"
+        />
+        @if (isPinned(region)) {
+          <button
+            type="button"
+            class="unpin"
+            [attr.data-testid]="'cf-material-derive-' + region"
+            [attr.aria-label]="'Derive ' + region + ' from ' + derivedFrom[region]"
+            (click)="onDerive(region)"
+          >derive</button>
+        } @else {
+          <span class="derived-from" aria-hidden="true">← {{ derivedFrom[region] }}</span>
+        }
+      </label>
+    }
+  </fieldset>
+</div>

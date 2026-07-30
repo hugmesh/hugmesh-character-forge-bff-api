@@ -1,0 +1,174 @@
+<fieldset class="packs" data-testid="cf-packs">
+  <legend>Character style</legend>
+
+  <div class="tabs" role="tablist" aria-label="Character style">
+    @for (lane of lanes; track lane.id) {
+      <button
+        type="button"
+        role="tab"
+        class="tab"
+        [class.active]="activeLane() === lane.id"
+        [attr.aria-selected]="activeLane() === lane.id"
+        [attr.data-testid]="'cf-lane-' + lane.id"
+        (click)="selectLane(lane.id)"
+      >{{ lane.displayName }}</button>
+    }
+  </div>
+
+  <p class="summary" data-testid="cf-lane-summary">{{ laneSummary() }}</p>
+
+  @if (activeLane() !== 'import') {
+    <div class="grid" data-testid="cf-pack-grid">
+      <button
+        type="button"
+        class="card procedural"
+        [class.chosen]="selectedKey() === ''"
+        data-testid="cf-pack-procedural"
+        (click)="clearPack()"
+      >
+        <span class="thumb initials" aria-hidden="true">◇</span>
+        <span class="name">Procedural</span>
+        <span class="meta">no mesh · fully recolourable</span>
+      </button>
+
+      @for (entry of entries(); track entry.key) {
+        <button
+          type="button"
+          class="card"
+          [class.chosen]="selectedKey() === entry.key"
+          [attr.data-testid]="'cf-pack-' + entry.key"
+          [attr.title]="entry.notes"
+          (click)="choose(entry)"
+        >
+          @if (thumbnailFor(entry.key); as thumb) {
+            <img class="thumb" [src]="thumb" [alt]="entry.displayName + ' preview'" />
+          } @else {
+            <span class="thumb initials" aria-hidden="true">{{ initialsFor(entry) }}</span>
+          }
+          <span class="name">{{ entry.displayName }}</span>
+          <span class="meta">{{ costFor(entry) }}</span>
+          <span class="licence">{{ entry.licenseSpdx }}</span>
+          @if (!entry.recolorable) {
+            <span class="flag" title="One baked atlas — per-region colours do not apply">
+              fixed colours
+            </span>
+          }
+          @if (entry.pieceCount) {
+            <span class="flag" title="A modular set assembled onto one skeleton at load time">
+              {{ entry.pieceCount + 1 }}-piece set
+            </span>
+          }
+          @if (!entry.partMixable) {
+            <span class="flag" title="Licence bars recombining this mesh — ships whole">
+              whole model only
+            </span>
+          }
+          @if (overBudget(entry); as warn) {
+            <span class="flag warn" [title]="warn">over Quest budget</span>
+          }
+        </button>
+      }
+    </div>
+
+    <p class="attribution" data-testid="cf-pack-credits">
+      Models by their authors under the licence shown on each card. CC-BY models
+      require that credit stays visible — it is on the card and in
+      THIRD_PARTY_ASSETS.md.
+    </p>
+  } @else {
+    <div class="import-slot" data-testid="cf-import-slot">
+      <p class="lede">
+        Bring your own VRM or GLB. The file is read <strong>in this browser</strong>
+        and handed straight to the 3D engine — it is never uploaded, never stored
+        on the server, and never saved with your character. Only the parametric
+        definition (families, parts, colours) is ever persisted.
+      </p>
+      <label class="file">
+        <span>Choose a .vrm / .glb file</span>
+        <input
+          type="file"
+          [attr.accept]="importAccept"
+          data-testid="cf-import-file"
+          [disabled]="importBusy() ? true : null"
+          (change)="onImportFile($event)"
+        />
+      </label>
+      @if (!engine.ready()) {
+        <p class="hint" data-testid="cf-import-engine-hint">
+          The engine bundle is not running yet — importing needs it, because the
+          model is loaded inside the engine rather than by this page.
+        </p>
+      }
+      @if (importBusy()) {
+        <p class="status" role="status" data-testid="cf-import-busy">
+          Reading {{ importedName() }} …
+        </p>
+      }
+      @if (importError()) {
+        <p class="field-error" role="alert" data-testid="cf-import-file-error">{{ importError() }}</p>
+      }
+
+      @if (licenseRows().length) {
+        <div class="license" data-testid="cf-import-license">
+          <h4>What this file says about itself</h4>
+          <p class="hint">
+            Read out of the VRM's own metadata — these are the author's terms, not ours.
+          </p>
+          <dl>
+            @for (row of licenseRows(); track row.label) {
+              <div class="row">
+                <dt>{{ row.label }}</dt>
+                <dd>{{ row.value }}</dd>
+              </div>
+            }
+          </dl>
+        </div>
+      }
+
+      <h4>Where to get one</h4>
+      <ul class="sources">
+        @for (source of importSources; track source.url) {
+          <li [class.user-only]="!source.redistributable">
+            <a [href]="source.url" target="_blank" rel="noopener noreferrer">{{ source.name }}</a>
+            <span class="terms">{{ source.terms }}</span>
+            @if (!source.redistributable) {
+              <span class="flag warn" title="We are not allowed to ship this — import your own copy">
+                user-supplied only
+              </span>
+            }
+            <p class="note">{{ source.note }}</p>
+          </li>
+        }
+      </ul>
+    </div>
+  }
+
+  @if (report(); as mounted) {
+    @if (mounted.mounted) {
+      <p class="mount-note" data-testid="cf-pack-report">
+        <strong>{{ mounted.displayName }}</strong>
+        — recolour: {{ mounted.recolorable ? 'yes' : 'no (baked atlas)' }};
+        lip-sync: {{ mounted.lipSyncChannels.length ? mounted.lipSyncChannels.join(', ') : 'none' }}@if (mounted.meshesHidden) {, {{ mounted.meshesHidden }} props hidden}.
+        @if (mounted.error) { <span class="warn">{{ mounted.error }}</span> }
+      </p>
+    }
+  }
+
+  <p class="status" role="status" aria-live="polite" data-testid="cf-pack-status">{{ status() }}</p>
+
+  <details class="gaps" data-testid="cf-pack-gaps">
+    <summary>What is deliberately missing ({{ blocked.length }})</summary>
+    <ul>
+      @for (gap of blocked; track gap.id) {
+        <li>
+          <strong>{{ gap.wanted }}</strong>
+          <span class="verdict">{{ gap.verdict }}</span>
+          <p class="note">{{ gap.evidence }}</p>
+          @if (gap.shippedInstead) {
+            <p class="note">Shipped instead: {{ gap.shippedInstead }}</p>
+          }
+        </li>
+      }
+    </ul>
+  </details>
+</fieldset>

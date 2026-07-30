@@ -1,0 +1,29 @@
+# ── Java / Maven (the Spring BFF at the repo root) ───────────────────────────
+target/
+*.class
+.env
+
+# ── Node / Angular (frontend/ — the character-forge federation remote) ──────
+node_modules/
+dist/
+.angular/
+npm-debug.log*
+*.tsbuildinfo
+
+# ── Godot 4 (godot/character-forge — the 3D maker game) ─────────────────────
+# The editor cache/import dir is per-machine state, never committed.
+godot/**/.godot/
+godot/**/*.translation
+# Web/desktop export OUTPUT bundles (baked by the orchestrator/CI, not committed);
+# export_presets.cfg IS committed.
+godot/**/export/
+godot/**/*.wasm
+godot/**/*.pck
+
+# ── IDE / editor noise ──────────────────────────────────────────────────────
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/

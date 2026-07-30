@@ -1,0 +1,30 @@
+<fieldset class="import" data-testid="cf-import">
+  <legend>Import from VN character</legend>
+  <p class="hint">
+    Paste the character-studio JSON (packId, slots, palette) — it maps onto the
+    3D parameters by its stable ids, never the SVG art.
+  </p>
+  <textarea
+    rows="6"
+    data-testid="cf-import-text"
+    [value]="text()"
+    (input)="onText($event)"
+    aria-label="VN character JSON"
+    placeholder='{"schemaVersion":1,"packId":"menagerie-v1","slots":{"head":"head_wolf_01"},...}'
+  ></textarea>
+  <div class="actions">
+    <button type="button" data-testid="cf-import-browser" (click)="loadFromBrowser()">
+      Load from this browser
+    </button>
+    <button type="button" data-testid="cf-import-local" (click)="previewLocally()">
+      Preview locally
+    </button>
+    <button type="button" data-testid="cf-import-server" (click)="mapOnServer()">
+      Map on server
+    </button>
+  </div>
+  <p class="status" role="status" aria-live="polite" data-testid="cf-import-status">{{ status() }}</p>
+  @if (error()) {
+    <p class="field-error" role="alert" data-testid="cf-import-error">{{ error() }}</p>
+  }
+</fieldset>

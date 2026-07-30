@@ -1,0 +1,5 @@
+# Vendor downloads + intermediate conversions. Everything under .work/ is
+# re-creatable with ./fetch.sh && ./build.sh; only the finished assets under
+# godot/character-forge/assets/packs/** are committed.
+.work/
+node_modules/

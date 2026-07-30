@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <!-- The org metapom — consolidates the Spring Boot 4.0.7 / Java 25 reactive BFF
+       baseline (WebFlux + Casdoor OAuth2 resource server + R2DBC/Liquibase +
+       SpringDoc), the shared <dependencies>, dependencyManagement (hugmesh-commons,
+       AWS SDK BOM, resilience4j, springdoc), pluginManagement (compiler / surefire
+       bytebuddy flag / spring-boot / native) and the GitLab Maven publishing wiring.
+       hugmesh-parent is itself a child of spring-boot-starter-parent:4.0.7, so the
+       Spring Boot dependency + plugin management (plus the Testcontainers BOM, the
+       r2dbc-h2/h2 pins and the spring-boot-liquibase starter) is inherited TRANSITIVELY.
+       Copy-adapted from hugmesh-forum-bff-api (the canonical small-BFF scaffold). -->
+  <parent>
+    <groupId>systems.hugmesh</groupId>
+    <artifactId>hugmesh-parent</artifactId>
+    <version>2.8.0</version>
+    <relativePath/>
+  </parent>
+
+  <!-- NO -api suffix in the artifactId (mirrors forum-bff/user-bff/admin-bff): -api is
+       only in the repo/service/image name. -->
+  <artifactId>character-forge-bff</artifactId>
+  <version>0.1.0</version>
+  <name>hugmesh-character-forge-bff-api</name>
+  <description>HugMesh character-forge BFF — 3D character (Char3DConfig) persistence,
+    active-character lookup and the VnCharacter→Char3DConfig mapping surface</description>
+
+  <!-- java.version (25), encoding, the hugmesh-commons / springdoc versions are all
+       inherited from hugmesh-parent. This BFF has no repo-specific version pins and
+       (unlike forum-bff) NO outbound upstream, so no resilience4j either. -->
+
+  <dependencies>
+    <!-- The shared, canonical HugMesh security/tenancy/config/web building blocks
+         (Casdoor JWT authorities, issuer->domain DomainRegistry, the config-gated
+         multi-issuer TenancyResourceServerConfig, the static DomainScope predicate
+         utility, the BFF ApiException). Version is MANAGED by hugmesh-parent's
+         dependencyManagement, so NO <version> here. The repo KEEPS its own
+         security.{Roles,PrincipalDomain} (extra used API — see README), the same split
+         as forum-bff. -->
+    <dependency>
+      <groupId>systems.hugmesh</groupId>
+      <artifactId>hugmesh-commons</artifactId>
+    </dependency>
+
+    <!-- The hugmesh-commons TEST-JAR — supplies the shared full-context test base
+         systems.hugmesh.commons.testsupport.PostgresTestSupport (a singleton
+         Testcontainers Postgres + a fresh per-class logical DB + r2dbc/Liquibase
+         DynamicPropertySource wiring). Version pinned explicitly to 2.1.0 (the real
+         published commons coordinate, matching hugmesh-parent's managed
+         hugmesh-commons.version); the parent's dependencyManagement does NOT manage
+         the tests classifier, so the <version> must stay explicit here. -->
+    <dependency>
+      <groupId>systems.hugmesh</groupId>
+      <artifactId>hugmesh-commons</artifactId>
+      <version>2.1.0</version>
+      <classifier>tests</classifier>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- ============================================================================
+         The core reactive BFF stack (webflux / actuator / security /
+         oauth2-resource-server / validation), the data-access stack (data-r2dbc /
+         r2dbc-postgresql / liquibase-core / spring-jdbc / postgresql), springdoc, and
+         the whole test stack (spring-boot-starter-test / reactor-test /
+         spring-security-test / r2dbc-h2 / h2) are INHERITED from hugmesh-parent's
+         common <dependencies>. The ONE repo-specific dependency tweak is below; this
+         BFF is otherwise a pure CRUD + pure-function-mapping resource server with no
+         external upstream.
+         ============================================================================ -->
+
+    <!-- SCOPE OVERRIDE (runtime → compile), first-in-fleet jsonb read converter:
+         hugmesh-parent inherits org.postgresql:r2dbc-postgresql at RUNTIME scope
+         (a pure driver for every other BFF), but this repo's R2dbcConvertersConfig
+         declares a Converter<io.r2dbc.postgresql.codec.Json, String> — the READ half
+         of the jsonb `definition` column mapping — so the driver's codec class must
+         be COMPILE-visible here. Version stays managed (Boot BOM via the parent);
+         only the scope is widened, and the runtime artifact set is unchanged. -->
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>r2dbc-postgresql</artifactId>
+    </dependency>
+  </dependencies>
+
+  <build><plugins>
+    <!-- The spring-boot, native and surefire (bytebuddy-experimental argLine)
+         plugins are configured in hugmesh-parent's pluginManagement; declaring
+         them here (no config) binds the managed config. The native plugin is bound
+         so `./mvnw -Pnative native:compile` works; spring-boot repackages the app. -->
+    <plugin>
+      <groupId>org.graalvm.buildtools</groupId>
+      <artifactId>native-maven-plugin</artifactId>
+    </plugin>
+    <plugin>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-maven-plugin</artifactId>
+    </plugin>
+    <!-- Binds the parent-managed spotbugs-maven-plugin config (offline, from the
+         local repo cache) with a repo-local exclude filter: EI_EXPOSE_REP2 is a
+         false positive on every constructor-injection site here (R2dbcRepository /
+         service beans stored into final fields), and there is no parent-level
+         exclude filter to inherit. See spotbugs/exclude-filter.xml. -->
+    <plugin>
+      <groupId>com.github.spotbugs</groupId>
+      <artifactId>spotbugs-maven-plugin</artifactId>
+      <configuration>
+        <excludeFilterFile>${project.basedir}/spotbugs/exclude-filter.xml</excludeFilterFile>
+      </configuration>
+    </plugin>
+  </plugins></build>
+
+  <profiles>
+    <!-- Native build: `./mvnw -Pnative native:compile` produces a GraalVM binary.
+         The parent's native plugin management does the heavy lifting; this thin
+         local profile mirrors forum-bff/user-bff so the same `-Pnative` invocation
+         works. -->
+    <profile>
+      <id>native</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.graalvm.buildtools</groupId>
+            <artifactId>native-maven-plugin</artifactId>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+</project>

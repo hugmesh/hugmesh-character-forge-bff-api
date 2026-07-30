@@ -1,0 +1,18 @@
+{
+  "name": "@hugmesh/character-forge-asset-pipeline",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Re-fetch / convert / audit pipeline for the vendored CC0+CC-BY 3D packs in godot/character-forge/assets/packs. Run `npm install` here, then `./build.sh`.",
+  "scripts": {
+    "build": "./build.sh"
+  },
+  "dependencies": {
+    "@gltf-transform/cli": "^4.4.2",
+    "@gltf-transform/core": "^4.4.2",
+    "@gltf-transform/extensions": "^4.4.2",
+    "@gltf-transform/functions": "^4.4.2",
+    "meshoptimizer": "^1.2.0",
+    "sharp": "^0.34.5"
+  }
+}
