@@ -26,7 +26,7 @@ Java 25, Spring Boot 4.0.7. The service is copy-adapted from
 the platform's canonical small-BFF scaffold.
 
 Maven artifact: `character-forge-bff` version `0.1.0` (package
-`systems.hugmesh.characterforgebff`). The `-api` suffix appears only in the
+`net.hugmesh.characterforgebff`). The `-api` suffix appears only in the
 repo/service/image name, matching the `forum-bff` / `user-bff` naming convention —
 it is not part of the artifact ID.
 
@@ -78,9 +78,9 @@ throughout this README:
 
 ## Shared commons library
 
-Parent POM `systems.hugmesh:hugmesh-parent:2.8.0` (a child of
+Parent POM `net.hugmesh:hugmesh-parent:2.8.0` (a child of
 `spring-boot-starter-parent:4.0.7` that supplies the whole reactive-BFF dependency
-and plugin baseline) and `systems.hugmesh:hugmesh-commons` (managed at 2.1.0)
+and plugin baseline) and `net.hugmesh:hugmesh-commons` (managed at 2.1.0)
 provide `CasdoorAuthorities`, `DomainRegistry`, `DomainScope`,
 `TenancyResourceServerConfig`, `ApiException`, plus the `hugmesh-commons:2.1.0:tests`
 test-jar's `PostgresTestSupport` (a singleton Testcontainers Postgres instance with
@@ -90,7 +90,7 @@ A few classes are kept per-repo rather than pulled from commons, the same split
 `forum-bff` uses: `security.{Roles,PrincipalDomain}` (the subset of the API this
 service actually uses), `config.SecurityConfig`, and `config.CommonsSecurityConfig`
 (which `@Import`s the commons beans — component-scan does not reach
-`systems.hugmesh.commons.*`).
+`net.hugmesh.commons.*`).
 
 Resolving the private artifacts: local development installs parent + commons into
 `~/.m2` (`mvn install` in their respective repos); CI and Docker builds resolve

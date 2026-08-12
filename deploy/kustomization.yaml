@@ -18,7 +18,7 @@ images:
   # lands (same carve-out as hugmesh-forum-bff-api). This public-mirror copy
   # completes the rename, so the path below has been updated too — re-sync
   # once the internal GitLab group/project migration lands.
-  - { name: hugmesh-systems/character-forge-bff-api, newName: registry.hugmesh.systems/hugmesh/hugmesh-character-forge-bff-api, newTag: main }
+  - { name: hugmesh-systems/character-forge-bff-api, newName: registry.hugmesh.net/hugmesh/hugmesh-character-forge-bff-api, newTag: main }
 patches:
   - target: { kind: Deployment }
     patch: |

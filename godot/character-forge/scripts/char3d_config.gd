@@ -7,7 +7,7 @@ extends RefCounted
 # validation (§3): the server REJECTS invalid definitions; this mirror CLAMPS
 # them so the renderer never crashes on hostile/stale input (matrix-ui
 # fail-soft parse precedent). Keep the enums and bounds in lockstep with
-# systems.hugmesh.characterforgebff's validator:
+# net.hugmesh.characterforgebff's validator:
 #   * unknown keys dropped
 #   * numerics clamped to their documented ranges
 #   * hex colours must match ^#[0-9a-fA-F]{3,8}$ (SVG studio SAFE_HEX twin)

@@ -15,11 +15,11 @@ discovery doc is served by a tiny in-process JDK `HttpServer` bound to `127.0.0.
 
 ## The two reusable seams (copied; only this repo's package + ctor shape adapted)
 
-- `src/test/java/systems/hugmesh/characterforgebff/testsupport/TestIssuer.java` —
+- `src/test/java/net/hugmesh/characterforgebff/testsupport/TestIssuer.java` —
   mints issuer-specific RS256 JWTs against an in-process JWKS. Copied VERBATIM from the
   gateway (only the `package` line changed). Only dependency: `nimbus-jose-jwt`,
   transitive via `spring-boot-starter-oauth2-resource-server`.
-- `src/test/java/systems/hugmesh/characterforgebff/config/SecuritySliceSupport.java` —
+- `src/test/java/net/hugmesh/characterforgebff/config/SecuritySliceSupport.java` —
   builds this repo's REAL `SecurityConfig` filter chain into a `WebTestClient`, no full
   Spring Boot context. Adapted to this repo's `SecurityConfig(DomainRegistry,
   ObjectProvider<...>)` ctor (same shape as the gateway) and its **profile-split**
