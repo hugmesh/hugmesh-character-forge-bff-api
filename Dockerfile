@@ -5,7 +5,7 @@
 # are NOT part of this image).
 #
 # PRIVATE DEPENDENCY (hugmesh-commons): this service depends on
-# systems.hugmesh:hugmesh-commons (managed by hugmesh-parent), which is NOT
+# net.hugmesh:hugmesh-commons (managed by hugmesh-parent), which is NOT
 # on Maven Central — it lives in the org's GitLab Maven Package Registry. The build
 # stage resolves it via the committed `settings.xml` (the `gitlab-maven` repo) using
 # the GitLab CI_JOB_TOKEN. The token is mounted as a BuildKit SECRET (never an ARG,

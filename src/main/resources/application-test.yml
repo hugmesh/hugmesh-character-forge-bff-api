@@ -1,6 +1,6 @@
 # Full-context test profile. The DB (R2DBC for the app + JDBC for Liquibase) is a
 # REAL Postgres container wired by Testcontainers in the shared
-# systems.hugmesh.commons.testsupport.PostgresTestSupport base — a REAL Postgres
+# net.hugmesh.commons.testsupport.PostgresTestSupport base — a REAL Postgres
 # is REQUIRED here (jsonb + the partial unique index + gen_random_uuid are Postgres
 # features the H2 compat mode cannot honour; the @DataR2dbcTest slice uses the
 # PostgresSliceTestConfig over the same container, the forum-bff 004 pattern). The
