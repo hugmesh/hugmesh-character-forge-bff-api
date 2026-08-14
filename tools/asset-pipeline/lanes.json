@@ -191,7 +191,7 @@
       "entries": [
         {
           "key": "anime-vroid-female",
-          "displayName": "VRoid base — female",
+          "displayName": "VRoid base — soft",
           "packId": "vroid-cc0-v1",
           "modelId": "base_female",
           "family": "humanoid",
@@ -203,7 +203,7 @@
         },
         {
           "key": "anime-vroid-male",
-          "displayName": "VRoid base — male",
+          "displayName": "VRoid base — hard",
           "packId": "vroid-cc0-v1",
           "modelId": "base_male",
           "family": "humanoid",
@@ -235,7 +235,7 @@
       "entries": [
         {
           "key": "jrpg-ubc-male",
-          "displayName": "Universal Base — male",
+          "displayName": "Universal Base — hard",
           "packId": "quaternius-base-v1",
           "modelId": "ubc_superhero_male",
           "family": "humanoid",
@@ -247,7 +247,7 @@
         },
         {
           "key": "jrpg-ubc-female",
-          "displayName": "Universal Base — female",
+          "displayName": "Universal Base — soft",
           "packId": "quaternius-base-v1",
           "modelId": "ubc_superhero_female",
           "family": "humanoid",
@@ -259,7 +259,7 @@
         },
         {
           "key": "jrpg-outfit-peasant-male",
-          "displayName": "Peasant outfit — male base",
+          "displayName": "Peasant outfit — hard base",
           "packId": "quaternius-outfits-v1",
           "modelId": "male_peasant_body",
           "extraPieces": [
@@ -276,7 +276,7 @@
         },
         {
           "key": "jrpg-outfit-peasant-female",
-          "displayName": "Peasant outfit — female base",
+          "displayName": "Peasant outfit — soft base",
           "packId": "quaternius-outfits-v1",
           "modelId": "female_peasant_body",
           "extraPieces": [
@@ -293,7 +293,7 @@
         },
         {
           "key": "jrpg-outfit-ranger-male",
-          "displayName": "Ranger outfit — male base",
+          "displayName": "Ranger outfit — hard base",
           "packId": "quaternius-outfits-v1",
           "modelId": "male_ranger_body",
           "extraPieces": [
@@ -311,7 +311,7 @@
         },
         {
           "key": "jrpg-outfit-ranger-female",
-          "displayName": "Ranger outfit — female base",
+          "displayName": "Ranger outfit — soft base",
           "packId": "quaternius-outfits-v1",
           "modelId": "female_ranger_body",
           "extraPieces": [
@@ -438,7 +438,7 @@
       "entries": [
         {
           "key": "kemono-ubc-body-male",
-          "displayName": "Mesh body + beast head (male base)",
+          "displayName": "Mesh body + beast head (hard base)",
           "packId": "quaternius-base-v1",
           "modelId": "ubc_superhero_male",
           "family": "humanoid",
@@ -450,7 +450,7 @@
         },
         {
           "key": "kemono-ubc-body-female",
-          "displayName": "Mesh body + beast head (female base)",
+          "displayName": "Mesh body + beast head (soft base)",
           "packId": "quaternius-base-v1",
           "modelId": "ubc_superhero_female",
           "family": "humanoid",

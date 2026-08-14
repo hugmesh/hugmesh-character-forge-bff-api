@@ -62,7 +62,7 @@ export const PACK_CATALOG: readonly PackCatalogLane[] = [
     "entries": [
       {
         "key": "anime-vroid-female",
-        "displayName": "VRoid base — female",
+        "displayName": "VRoid base — soft",
         "lane": "anime",
         "packId": "vroid-cc0-v1",
         "modelId": "base_female",
@@ -92,7 +92,7 @@ export const PACK_CATALOG: readonly PackCatalogLane[] = [
       },
       {
         "key": "anime-vroid-male",
-        "displayName": "VRoid base — male",
+        "displayName": "VRoid base — hard",
         "lane": "anime",
         "packId": "vroid-cc0-v1",
         "modelId": "base_male",
@@ -160,7 +160,7 @@ export const PACK_CATALOG: readonly PackCatalogLane[] = [
     "entries": [
       {
         "key": "jrpg-ubc-male",
-        "displayName": "Universal Base — male",
+        "displayName": "Universal Base — hard",
         "lane": "jrpg",
         "packId": "quaternius-base-v1",
         "modelId": "ubc_superhero_male",
@@ -190,7 +190,7 @@ export const PACK_CATALOG: readonly PackCatalogLane[] = [
       },
       {
         "key": "jrpg-ubc-female",
-        "displayName": "Universal Base — female",
+        "displayName": "Universal Base — soft",
         "lane": "jrpg",
         "packId": "quaternius-base-v1",
         "modelId": "ubc_superhero_female",
@@ -220,7 +220,7 @@ export const PACK_CATALOG: readonly PackCatalogLane[] = [
       },
       {
         "key": "jrpg-outfit-peasant-male",
-        "displayName": "Peasant outfit — male base",
+        "displayName": "Peasant outfit — hard base",
         "lane": "jrpg",
         "packId": "quaternius-outfits-v1",
         "modelId": "male_peasant_body",
@@ -248,7 +248,7 @@ export const PACK_CATALOG: readonly PackCatalogLane[] = [
       },
       {
         "key": "jrpg-outfit-peasant-female",
-        "displayName": "Peasant outfit — female base",
+        "displayName": "Peasant outfit — soft base",
         "lane": "jrpg",
         "packId": "quaternius-outfits-v1",
         "modelId": "female_peasant_body",
@@ -276,7 +276,7 @@ export const PACK_CATALOG: readonly PackCatalogLane[] = [
       },
       {
         "key": "jrpg-outfit-ranger-male",
-        "displayName": "Ranger outfit — male base",
+        "displayName": "Ranger outfit — hard base",
         "lane": "jrpg",
         "packId": "quaternius-outfits-v1",
         "modelId": "male_ranger_body",
@@ -304,7 +304,7 @@ export const PACK_CATALOG: readonly PackCatalogLane[] = [
       },
       {
         "key": "jrpg-outfit-ranger-female",
-        "displayName": "Ranger outfit — female base",
+        "displayName": "Ranger outfit — soft base",
         "lane": "jrpg",
         "packId": "quaternius-outfits-v1",
         "modelId": "female_ranger_body",
@@ -519,7 +519,7 @@ export const PACK_CATALOG: readonly PackCatalogLane[] = [
     "entries": [
       {
         "key": "kemono-ubc-body-male",
-        "displayName": "Mesh body + beast head (male base)",
+        "displayName": "Mesh body + beast head (hard base)",
         "lane": "kemono",
         "packId": "quaternius-base-v1",
         "modelId": "ubc_superhero_male",
@@ -549,7 +549,7 @@ export const PACK_CATALOG: readonly PackCatalogLane[] = [
       },
       {
         "key": "kemono-ubc-body-female",
-        "displayName": "Mesh body + beast head (female base)",
+        "displayName": "Mesh body + beast head (soft base)",
         "lane": "kemono",
         "packId": "quaternius-base-v1",
         "modelId": "ubc_superhero_female",
