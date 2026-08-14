@@ -18,7 +18,10 @@ export const PART_ARCHETYPE_INDEX: Readonly<
     "body": {
       "body_anime_a_01": "humanoid",
       "body_anime_b_01": "humanoid",
-      "body_anime_c_01": "humanoid"
+      "body_anime_c_01": "humanoid",
+      "body_anime_d_01": "humanoid",
+      "body_anime_e_01": "humanoid",
+      "body_anime_f_01": "humanoid"
     },
     "head": {
       "head_anime_oval_01": "humanoid",
