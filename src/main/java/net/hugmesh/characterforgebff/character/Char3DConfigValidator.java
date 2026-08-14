@@ -152,7 +152,8 @@ public final class Char3DConfigValidator {
             "schemaVersion", "name", "source", "body", "head", "parts", "materials", "style");
     private static final Set<String> SOURCE_KEYS = Set.of(
             "packId", "slots", "palette", "defaultExpression");
-    private static final Set<String> BODY_KEYS = Set.of("archetype", "build", "height");
+    private static final Set<String> BODY_KEYS = Set.of(
+            "archetype", "build", "height", "curve", "top");
     private static final Set<String> HEAD_KEYS = Set.of(
             "family", "variant", "snoutLength", "earStyle", "hornStyle");
     /** Every admissible materials key: the seven canonical + the four extended. */
@@ -301,6 +302,15 @@ public final class Char3DConfigValidator {
         out.put("archetype", requireEnum(body.get("archetype"), FAMILIES, "definition.body.archetype"));
         out.put("build", clampedNumber(body.get("build"), 0.0, 1.0, 0.5, "definition.body.build"));
         out.put("height", clampedNumber(body.get("height"), 0.5, 1.5, 1.0, "definition.body.height"));
+        // Shape axes, orthogonal to `build` (which is overall mass/width): `curve`
+        // is the hip-to-waist ratio, `top` is chest volume. Both default to 0.5,
+        // and 0.5 is defined to reproduce the pre-axis silhouette EXACTLY — that
+        // is what makes them migration-free. Every already-stored definition
+        // predates these keys, so it validates with the defaults and must keep
+        // rendering byte-identically; the assembler's bands are centred to
+        // guarantee it and a headless test asserts omitted == 0.5.
+        out.put("curve", clampedNumber(body.get("curve"), 0.0, 1.0, 0.5, "definition.body.curve"));
+        out.put("top", clampedNumber(body.get("top"), 0.0, 1.0, 0.5, "definition.body.top"));
         return out;
     }
 

@@ -189,6 +189,55 @@ class Char3DConfigValidatorTest {
             ((ObjectNode) def2.get("body")).put("height", true);
             reject(def2);
         }
+
+        /** THE MIGRATION GUARD. Every character stored before the shape axes
+         *  existed carries a body block with no curve/top, and there is no
+         *  migration mechanism in this service (Liquibase 001 only, definition
+         *  is jsonb). Those rows MUST come back as 0.5/0.5 — the neutral value
+         *  the assembler is calibrated to render exactly as it did before the
+         *  axes were added. If this test ever goes red, every saved character
+         *  silently changes silhouette on next load. */
+        @Test
+        void curve_andTop_defaultToNeutral_whenAbsent() {
+            ObjectNode def = minimal();
+            assertThat(def.get("body").has("curve")).isFalse();
+            assertThat(def.get("body").has("top")).isFalse();
+
+            ObjectNode out = Char3DConfigValidator.validate(def);
+            assertThat(out.get("body").get("curve").doubleValue()).isEqualTo(0.5);
+            assertThat(out.get("body").get("top").doubleValue()).isEqualTo(0.5);
+        }
+
+        @Test
+        void curve_andTop_clampIntoRange() {
+            ObjectNode def = minimal();
+            ((ObjectNode) def.get("body")).put("curve", 9.0);
+            ((ObjectNode) def.get("body")).put("top", -4.0);
+            ObjectNode out = Char3DConfigValidator.validate(def);
+            assertThat(out.get("body").get("curve").doubleValue()).isEqualTo(1.0);
+            assertThat(out.get("body").get("top").doubleValue()).isEqualTo(0.0);
+        }
+
+        @Test
+        void curve_andTop_roundTripTheirValues() {
+            ObjectNode def = minimal();
+            ((ObjectNode) def.get("body")).put("curve", 0.9);
+            ((ObjectNode) def.get("body")).put("top", 0.2);
+            ObjectNode out = Char3DConfigValidator.validate(def);
+            assertThat(out.get("body").get("curve").doubleValue()).isEqualTo(0.9);
+            assertThat(out.get("body").get("top").doubleValue()).isEqualTo(0.2);
+        }
+
+        @Test
+        void curve_andTop_rejectWrongType() {
+            ObjectNode def = minimal();
+            ((ObjectNode) def.get("body")).put("curve", "0.9");
+            reject(def);
+
+            ObjectNode def2 = minimal();
+            ((ObjectNode) def2.get("body")).put("top", true);
+            reject(def2);
+        }
     }
 
     // ── enums / patterns ────────────────────────────────────────────────

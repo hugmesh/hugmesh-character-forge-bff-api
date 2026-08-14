@@ -224,7 +224,7 @@
           "palette": { "fur": "#8b5a2b", "accent": "#d2b48c" },
           "defaultExpression": "smug"
         },
-        "body": { "archetype": "canid", "build": 0.5, "height": 1.0 },
+        "body": { "archetype": "canid", "build": 0.5, "height": 1.0, "curve": 0.5, "top": 0.5 },
         "head": {
           "family": "canid",
           "variant": "head_wolf_01",
@@ -273,7 +273,7 @@
           "palette": { "skin": "#f1c27d", "hair": "#090806" },
           "defaultExpression": "happy"
         },
-        "body": { "archetype": "humanoid", "build": 0.5, "height": 1.0 },
+        "body": { "archetype": "humanoid", "build": 0.5, "height": 1.0, "curve": 0.5, "top": 0.5 },
         "head": {
           "family": "humanoid",
           "variant": "head_anime_oval_01",
@@ -312,7 +312,7 @@
           "palette": {},
           "defaultExpression": "neutral"
         },
-        "body": { "archetype": "reptile", "build": 0.5, "height": 1.0 },
+        "body": { "archetype": "reptile", "build": 0.5, "height": 1.0, "curve": 0.5, "top": 0.5 },
         "head": {
           "family": "reptile",
           "variant": "head_dragonborn_01",
@@ -351,7 +351,7 @@
           "palette": { "line": "#090806" },
           "defaultExpression": "angry"
         },
-        "body": { "archetype": "dragon", "build": 0.5, "height": 1.0 },
+        "body": { "archetype": "dragon", "build": 0.5, "height": 1.0, "curve": 0.5, "top": 0.5 },
         "head": {
           "family": "dragon",
           "variant": "head_not_in_pack_01",
@@ -400,7 +400,7 @@
           "palette": { "fur": "#112233", "unknown_region": "#ff0000" },
           "defaultExpression": "neutral"
         },
-        "body": { "archetype": "canid", "build": 0.5, "height": 1.0 },
+        "body": { "archetype": "canid", "build": 0.5, "height": 1.0, "curve": 0.5, "top": 0.5 },
         "head": {
           "family": "canid",
           "variant": "head_wolf_01",
