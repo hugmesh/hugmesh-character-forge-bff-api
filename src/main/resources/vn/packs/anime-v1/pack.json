@@ -294,6 +294,7 @@
             "anime",
             "humanoid",
             "body",
+            "nonbinary",
             "androgynous",
             "hoodie",
             "cozy"
@@ -313,6 +314,125 @@
               "region": "detail",
               "svgClass": "region-detail",
               "defaultPalette": "#5c4a85"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "body_anime_d_01",
+          "displayName": "Willowy Body (Cardigan)",
+          "file": "parts/body/body_anime_d_01.svg",
+          "category": "base",
+          "headArchetype": "humanoid",
+          "tags": [
+            "anime",
+            "humanoid",
+            "body",
+            "nonbinary",
+            "androgynous",
+            "femme-leaning",
+            "willowy",
+            "cardigan"
+          ],
+          "tintRegions": [
+            {
+              "region": "skin",
+              "svgClass": "region-skin",
+              "defaultPalette": "#f2c9a8"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#7dbca6"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#49897a"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "body_anime_e_01",
+          "displayName": "Rangy Body (Button-Up)",
+          "file": "parts/body/body_anime_e_01.svg",
+          "category": "base",
+          "headArchetype": "humanoid",
+          "tags": [
+            "anime",
+            "humanoid",
+            "body",
+            "nonbinary",
+            "androgynous",
+            "masc-leaning",
+            "rangy",
+            "button-up"
+          ],
+          "tintRegions": [
+            {
+              "region": "skin",
+              "svgClass": "region-skin",
+              "defaultPalette": "#f2c9a8"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#d9a76a"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#8f6534"
+            }
+          ],
+          "anchorOverride": null,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "body_anime_f_01",
+          "displayName": "Sprout Body (Overalls)",
+          "file": "parts/body/body_anime_f_01.svg",
+          "category": "base",
+          "headArchetype": "humanoid",
+          "tags": [
+            "anime",
+            "humanoid",
+            "body",
+            "nonbinary",
+            "androgynous",
+            "young",
+            "kid",
+            "sprout",
+            "overalls",
+            "smol"
+          ],
+          "tintRegions": [
+            {
+              "region": "skin",
+              "svgClass": "region-skin",
+              "defaultPalette": "#f2c9a8"
+            },
+            {
+              "region": "accent",
+              "svgClass": "region-accent",
+              "defaultPalette": "#96bede"
+            },
+            {
+              "region": "detail",
+              "svgClass": "region-detail",
+              "defaultPalette": "#d9849b"
             }
           ],
           "anchorOverride": null,
