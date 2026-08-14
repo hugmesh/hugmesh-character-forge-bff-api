@@ -177,6 +177,21 @@ export class EngineBridgeService {
    */
   async load(canvas: HTMLCanvasElement): Promise<void> {
     try {
+      // The canvas MUST carry a non-empty id before startGame().
+      //
+      // Godot's web glue builds its lookup as `document.querySelector('#' +
+      // config.canvas.id)`. With an id-less canvas that is the bare string '#',
+      // which is not a valid selector: querySelector THROWS SyntaxError, the
+      // startGame() promise rejects, window.CharForge is never defined, and
+      // engine.ready() stays false — so the 3D preview never appears and
+      // "Snapshot PNG" stays disabled. Live symptom (operator report
+      // 2026-08-14, "the webgl isn't working"): [data-testid=cf-engine-error]
+      // reading "'#' is not a valid selector" with the WASM already fetched
+      // 200. Stamped here rather than in the template so the guarantee sits on
+      // the boot path itself and cannot be lost to a template edit.
+      if (!canvas.id) {
+        canvas.id = 'cf-engine-canvas';
+      }
       await this.injectScript(`${ENGINE_BASE}${ENGINE_EXECUTABLE}.js`);
       const engineCtor = (window as unknown as Record<string, unknown>)['Engine'] as
         | (new (cfg: Record<string, unknown>) => { startGame(opts?: Record<string, unknown>): Promise<void> })
