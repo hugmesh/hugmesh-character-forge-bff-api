@@ -98,7 +98,13 @@ static func region_color(config: Dictionary, region: String) -> Color:
 ## Builds the 8x8 palette Image for a config (all 11 region cells filled,
 ## unused cells = line colour).
 static func build_image(config: Dictionary) -> Image:
-	var img := Image.create(GRID_SIZE, GRID_SIZE, false, Image.FORMAT_RGBA8)
+	# create_empty(), not create(): the deprecated alias was REMOVED in Godot
+	# 4.7, and because this is a parse-time symbol lookup its absence does not
+	# degrade — palette.gd fails to compile, and every script that depends on it
+	# (character_assembler, house_materials, glb_loader, studio …) fails with
+	# it, i.e. the whole maker refuses to load. create_empty has existed since
+	# 4.3, so this spelling is also correct for the 4.6 the project declares.
+	var img := Image.create_empty(GRID_SIZE, GRID_SIZE, false, Image.FORMAT_RGBA8)
 	img.fill(region_color(config, "line"))
 	for region in CELLS:
 		var cell: Vector2i = CELLS[region]

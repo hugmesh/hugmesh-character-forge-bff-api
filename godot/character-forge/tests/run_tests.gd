@@ -1004,10 +1004,10 @@ func _test_glb_slot_map_and_regions() -> void:
 
 func _test_glb_mipmap_fixup() -> void:
 	var state := GLTFState.new()
-	var img := Image.create(16, 16, false, Image.FORMAT_RGBA8)
+	var img := Image.create_empty(16, 16, false, Image.FORMAT_RGBA8)
 	img.fill(Color.RED)
 	_check(not img.has_mipmaps(), "the fixture texture starts WITHOUT mipmaps")
-	var with_mips := Image.create(16, 16, true, Image.FORMAT_RGBA8)
+	var with_mips := Image.create_empty(16, 16, true, Image.FORMAT_RGBA8)
 	with_mips.fill(Color.BLUE)
 	state.set_images([ImageTexture.create_from_image(img),
 			ImageTexture.create_from_image(with_mips)])
