@@ -105,6 +105,14 @@ export class ConfigEditorComponent {
     this.state.setHeight(Number((ev.target as HTMLInputElement).value));
   }
 
+  onCurve(ev: Event): void {
+    this.state.setCurve(Number((ev.target as HTMLInputElement).value));
+  }
+
+  onTop(ev: Event): void {
+    this.state.setTop(Number((ev.target as HTMLInputElement).value));
+  }
+
   onFamily(ev: Event): void {
     this.state.setFamily((ev.target as HTMLSelectElement).value as HeadFamily);
   }

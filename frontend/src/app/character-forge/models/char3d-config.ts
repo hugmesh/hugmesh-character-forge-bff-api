@@ -160,6 +160,16 @@ export interface Char3dBody {
   build: number;
   /** 0.5–1.5 */
   height: number;
+  /**
+   * 0.0–1.0 — hip-to-waist ratio, ORTHOGONAL to `build` (which is overall
+   * mass/width). 0.5 is not merely the default: it is defined to reproduce the
+   * pre-axis silhouette exactly, because every already-stored definition
+   * predates this key and this service has no migration mechanism (Liquibase
+   * 001 only, definition is jsonb) — absent → 0.5 → unchanged rendering.
+   */
+  curve: number;
+  /** 0.0–1.0 — chest volume. Same centring contract as {@link curve}. */
+  top: number;
 }
 
 export interface Char3dHead {
@@ -208,7 +218,7 @@ export function defaultChar3dConfig(): Char3dConfig {
   return {
     schemaVersion: 1,
     name: 'Untitled',
-    body: { archetype: 'canid', build: 0.5, height: 1.0 },
+    body: { archetype: 'canid', build: 0.5, height: 1.0, curve: 0.5, top: 0.5 },
     head: { family: 'canid', variant: '', snoutLength: 0.5, earStyle: null, hornStyle: null },
     parts: { tail: null, wings: null, ears: null, feature: null, accessory: null, markings: null, hair: null },
     materials: { ...DEFAULT_MATERIALS },
@@ -374,6 +384,12 @@ export function normalizeChar3dConfig(input: unknown): Char3dConfig {
       archetype: clampEnum(rawBody['archetype'], BODY_ARCHETYPES, 'humanoid'),
       build: clampNumber(rawBody['build'], 0, 1, 0.5),
       height: clampNumber(rawBody['height'], 0.5, 1.5, 1.0),
+      // This function rebuilds the output FIELD BY FIELD, so a key that is not
+      // listed here is silently dropped — that is exactly how a new axis
+      // reaches the engine as `undefined` and reads as "the user never touched
+      // it" while the editor shows a moved slider.
+      curve: clampNumber(rawBody['curve'], 0, 1, 0.5),
+      top: clampNumber(rawBody['top'], 0, 1, 0.5),
     },
     head: {
       family: clampEnum(rawHead['family'], HEAD_FAMILIES, 'humanoid'),

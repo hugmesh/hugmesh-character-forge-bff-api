@@ -131,6 +131,11 @@ static func randomize_config(seed_value: int) -> Dictionary:
 	cfg.body.archetype = family
 	cfg.body.build = rng.randf_range(0.2, 0.8)
 	cfg.body.height = rng.randf_range(0.85, 1.2)
+	# The shape axes take the FULL 0..1 range rather than build's trimmed 0.2-0.8:
+	# curve/top only reshape the torso blocks, so the extremes stay a readable
+	# silhouette, whereas an extreme `build` scales the whole rig.
+	cfg.body.curve = rng.randf()
+	cfg.body.top = rng.randf()
 	cfg.head.family = family
 	cfg.head.variant = "seed-%d" % (seed_value % 1000)
 	cfg.head.snoutLength = rng.randf_range(0.2, 0.9)

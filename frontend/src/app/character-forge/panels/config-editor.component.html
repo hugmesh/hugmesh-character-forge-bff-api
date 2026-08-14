@@ -52,6 +52,26 @@
         aria-label="Body height"
       />
     </label>
+    <label class="row">
+      <span class="name">Curve</span>
+      <input
+        type="range" min="0" max="1" step="0.05"
+        data-testid="cf-curve"
+        [value]="state.config().body.curve"
+        (input)="onCurve($event)"
+        aria-label="Body curve (straight to curvy)"
+      />
+    </label>
+    <label class="row">
+      <span class="name">Top</span>
+      <input
+        type="range" min="0" max="1" step="0.05"
+        data-testid="cf-top"
+        [value]="state.config().body.top"
+        (input)="onTop($event)"
+        aria-label="Chest volume (flat to full)"
+      />
+    </label>
   </fieldset>
 
   <fieldset class="panel">

@@ -491,11 +491,44 @@ func _build_body(rig: Node3D, family: String) -> void:
 			_arm(body, 1.0, family)
 			_arm(body, -1.0, family)
 		_:
-			_m(body, "Hips", _sphere(0.2), _block_mat("hips"), Vector3(0, 0.62, 0), Vector3.ZERO, Vector3(1.15, 0.8, 1.0))
+			# SHAPE AXES (Char3DConfig body.curve / body.top). Deliberately not
+			# mesh morphs: a scoping pass found ZERO body morph targets across
+			# all 75 vendored models (the 11 that have any are .vrm and all
+			# FACIAL — base_female.vrm carries 56, every one of them on
+			# "Face.baked", while "Body.baked" has none), so a morph slider
+			# would need asset authoring. The procedural assembler is the one
+			# route that always exists, and it already scales its primitives.
+			#
+			# Orthogonal to `build`: build scales the WHOLE rig (rebuild()
+			# writes rig.scale from it), while these re-proportion the three
+			# torso blocks that are already here. No primitive is added, so the
+			# colour-blocking region map and the Quest-3 triangle budget are
+			# untouched, and proportions.gd's shoulder widths stay build's job.
+			#
+			# Every band is CENTRED on the pre-axis literal, so 0.5 rebuilds
+			# today's silhouette EXACTLY. That is the whole migration story:
+			# every stored definition predates these keys, the BFF has no
+			# migration mechanism (Liquibase 001, definition is jsonb), so
+			# absent -> 0.5 must be a no-op. It is byte-identical, not merely
+			# close — each midpoint below rounds to the same float32 the old
+			# literal did, and run_tests.gd asserts it.
+			var curve: float = config.body.curve
+			var top: float = config.body.top
+			# Hips flare in X *and* Z — a curvy hip has to read from the side as
+			# well as the front — and the waist narrows in step, which is what
+			# makes this a RATIO rather than just "bigger hips".
+			var hips_scale := Vector3(lerpf(1.00, 1.30, curve), 0.8, lerpf(0.90, 1.10, curve))
+			var belly_r := lerpf(0.225, 0.185, curve)
+			# Chest volume grows in X/Z with a small forward bias: scaling a
+			# sphere about its own centre also grows it BACKWARD into the spine,
+			# which reads as a thicker ribcage instead of a fuller chest.
+			var chest_scale := Vector3(lerpf(0.95, 1.15, top), 0.9, lerpf(0.80, 0.96, top))
+			var chest_z := lerpf(-0.015, 0.015, top)
+			_m(body, "Hips", _sphere(0.2), _block_mat("hips"), Vector3(0, 0.62, 0), Vector3.ZERO, hips_scale)
 			_leg(body, 1.0, family)
 			_leg(body, -1.0, family)
-			_m(body, "Belly", _capsule(0.205, 0.5), _block_mat("belly"), Vector3(0, 0.85, 0.01))
-			_m(body, "Chest", _sphere(0.23), _block_mat("chest"), Vector3(0, 1.08, 0), Vector3.ZERO, Vector3(1.05, 0.9, 0.88))
+			_m(body, "Belly", _capsule(belly_r, 0.5), _block_mat("belly"), Vector3(0, 0.85, 0.01))
+			_m(body, "Chest", _sphere(0.23), _block_mat("chest"), Vector3(0, 1.08, chest_z), Vector3.ZERO, chest_scale)
 			_arm(body, 1.0, family)
 			_arm(body, -1.0, family)
 

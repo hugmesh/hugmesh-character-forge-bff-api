@@ -60,6 +60,16 @@ export class ForgeStateService {
     this.patchBody({ height });
   }
 
+  /** Hip-to-waist ratio (0=straight, 0.5=today's silhouette, 1=curvy). */
+  setCurve(curve: number): void {
+    this.patchBody({ curve });
+  }
+
+  /** Chest volume (0=flat, 0.5=today's silhouette, 1=full). */
+  setTop(top: number): void {
+    this.patchBody({ top });
+  }
+
   setFamily(family: HeadFamily): void {
     this.patchHead({ family });
   }

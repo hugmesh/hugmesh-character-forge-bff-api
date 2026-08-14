@@ -141,7 +141,7 @@ static func defaults() -> Dictionary:
 	return {
 		"schemaVersion": SCHEMA_VERSION,
 		"name": "Untitled",
-		"body": {"archetype": "canid", "build": 0.5, "height": 1.0},
+		"body": {"archetype": "canid", "build": 0.5, "height": 1.0, "curve": 0.5, "top": 0.5},
 		"head": {
 			"family": "canid",
 			"variant": "",
@@ -190,6 +190,13 @@ static func sanitize(raw: Dictionary) -> Dictionary:
 			out.body["archetype"] = arch
 		out.body["build"] = _clamp_num(body_raw.get("build"), 0.0, 1.0, 0.5)
 		out.body["height"] = _clamp_num(body_raw.get("height"), 0.5, 1.5, 1.0)
+		# Shape axes, orthogonal to `build` (overall mass): `curve` is the
+		# hip-to-waist ratio, `top` is chest volume. sanitize() starts from
+		# defaults() and overwrites key by key, so an axis missing from BOTH
+		# places is dropped on the floor — the engine would then render the
+		# centred silhouette while the editor's slider says otherwise.
+		out.body["curve"] = _clamp_num(body_raw.get("curve"), 0.0, 1.0, 0.5)
+		out.body["top"] = _clamp_num(body_raw.get("top"), 0.0, 1.0, 0.5)
 
 	var head_raw: Variant = raw.get("head")
 	if head_raw is Dictionary:

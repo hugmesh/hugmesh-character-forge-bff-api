@@ -11,6 +11,14 @@ import { randomChar3dConfig } from './util/random-config';
 import { AvatarFanoutService, PlatformResult } from './services/avatar-fanout.service';
 
 /**
+ * How long the editor waits after the last edit before pushing the config at
+ * the engine. Short enough to still feel immediate (well under the ~100ms
+ * "instant" threshold), long enough that a slider drag coalesces into one
+ * assembler rebuild instead of one per tick.
+ */
+const SET_CONFIG_DEBOUNCE_MS = 80;
+
+/**
  * The forge studio page (route '' of the character-forge remote): the Godot
  * turntable canvas beside the Char3DConfig parameter editor, import-from-VN,
  * the seeded randomizer, and save/load via the character-forge BFF. The page
@@ -49,11 +57,21 @@ export class CharacterForgeComponent {
   constructor() {
     // Editor → engine: push every (clamped) config change; the bridge queues
     // until the game registers CharForge, so this is safe from first paint.
-    effect(() => {
+    //
+    // TRAILING-DEBOUNCED on purpose. `setConfig` is not a cheap property
+    // write: the engine re-runs the whole assembler, which tears down and
+    // rebuilds the 40-60 primitives of the rig. An undebounced push meant one
+    // full rebuild per `input` event, i.e. per SLIDER TICK — a single drag of
+    // the build slider fires dozens. The effect's cleanup cancels the pending
+    // push, so a drag costs exactly one rebuild, ~80ms after the user stops.
+    // Cleanup also runs on destroy, so no timer outlives the page.
+    effect(onCleanup => {
       const json = this.state.definitionJson();
-      if (json !== this.lastEngineJson) {
-        this.engine.setConfig(json);
+      if (json === this.lastEngineJson) {
+        return;
       }
+      const timer = setTimeout(() => this.engine.setConfig(json), SET_CONFIG_DEBOUNCE_MS);
+      onCleanup(() => clearTimeout(timer));
     });
     // Engine → editor: in-engine edits replace the live config (normalized).
     // The echo guard pins the NORMALIZED form, so the effect above skips the

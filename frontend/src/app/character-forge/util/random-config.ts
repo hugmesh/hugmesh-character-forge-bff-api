@@ -95,6 +95,16 @@ export function randomChar3dConfig(seed: number): Char3dConfig {
       archetype,
       build: rng(),
       height: 0.5 + rng(),
+      // The shape axes draw the FULL range: "Surprise me" is the one place the
+      // silhouette is meant to vary, and a randomizer that always emitted the
+      // centred 0.5 would make the two axes invisible in the seeded gallery.
+      // NOTE these two draws shift the rest of the sequence, so a seed shared
+      // before the axes existed now forges a different character. Determinism
+      // is per-version (nothing persists a seed — saves store the config), and
+      // burying the draws at the end to preserve old seeds would put two body
+      // fields nowhere near the body block.
+      curve: rng(),
+      top: rng(),
     },
     head: {
       family,

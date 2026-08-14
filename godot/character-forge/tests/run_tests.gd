@@ -69,6 +69,7 @@ func _run_all() -> void:
 	_test_lipsync_drives_a_skeleton()
 	_test_v2_head_geometry()
 	_test_v2_body_geometry()
+	_test_body_shape_axes()
 	_test_vrm_addon_vendored()
 	_test_mouth_quad_factory()
 	_test_shader_contract()
@@ -122,6 +123,14 @@ func _test_sanitize_clamps() -> void:
 	_check(cfg.name == "Zeta", "sanitize trims name edges")
 	_check(cfg.body.build == 1.0, "build clamped high to 1.0")
 	_check(cfg.body.height == 0.5, "height clamped low to 0.5")
+	# The shape axes were absent from the payload above — the DEFAULT is the
+	# contract here, not a convenience: every definition stored before these
+	# keys existed arrives exactly like this.
+	_check(cfg.body.curve == 0.5 and cfg.body.top == 0.5,
+			"absent curve/top default to the centred 0.5")
+	var axes := Char3DConfig.sanitize({"body": {"curve": 9.0, "top": -3.0}})
+	_check(axes.body.curve == 1.0 and axes.body.top == 0.0,
+			"out-of-range curve/top clamp into 0..1")
 	_check(cfg.head.snoutLength == 0.0, "snoutLength clamped low to 0.0")
 	_check(cfg.head.variant.length() == Char3DConfig.MAX_VARIANT_LEN,
 			"variant truncated to MAX_VARIANT_LEN")
@@ -1405,6 +1414,120 @@ func _test_v2_body_geometry() -> void:
 
 	get_root().remove_child(a)
 	a.free()
+
+
+## body.curve (hip-to-waist ratio) / body.top (chest volume) — the two shape
+## axes. They are PROCEDURAL on purpose: a scoping pass found zero body morph
+## targets on any of the 75 vendored models, so re-proportioning the assembler's
+## own torso primitives is the only route that works without asset authoring.
+##
+## Three claims, and only the first is "the slider does something":
+##   1. each axis measurably moves the torso at 0.0 / 0.5 / 1.0,
+##   2. 0.5 reproduces the pre-axis literals EXACTLY, and
+##   3. a definition that OMITS both keys is indistinguishable from 0.5 / 0.5.
+##
+## (3) is the migration guard, and it is the one that must never go red. Every
+## character stored before these keys existed has no curve/top in its jsonb
+## definition and the BFF has no migration mechanism (Liquibase 001 only), so
+## "absent" has to stay a no-op forever — the day it stops being one, every
+## saved avatar silently reshapes with nothing to roll back to.
+func _test_body_shape_axes() -> void:
+	var a := CharacterAssembler.new()
+	get_root().add_child(a)
+
+	# 1. Each axis is VISIBLE: three settings, three different torso boxes.
+	for axis in ["curve", "top"]:
+		var seen := {}
+		for value in [0.0, 0.5, 1.0]:
+			var cfg := Char3DConfig.defaults()
+			cfg.body[axis] = value
+			a.apply_config(cfg)
+			var size := _torso_aabb(a).size.snappedf(0.0005)
+			_check(not seen.has(size),
+					"body.%s %.1f gives torso extents distinct from %s"
+					% [axis, value, seen.get(size, "-")])
+			seen[size] = "%.1f" % value
+		_check(seen.size() == 3, "all three body.%s stops are visually distinct" % axis)
+
+	# 2. The centred stop is EXACT, not approximate. These four literals are
+	#    what _build_body hardcoded before the axes existed; the bands are
+	#    centred on them and float32 scale/radius storage makes the midpoints
+	#    land on the identical bits.
+	a.apply_config(Char3DConfig.defaults())
+	var body: Node3D = a.get_node("Rig/Body")
+	var hips: MeshInstance3D = body.get_node("Hips")
+	var belly: MeshInstance3D = body.get_node("Belly")
+	var chest: MeshInstance3D = body.get_node("Chest")
+	_check(hips.scale == Vector3(1.15, 0.8, 1.0), "curve 0.5 keeps the original Hips scale")
+	# CapsuleMesh.radius is float32 storage while a GDScript literal is a double,
+	# so the reference literal has to make the same round trip before equality
+	# means anything — comparing straight against 0.205 fails on the last bits
+	# even when the stored value is bit-for-bit what it always was.
+	var original_belly := CapsuleMesh.new()
+	original_belly.radius = 0.205
+	_check((belly.mesh as CapsuleMesh).radius == original_belly.radius,
+			"curve 0.5 keeps the original Belly radius")
+	_check(chest.scale == Vector3(1.05, 0.9, 0.88), "top 0.5 keeps the original Chest scale")
+	_check(chest.position == Vector3(0, 1.08, 0), "top 0.5 keeps the original Chest position")
+
+	# 3. THE MIGRATION GUARD: omitted == centred, node for node.
+	var explicit := Char3DConfig.defaults()
+	explicit.body.curve = 0.5
+	explicit.body.top = 0.5
+	a.apply_config(explicit)
+	var centred_aabb := _torso_aabb(a)
+	var centred_sig := _head_signature(a.get_node("Rig/Body"))
+
+	var legacy := Char3DConfig.defaults()
+	legacy.body.erase("curve")
+	legacy.body.erase("top")
+	_check(not legacy.body.has("curve") and not legacy.body.has("top"),
+			"the legacy fixture really omits both keys")
+	a.apply_config(legacy)
+	_check(_torso_aabb(a) == centred_aabb,
+			"a definition omitting curve/top renders the SAME extents as 0.5/0.5")
+	_check(_head_signature(a.get_node("Rig/Body")) == centred_sig,
+			"...and the whole body subtree matches node for node (no silent reshape)")
+
+	# ORTHOGONALITY. `build` owns overall mass — it writes rig.scale and drives
+	# proportions.gd's shoulder width. If curve/top leaked into either, the two
+	# sliders would fight and neither would mean anything on its own.
+	var arm_roots := {}
+	var rig_scales := {}
+	var tri_counts := {}
+	for value in [0.0, 0.5, 1.0]:
+		var cfg := Char3DConfig.defaults()
+		cfg.body.curve = value
+		cfg.body.top = 1.0 - value          # push both axes, in opposite directions
+		a.apply_config(cfg)
+		arm_roots[(a.get_node("Rig/Body/ArmL") as Node3D).position.snappedf(0.0001)] = true
+		rig_scales[(a.get_node("Rig") as Node3D).scale.snappedf(0.0001)] = true
+		tri_counts[_triangles(a)] = true
+	_check(arm_roots.size() == 1, "the arm root never moves with curve/top (that is build's knob)")
+	_check(rig_scales.size() == 1, "rig.scale never moves with curve/top (that is build/height)")
+	# No primitive is added at any setting: colour blocking assigns regions off
+	# this exact node set, and the Quest-3 budget is counted off these triangles.
+	_check(tri_counts.size() == 1, "the shape axes add no geometry at any setting")
+
+	get_root().remove_child(a)
+	a.free()
+
+
+## Merged extents of the three torso blocks the shape axes drive, in Body-local
+## space. Deliberately NOT the whole-rig AABB: the arms and hands sit further
+## out in X than any hip flare reaches, so a whole-rig box is dominated by
+## geometry these axes never touch and would report "nothing moved" for a change
+## that is plainly visible on screen.
+func _torso_aabb(a: CharacterAssembler) -> AABB:
+	var body: Node3D = a.get_node("Rig/Body")
+	var out := AABB()
+	var seeded := false
+	for part in ["Hips", "Belly", "Chest"]:
+		var mi: MeshInstance3D = body.get_node(part)
+		var box: AABB = mi.transform * mi.mesh.get_aabb()
+		out = out.merge(box) if seeded else box
+		seeded = true
+	return out
 
 
 # ── VRM ingest ───────────────────────────────────────────────────────────────
