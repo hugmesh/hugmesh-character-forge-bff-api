@@ -56,7 +56,7 @@ describe('PackSelectorComponent (style tabs + BYO import)', () => {
     // rather than silently ignoring the palette.
     expect(knight.textContent).toContain('fixed colours');
 
-    const ubc = el.querySelector('[data-testid="cf-pack-jrpg-ubc-male"]')!;
+    const ubc = el.querySelector('[data-testid="cf-pack-jrpg-ubc-hard"]')!;
     expect(ubc.textContent).not.toContain('fixed colours');
     expect(ubc.textContent).toContain('tris');
   });
@@ -67,16 +67,16 @@ describe('PackSelectorComponent (style tabs + BYO import)', () => {
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
 
-    const peasant = el.querySelector('[data-testid="cf-pack-jrpg-outfit-peasant-male"]')!;
+    const peasant = el.querySelector('[data-testid="cf-pack-jrpg-outfit-peasant-hard"]')!;
     expect(peasant).withContext('the modular outfit is offered as one model').not.toBeNull();
     expect(peasant.textContent).toContain('4-piece set');
     // The cost shown is the SUM over the pieces, not just the primary GLB.
-    const entry = PACK_ENTRIES.find(e => e.key === 'jrpg-outfit-peasant-male')!;
+    const entry = PACK_ENTRIES.find(e => e.key === 'jrpg-outfit-peasant-hard')!;
     expect(entry.pieceCount).toBe(3);
     expect(entry.tris).toBe(12894);
     expect(peasant.textContent).toContain('12,894 tris');
     // Ranger sets really are over budget — the flag is not decorative.
-    const ranger = el.querySelector('[data-testid="cf-pack-jrpg-outfit-ranger-female"]')!;
+    const ranger = el.querySelector('[data-testid="cf-pack-jrpg-outfit-ranger-soft"]')!;
     expect(ranger.textContent).toContain('over Quest budget');
   });
 
@@ -95,7 +95,7 @@ describe('PackSelectorComponent (style tabs + BYO import)', () => {
     fixture.componentInstance.selectLane('anime');
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
-    const vroid = el.querySelector('[data-testid="cf-pack-anime-vroid-female"]')!;
+    const vroid = el.querySelector('[data-testid="cf-pack-anime-vroid-soft"]')!;
     expect(vroid.textContent).toContain('whole model only');
   });
 

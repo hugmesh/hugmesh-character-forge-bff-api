@@ -16,7 +16,7 @@
       "downloadUrl": "https://quaternius.itch.io/universal-base-characters (free 'Standard' upload)",
       "extraSourceUrls": ["https://quaternius.com/packs/universalanimationlibrary.html", "https://quaternius.itch.io/universal-animation-library"],
       "licenseQuote": "License:\nCC0 1.0 Universal (CC0 1.0)\nPublic Domain Dedication\nhttps://creativecommons.org/publicdomain/zero/1.0/  — quoted from License_Standard.txt / License.txt inside the downloaded Standard zips",
-      "notes": "Free 'Standard' tier ships 2 of the 6 base bodies (Superhero Female/Male) + 8 hairstyles; the remaining bases are paywalled in the Source tier. Hairstyles taken from the 'Rigged to Head Bone' variant so they bind to the UBC head bone. The animation library ships as a rigged mesh + 43 clips; we keep the clips only (mesh-less shared AnimationLibrary, technique.md canonical-rig rule)."
+      "notes": "Free 'Standard' tier ships 2 of the 6 base bodies (Superhero Soft/Hard) + 8 hairstyles; the remaining bases are paywalled in the Source tier. Hairstyles taken from the 'Rigged to Head Bone' variant so they bind to the UBC head bone. The animation library ships as a rigged mesh + 43 clips; we keep the clips only (mesh-less shared AnimationLibrary, technique.md canonical-rig rule)."
     },
     {
       "id": "quaternius-outfits-v1",
@@ -98,7 +98,7 @@
       "attribution": "VRoidプロジェクト (VRoid Project / pixiv Inc.)",
       "attributionRequired": false,
       "sourceUrl": "https://opengameart.org/content/vroid-studio-cc0-models",
-      "downloadUrl": "https://opengameart.org/sites/default/files/base_female.zip, https://opengameart.org/sites/default/files/base_male.zip",
+      "downloadUrl": "https://opengameart.org/sites/default/files/base_soft.zip, https://opengameart.org/sites/default/files/base_hard.zip",
       "licenseQuote": "OpenGameArt licence block on the submission page: CC0. Corroborated by the VRM's own in-file metadata: extensions.VRM.meta.licenseName == \"CC0\" (read back by audit.mjs after slimming), with otherLicenseUrl granting redistribution=allow, modification=allow, corporate_commercial_use=allow, credit=unnecessary.",
       "notes": "PART-MIXER PROHIBITION: VRoid meshes are shipped ONLY as fixed, whole avatars. They must never enter the part-mixer — pixiv's VRoid Studio guideline bars apps that generate/output models from deformed or recombined VRoid meshes (jrpg-bases.md killer clause). AvatarSample_D/E/F/G from the same OGA bundle are deliberately NOT shipped: their in-file licenseName is \"Other\" (not \"CC0\"), and at 26.7k-34.4k tris / 417-498 joints they blow the Quest budget with no safe decimation path."
     },
@@ -150,7 +150,7 @@
       "id": "oga-modular-rpg-characters-g6",
       "sourceUrl": "https://opengameart.org/content/modular-rpg-characters",
       "licenseSpdx": "CC0-1.0",
-      "reason": "BLENDER REQUIRED. Verified by listing both archives the page offers: modular_rpg_characters.7z = 53 files / 2 folders, of which the only geometry is human_female.blend + human_male.blend (the other 51 are textures/*.png + READ_ME.txt); modular_rpg_characters_ik_rig_for_animating.7z = animations_bake_human_female.blend + animations_bake_human_male.blend + READ_ME.txt. No FBX/glTF/DAE export exists anywhere in either download. Blender is not installed in this environment, so there is no honest conversion path; skipped rather than faked."
+      "reason": "BLENDER REQUIRED. Verified by listing both archives the page offers: modular_rpg_characters.7z = 53 files / 2 folders, of which the only geometry is human_soft.blend + human_hard.blend (the other 51 are textures/*.png + READ_ME.txt); modular_rpg_characters_ik_rig_for_animating.7z = animations_bake_human_soft.blend + animations_bake_human_hard.blend + READ_ME.txt. No FBX/glTF/DAE export exists anywhere in either download. Blender is not installed in this environment, so there is no honest conversion path; skipped rather than faked."
     },
     {
       "id": "oga-base-rigged-stylized-humanoid-yw",

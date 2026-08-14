@@ -61,11 +61,11 @@ export const PACK_CATALOG: readonly PackCatalogLane[] = [
     ],
     "entries": [
       {
-        "key": "anime-vroid-female",
+        "key": "anime-vroid-soft",
         "displayName": "VRoid base — soft",
         "lane": "anime",
         "packId": "vroid-cc0-v1",
-        "modelId": "base_female",
+        "modelId": "base_soft",
         "pieceCount": 0,
         "family": "humanoid",
         "archetype": "humanoid",
@@ -91,11 +91,11 @@ export const PACK_CATALOG: readonly PackCatalogLane[] = [
         "notes": "pixiv's VRoid Studio guideline bars any app that generates or outputs models from deformed/recombined VRoid meshes, so this ships as a FIXED whole avatar and never enters the part-mixer. 166 joints is over the ~75-bone Quest budget (manifest flag)."
       },
       {
-        "key": "anime-vroid-male",
+        "key": "anime-vroid-hard",
         "displayName": "VRoid base — hard",
         "lane": "anime",
         "packId": "vroid-cc0-v1",
-        "modelId": "base_male",
+        "modelId": "base_hard",
         "pieceCount": 0,
         "family": "humanoid",
         "archetype": "humanoid",
@@ -159,11 +159,11 @@ export const PACK_CATALOG: readonly PackCatalogLane[] = [
     ],
     "entries": [
       {
-        "key": "jrpg-ubc-male",
+        "key": "jrpg-ubc-hard",
         "displayName": "Universal Base — hard",
         "lane": "jrpg",
         "packId": "quaternius-base-v1",
-        "modelId": "ubc_superhero_male",
+        "modelId": "ubc_superhero_hard",
         "pieceCount": 0,
         "family": "humanoid",
         "archetype": "humanoid",
@@ -189,11 +189,11 @@ export const PACK_CATALOG: readonly PackCatalogLane[] = [
         "notes": "The maker backbone: retargetable humanoid rig shared with the 43-clip Universal Animation Library. No jaw bone and no visemes — the assembler supplies the mouth-strip lip-sync channel."
       },
       {
-        "key": "jrpg-ubc-female",
+        "key": "jrpg-ubc-soft",
         "displayName": "Universal Base — soft",
         "lane": "jrpg",
         "packId": "quaternius-base-v1",
-        "modelId": "ubc_superhero_female",
+        "modelId": "ubc_superhero_soft",
         "pieceCount": 0,
         "family": "humanoid",
         "archetype": "humanoid",
@@ -216,10 +216,10 @@ export const PACK_CATALOG: readonly PackCatalogLane[] = [
         "flags": [
           "no jaw bone and no visemes — lip-sync channel must be added by the assembler"
         ],
-        "notes": "Same rig and animation library as the male base."
+        "notes": "Same rig and animation library as the hard base."
       },
       {
-        "key": "jrpg-outfit-peasant-male",
+        "key": "jrpg-outfit-peasant-hard",
         "displayName": "Peasant outfit — hard base",
         "lane": "jrpg",
         "packId": "quaternius-outfits-v1",
@@ -247,7 +247,7 @@ export const PACK_CATALOG: readonly PackCatalogLane[] = [
         "notes": "Quaternius Modular Character Outfits: garment pieces skinned to the SAME 65-bone Universal Base rig, composed at runtime by re-parenting each piece's skinned mesh onto the mounted skeleton (all 65 skin binds resolve by name — verified, no Blender step). Mounted as a BODY so the procedural head sits on top: the pack ships no head piece, and its 'Regular' proportion body is baked into the arm/leg pieces."
       },
       {
-        "key": "jrpg-outfit-peasant-female",
+        "key": "jrpg-outfit-peasant-soft",
         "displayName": "Peasant outfit — soft base",
         "lane": "jrpg",
         "packId": "quaternius-outfits-v1",
@@ -272,10 +272,10 @@ export const PACK_CATALOG: readonly PackCatalogLane[] = [
         "sourceUrl": "https://quaternius.com/packs/modularcharacteroutfitsfantasy.html",
         "retrievedAt": "2026-07-29",
         "flags": [],
-        "notes": "Same composed-set mount on the female Regular base. 13,568 triangles across the four pieces — inside the Quest-3 budget."
+        "notes": "Same composed-set mount on the soft Regular base. 13,568 triangles across the four pieces — inside the Quest-3 budget."
       },
       {
-        "key": "jrpg-outfit-ranger-male",
+        "key": "jrpg-outfit-ranger-hard",
         "displayName": "Ranger outfit — hard base",
         "lane": "jrpg",
         "packId": "quaternius-outfits-v1",
@@ -303,7 +303,7 @@ export const PACK_CATALOG: readonly PackCatalogLane[] = [
         "notes": "Five pieces including pauldrons. The hooded head piece is deliberately NOT included: this mounts as a body under the procedural head, and a hood plus our own head would intersect. 21,210 triangles — over the 15k Quest-3 budget, and flagged as such in the selector."
       },
       {
-        "key": "jrpg-outfit-ranger-female",
+        "key": "jrpg-outfit-ranger-soft",
         "displayName": "Ranger outfit — soft base",
         "lane": "jrpg",
         "packId": "quaternius-outfits-v1",
@@ -328,7 +328,7 @@ export const PACK_CATALOG: readonly PackCatalogLane[] = [
         "sourceUrl": "https://quaternius.com/packs/modularcharacteroutfitsfantasy.html",
         "retrievedAt": "2026-07-29",
         "flags": [],
-        "notes": "Same five-piece set on the female base; the hood piece is excluded for the same reason. 24,830 triangles — over the Quest-3 budget, flagged in the selector."
+        "notes": "Same five-piece set on the soft base; the hood piece is excluded for the same reason. 24,830 triangles — over the Quest-3 budget, flagged in the selector."
       },
       {
         "key": "jrpg-knight",
@@ -518,11 +518,11 @@ export const PACK_CATALOG: readonly PackCatalogLane[] = [
     ],
     "entries": [
       {
-        "key": "kemono-ubc-body-male",
+        "key": "kemono-ubc-body-hard",
         "displayName": "Mesh body + beast head (hard base)",
         "lane": "kemono",
         "packId": "quaternius-base-v1",
-        "modelId": "ubc_superhero_male",
+        "modelId": "ubc_superhero_hard",
         "pieceCount": 0,
         "family": "humanoid",
         "archetype": "humanoid",
@@ -548,11 +548,11 @@ export const PACK_CATALOG: readonly PackCatalogLane[] = [
         "notes": "The hybrid legal-inventory.md recommends: CC0 humanoid body + our procedural head. The head is re-parented onto the rig's head bone FROM CODE (BoneAttachment3D), never authored into the GLB. Head family stays whatever the character selects, so any of the 28 beast families works over this body."
       },
       {
-        "key": "kemono-ubc-body-female",
+        "key": "kemono-ubc-body-soft",
         "displayName": "Mesh body + beast head (soft base)",
         "lane": "kemono",
         "packId": "quaternius-base-v1",
-        "modelId": "ubc_superhero_female",
+        "modelId": "ubc_superhero_soft",
         "pieceCount": 0,
         "family": "humanoid",
         "archetype": "humanoid",
@@ -575,7 +575,7 @@ export const PACK_CATALOG: readonly PackCatalogLane[] = [
         "flags": [
           "no jaw bone and no visemes — lip-sync channel must be added by the assembler"
         ],
-        "notes": "Same hybrid on the female base."
+        "notes": "Same hybrid on the soft base."
       },
       {
         "key": "kemono-cat",
@@ -1395,7 +1395,7 @@ export const PACK_BLOCKED: readonly {
     "verdict": "NOT POSSIBLE AT RUNTIME — measured, not assumed.",
     "evidence": "Every quadruped in quaternius-animals-v1 is ONE skinned mesh with no separable head node: wolf.glb contains exactly one mesh ('Wolf', 4 primitives) bound to a single 51-joint skin, and its head geometry is skin-weighted to the 'Head' joint rather than living in its own node. BoneAttachment3D attaches whole NODES, so there is nothing to attach; isolating the head means splitting the mesh by bone weight, which is offline mesh surgery.",
     "blocker": "Blender (or an equivalent weight-aware mesh splitter) is not installed in this environment, and gltf-transform has no split-by-skin-weight operation.",
-    "shippedInstead": "The 'body' mount: the CC0 mesh body carries a fully PROCEDURAL beast head (kemono-ubc-body-male/female entries above), plus the three Ultimate Monsters chibi bipeds as complete meshes. The species silhouette rides on the procedural ears/horns/muzzle, which technique.md notes is where species identity actually lives."
+    "shippedInstead": "The 'body' mount: the CC0 mesh body carries a fully PROCEDURAL beast head (kemono-ubc-body-hard/soft entries above), plus the three Ultimate Monsters chibi bipeds as complete meshes. The species silhouette rides on the procedural ears/horns/muzzle, which technique.md notes is where species identity actually lives."
   },
   {
     "id": "kaykit-atlas-recolor",
