@@ -2,7 +2,7 @@
 
 Angular 22 native-federation remote **`character-forge`** (exposes `./routes` →
 `CHARACTER_FORGE_ROUTES`), structurally cloned from
-`hugmesh-character-studio-ui` and mounted by the hugmesh.systems host at
+`hugmesh-character-studio-ui` and mounted by the hugmesh.net host at
 `/character-forge`. Part of the `hugmesh-character-forge-bff-api` repo: the
 Spring BFF lives at the repo root, the Godot maker in `../godot/character-forge/`.
 

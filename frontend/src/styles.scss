@@ -5,7 +5,7 @@
 // Unlike the host shell this remote does NOT pull in Bootstrap — it ships only
 // the shared HugMesh a11y baseline so it is accessible served standalone
 // (`ng serve character-forge`) AND consistent in look + focus behaviour once
-// federated into the hugmesh.systems host. The a11y rules below are copied
+// federated into the hugmesh.net host. The a11y rules below are copied
 // verbatim from hugmesh-character-studio-ui/src/styles.scss (itself copied
 // from the host: two-layer focus ring, underlined links, coarse-pointer
 // targets, .sr util, --hug-* palette, prefers-reduced-motion + prefers-contrast)

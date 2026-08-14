@@ -27,14 +27,14 @@ kind: Deployment
 metadata:
   name: hugmesh-character-forge-bff-api
   namespace: hugmesh-backend
-  labels: { app: hugmesh-character-forge-bff-api, app.kubernetes.io/part-of: hugmesh.systems }
+  labels: { app: hugmesh-character-forge-bff-api, app.kubernetes.io/part-of: hugmesh.net }
 spec:
   replicas: 1
   selector: { matchLabels: { app: hugmesh-character-forge-bff-api } }
   template:
     metadata: { labels: { app: hugmesh-character-forge-bff-api } }
     spec:
-      nodeSelector: { hugmesh.systems/backend: "true" }
+      nodeSelector: { hugmesh.net/backend: "true" }
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
@@ -98,7 +98,7 @@ spec:
             - { name: SSL_TRUST_STORE_TYPE, value: "PKCS12" }
             - { name: SPRING_CONFIG_ADDITIONAL_LOCATION, value: "file:/stores/" }
             # OAuth2 resource server: validate the cluster Casdoor JWT itself.
-            - { name: CASDOOR_ISSUER_URI, value: "https://id.hugmesh.systems" }
+            - { name: CASDOOR_ISSUER_URI, value: "https://id.hugmesh.net" }
             # Config datastore: the character_forge_character table. R2DBC is the
             # runtime handle; the JDBC handle is used by Liquibase ONCE at startup.
             # RUNTIME handle: log in as the dedicated NON-OWNER least-privilege role

@@ -14,11 +14,18 @@
        r2dbc-h2/h2 pins and the spring-boot-liquibase starter) is inherited TRANSITIVELY.
        Copy-adapted from hugmesh-forum-bff-api (the canonical small-BFF scaffold). -->
   <parent>
-    <groupId>systems.hugmesh</groupId>
+    <groupId>net.hugmesh</groupId>
     <artifactId>hugmesh-parent</artifactId>
     <version>2.8.0</version>
     <relativePath/>
   </parent>
+
+  <!-- groupId is declared EXPLICITLY rather than inherited from the parent. This repo's
+       packages are net.hugmesh.characterforgebff.*, and an implicit groupId would silently
+       track whatever the parent happens to declare — exactly the failure mode that made a
+       half-migrated coordinate look like a package-rename bug. Keep it explicit and equal
+       to the package root. -->
+  <groupId>net.hugmesh</groupId>
 
   <!-- NO -api suffix in the artifactId (mirrors forum-bff/user-bff/admin-bff): -api is
        only in the repo/service/image name. -->
@@ -41,7 +48,7 @@
          security.{Roles,PrincipalDomain} (extra used API — see README), the same split
          as forum-bff. -->
     <dependency>
-      <groupId>systems.hugmesh</groupId>
+      <groupId>net.hugmesh</groupId>
       <artifactId>hugmesh-commons</artifactId>
     </dependency>
 
@@ -53,7 +60,7 @@
          hugmesh-commons.version); the parent's dependencyManagement does NOT manage
          the tests classifier, so the <version> must stay explicit here. -->
     <dependency>
-      <groupId>systems.hugmesh</groupId>
+      <groupId>net.hugmesh</groupId>
       <artifactId>hugmesh-commons</artifactId>
       <version>2.1.0</version>
       <classifier>tests</classifier>

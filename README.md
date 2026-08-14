@@ -43,7 +43,7 @@ it is not part of the artifact ID.
   `character-forge-bff-db.hugmesh-backend`) holding a single table,
   `character_forge_character` (see [Schema](#schema-liquibase-r2dbc-at-runtime)).
 - **Identity:** Casdoor JWT OAuth2 resource server; `issuer-uri` defaults to
-  `https://id.hugmesh.systems` (override with `CASDOOR_ISSUER_URI`). Multi-brand
+  `https://id.hugmesh.net` (override with `CASDOOR_ISSUER_URI`). Multi-brand
   (multi-issuer) tenancy is opt-in via `APP_TENANCY_ISSUERS` — the same wiring
   used by `hugmesh-forum-bff-api` via the shared `hugmesh-commons` classes.
 
@@ -274,7 +274,7 @@ local-dev default.
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `CASDOOR_ISSUER_URI` | `https://id.hugmesh.systems` | Casdoor OIDC issuer used for JWT validation (single-issuer mode) |
+| `CASDOOR_ISSUER_URI` | `https://id.hugmesh.net` | Casdoor OIDC issuer used for JWT validation (single-issuer mode) |
 | `APP_TENANCY_ISSUERS` | *(empty)* | Comma-separated `issuerUri=domainName` pairs; non-empty enables multi-issuer (multi-brand) mode, and any issuer outside this list is rejected with 401 |
 | `SPRING_R2DBC_URL` / `SPRING_R2DBC_USERNAME` / `SPRING_R2DBC_PASSWORD` | in-cluster Postgres service | Runtime R2DBC connection |
 | `SPRING_LIQUIBASE_URL` / `SPRING_LIQUIBASE_USER` / `SPRING_LIQUIBASE_PASSWORD` | in-cluster Postgres service | JDBC connection used only for Liquibase migrations at startup |

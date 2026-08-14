@@ -1,5 +1,5 @@
 // REMOTE bundle config for the Character Forge micro-frontend (native-
-// federation remote name "character-forge"). The hugmesh.systems host
+// federation remote name "character-forge"). The hugmesh.net host
 // consumes the single exposed `./routes` module via
 // loadRemoteModule({ remoteName: 'character-forge', exposedModule: './routes' })
 // and mounts CHARACTER_FORGE_ROUTES at /character-forge — so the remote name
