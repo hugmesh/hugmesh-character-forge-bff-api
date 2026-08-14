@@ -58,11 +58,32 @@
           aria-describedby="cf-snapshot-help"
           (click)="snapshot()"
         >Snapshot PNG</button>
+        <button
+          type="button"
+          data-testid="cf-use-everywhere"
+          [attr.aria-disabled]="engine.ready() ? null : 'true'"
+          aria-describedby="cf-snapshot-help"
+          (click)="useEverywhere()"
+        >Use as my avatar everywhere</button>
         @if (!engine.ready()) {
           <span id="cf-snapshot-help" class="hint">
             Snapshots need the 3D engine — unavailable until the engine bundle
             loads.
           </span>
+        }
+        <!-- Per-platform outcomes. "Skipped" states a ROLE fact, not an error:
+             an account without ROLE_MATRIX/ROLE_MASTODON has no avatar to set
+             there at all. -->
+        @if (platformResults().length) {
+          <ul class="platform-results" data-testid="cf-platform-results">
+            @for (r of platformResults(); track r.platform) {
+              <li [attr.data-outcome]="r.outcome">
+                <strong>{{ r.platform }}</strong>:
+                {{ r.outcome === 'applied' ? 'applied' : r.outcome === 'skipped' ? 'skipped' : 'failed' }}
+                @if (r.detail) { <span class="detail"> — {{ r.detail }}</span> }
+              </li>
+            }
+          </ul>
         }
       </fieldset>
     </div>
