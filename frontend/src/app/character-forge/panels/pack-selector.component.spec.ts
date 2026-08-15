@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { PackSelectorComponent } from './pack-selector.component';
 import { EngineBridgeService } from '../services/engine-bridge.service';
 import { ForgeStateService } from '../services/forge-state.service';
-import { PACK_CATALOG, PACK_ENTRIES } from '../models/pack-catalog.generated';
+import { PACK_BLOCKED, PACK_CATALOG, PACK_ENTRIES } from '../models/pack-catalog.generated';
 import { IMPORT_SOURCES } from '../models/import-sources';
 
 /**
@@ -204,10 +204,18 @@ describe('PackSelectorComponent (style tabs + BYO import)', () => {
   it('lists the recorded capability gaps instead of hiding them', () => {
     const el: HTMLElement = render().nativeElement;
     const gaps = el.querySelector('[data-testid="cf-pack-gaps"]')!;
-    // Two gaps remain, and each still shows its evidence rather than a bare
-    // "unavailable".
-    expect(gaps.textContent).toContain('materialPolicy');
+    // Two gaps remain, and each still shows its EVIDENCE rather than a bare
+    // "unavailable" — that is the property worth pinning, not any one phrase.
+    expect(gaps.textContent).toContain('100Avatars');
     expect(gaps.textContent).toContain('NOT VENDORED');
+    for (const gap of PACK_BLOCKED) {
+      expect(gap.evidence.length)
+        .withContext(`gap '${gap.id}' must carry real evidence, not a bare verdict`)
+        .toBeGreaterThan(40);
+      expect(gap.blocker.length)
+        .withContext(`gap '${gap.id}' must say what is actually in the way`)
+        .toBeGreaterThan(20);
+    }
   });
 
   it('no longer claims the animal-head graft is impossible', () => {
