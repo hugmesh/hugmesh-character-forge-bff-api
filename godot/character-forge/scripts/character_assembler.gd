@@ -72,6 +72,49 @@ var openness: float = 0.0
 
 ## The resolved proportion row for `config` (CharForgeProportions.for_config).
 var proportions: Dictionary = CharForgeProportions.PRESETS["legacy"].duplicate()
+
+# =============================================================================
+# PROPORTION AXES — Char3DConfig body.legs / body.arms / body.limb.
+#
+# `legs` and `arms` are limb LENGTH; `limb` is limb GIRTH. With the existing
+# height/build/curve/top that is the whole shape surface, and every axis is
+# centred at 0.5 — so the DEFAULT body is androgynous by construction rather
+# than by picking a neutral preset, and there is no gendered starting point.
+#
+# MIGRATION CONTRACT (identical to curve/top): every band below is centred on
+# the pre-axis literal, so 0.5 rebuilds today's silhouette EXACTLY — lerpf(lo,
+# hi, 0.5) lands on 1.0 and _hip_lift lands on 0.0 to the last float32 bit.
+# Every stored definition predates these keys and the BFF has no migration
+# mechanism (Liquibase 001, definition is jsonb), so absent -> 0.5 MUST be a
+# no-op. run_tests.gd asserts it family by family.
+#
+# WHY THE BANDS DIFFER BY FAMILY — "reasonable constraints for humanoid or
+# furry type" is not decoration. A plantigrade leg is ONE capsule and tolerates
+# a wide stretch. A digitigrade leg (kemono.md) is a THREE-segment chain of
+# raked thigh/shin/ankle whose angles only read as digitigrade near their
+# authored proportions; stretching it as hard as a humanoid leg straightens the
+# rake into a stilt. So the furry lane gets the tighter band, and it is tighter
+# by measurement of what the pose survives, not by taste.
+const LEG_LEN_BAND := Vector2(0.80, 1.20)              # plantigrade / humanoid
+const LEG_LEN_BAND_DIGITIGRADE := Vector2(0.88, 1.12)  # kemono three-segment leg
+const ARM_LEN_BAND := Vector2(0.85, 1.15)
+const LIMB_GIRTH_BAND := Vector2(0.75, 1.25)
+## The plantigrade leg capsule the default branch builds, at scale 1. Used to
+## convert a leg-length multiplier into the hip lift that keeps feet on the floor.
+const NOMINAL_LEG_HEIGHT := 0.5
+## The digitigrade chain at scale 1, paw (0.035) to thigh top (0.48 + 0.13).
+const NOMINAL_DIGITIGRADE_LEG_HEIGHT := 0.6
+## Families whose legs end in a hoof — never digitigrade, so they keep the wide band.
+const HOOFED_FAMILIES := ["equine", "cervine", "bovine", "caprine", "suid"]
+
+## Resolved per rebuild by _resolve_proportion_axes(). 1.0 / 0.0 == the
+## pre-axis silhouette.
+var _leg_len := 1.0
+var _arm_len := 1.0
+var _limb_girth := 1.0
+## How far the hips (and EVERYTHING above them) rise so a longer leg makes a
+## taller character instead of one sunk through the floor.
+var _hip_lift := 0.0
 ## Basis registry consulted on every rebuild. Swap in a populated one to route
 ## families through the GLB loader.
 var registry: CharForgeRegistry = CharForgeRegistry.default_registry()
@@ -470,7 +513,49 @@ func _hash01(text: String, salt: int = 0) -> float:
 # Body
 # =============================================================================
 
+## Resolve the three proportion axes into the multipliers the builders use.
+## MUST run before _build_body, and must be re-run per rebuild because the band
+## depends on the resolved preset (digitigrade or not), which depends on family.
+##
+## `slime` gets NO hip lift: it has no legs to lengthen, so lifting its body
+## would just detach the blob from the floor. Its length axes are inert by
+## anatomy rather than by oversight, and the editor disables them for it — the
+## curve/top round shipped two silently-inert families and that is the mistake
+## being avoided here.
+func _resolve_proportion_axes(family: String) -> void:
+	var body_cfg: Variant = config.get("body")
+	var b: Dictionary = body_cfg if body_cfg is Dictionary else {}
+	var legs := clampf(_axis(b, "legs"), 0.0, 1.0)
+	var arms := clampf(_axis(b, "arms"), 0.0, 1.0)
+	var limb := clampf(_axis(b, "limb"), 0.0, 1.0)
+
+	var digitigrade: bool = bool(proportions.get("digitigrade", false)) \
+			and family not in HOOFED_FAMILIES
+	var band := LEG_LEN_BAND_DIGITIGRADE if digitigrade else LEG_LEN_BAND
+
+	_leg_len = lerpf(band.x, band.y, legs)
+	_arm_len = lerpf(ARM_LEN_BAND.x, ARM_LEN_BAND.y, arms)
+	_limb_girth = lerpf(LIMB_GIRTH_BAND.x, LIMB_GIRTH_BAND.y, limb)
+	# The lift must match the leg the family ACTUALLY builds, not one nominal for
+	# everyone: the digitigrade chain stands ~0.60 tall (paw 0.035 to thigh top
+	# 0.61) against the plantigrade capsule's 0.50. Using 0.50 for both
+	# under-lifts a stretched digitigrade leg and floats the paws off the floor —
+	# the exact bug the fixed-foot construction exists to prevent.
+	var nominal := NOMINAL_DIGITIGRADE_LEG_HEIGHT if digitigrade else NOMINAL_LEG_HEIGHT
+	_hip_lift = 0.0 if family == "slime" else nominal * (_leg_len - 1.0)
+
+
+## One shape axis, tolerating a config that predates it (absent -> the centred
+## 0.5, which every band maps to the pre-axis value).
+static func _axis(body: Dictionary, key: String) -> float:
+	var v: Variant = body.get(key)
+	if v is float or v is int:
+		return float(v)
+	return 0.5
+
+
 func _build_body(rig: Node3D, family: String) -> void:
+	_resolve_proportion_axes(family)
 	var body := _anchor(rig, "Body", Vector3.ZERO)
 	_refs["body"] = body
 	var bm := _mat(_body_region())
@@ -530,13 +615,19 @@ func _build_body(rig: Node3D, family: String) -> void:
 			var chassis_scale := Vector3(lerpf(0.85, 1.15, curve), 1.0, lerpf(0.92, 1.08, curve))
 			var torso_scale := Vector3(lerpf(0.88, 1.12, top), 1.0, lerpf(0.92, 1.08, top))
 			var torso_z := lerpf(-0.012, 0.012, top)
-			_m(body, "Hips", _box(Vector3(0.34, 0.18, 0.24)), bm, Vector3(0, 0.6, 0),
+			# The robot owes the proportion axes an answer too: its legs are a
+			# strut pair, so length stretches the strut from the fixed foot and
+			# girth thickens it, exactly as the default branch does. Leaving this
+			# branch out is how curve/top shipped two silently-inert families.
+			_m(body, "Hips", _box(Vector3(0.34, 0.18, 0.24)), bm, Vector3(0, 0.6 + _hip_lift, 0),
 					Vector3.ZERO, chassis_scale)
-			_m(body, "LegL", _cyl(0.07, 0.08, 0.5), _mat("detail"), Vector3(0.12, 0.3, 0))
-			_m(body, "LegR", _cyl(0.07, 0.08, 0.5), _mat("detail"), Vector3(-0.12, 0.3, 0))
+			_m(body, "LegL", _cyl(0.07 * _limb_girth, 0.08 * _limb_girth, 0.5 * _leg_len),
+					_mat("detail"), Vector3(0.12, 0.05 + 0.25 * _leg_len, 0))
+			_m(body, "LegR", _cyl(0.07 * _limb_girth, 0.08 * _limb_girth, 0.5 * _leg_len),
+					_mat("detail"), Vector3(-0.12, 0.05 + 0.25 * _leg_len, 0))
 			_m(body, "FootL", _box(Vector3(0.14, 0.07, 0.2)), bm, Vector3(0.12, 0.045, 0.03))
 			_m(body, "FootR", _box(Vector3(0.14, 0.07, 0.2)), bm, Vector3(-0.12, 0.045, 0.03))
-			_m(body, "Torso", _box(Vector3(0.42, 0.4, 0.28)), bm, Vector3(0, 0.98, torso_z),
+			_m(body, "Torso", _box(Vector3(0.42, 0.4, 0.28)), bm, Vector3(0, 0.98 + _hip_lift, torso_z),
 					Vector3.ZERO, torso_scale)
 			# The panel is surface DETAIL, so it rides on the chassis face instead
 			# of sitting at a fixed z: half the torso depth (0.28 / 2), scaled,
@@ -544,7 +635,7 @@ func _build_body(rig: Node3D, family: String) -> void:
 			# chest at top 1.0 and float off it at top 0.0. At the centred stop
 			# that expression is the original 0.145 to the last float32 bit.
 			_m(body, "Panel", _box(Vector3(0.2, 0.16, 0.02)), _mat("accent"),
-					Vector3(0, 1.0, torso_z + 0.14 * torso_scale.z + 0.005))
+					Vector3(0, 1.0 + _hip_lift, torso_z + 0.14 * torso_scale.z + 0.005))
 			_arm(body, 1.0, family)
 			_arm(body, -1.0, family)
 		_:
@@ -558,24 +649,29 @@ func _build_body(rig: Node3D, family: String) -> void:
 			# which reads as a thicker ribcage instead of a fuller chest.
 			var chest_scale := Vector3(lerpf(0.95, 1.15, top), 0.9, lerpf(0.80, 0.96, top))
 			var chest_z := lerpf(-0.015, 0.015, top)
-			_m(body, "Hips", _sphere(0.2), _block_mat("hips"), Vector3(0, 0.62, 0), Vector3.ZERO, hips_scale)
+			# Everything from the hips up rides on _hip_lift, so a longer leg
+			# raises the whole torso instead of burying the feet.
+			_m(body, "Hips", _sphere(0.2), _block_mat("hips"), Vector3(0, 0.62 + _hip_lift, 0), Vector3.ZERO, hips_scale)
 			_leg(body, 1.0, family)
 			_leg(body, -1.0, family)
-			_m(body, "Belly", _capsule(belly_r, 0.5), _block_mat("belly"), Vector3(0, 0.85, 0.01))
-			_m(body, "Chest", _sphere(0.23), _block_mat("chest"), Vector3(0, 1.08, chest_z), Vector3.ZERO, chest_scale)
+			_m(body, "Belly", _capsule(belly_r, 0.5), _block_mat("belly"), Vector3(0, 0.85 + _hip_lift, 0.01))
+			_m(body, "Chest", _sphere(0.23), _block_mat("chest"), Vector3(0, 1.08 + _hip_lift, chest_z), Vector3.ZERO, chest_scale)
 			_arm(body, 1.0, family)
 			_arm(body, -1.0, family)
 
-	var neck_y := 1.28
+	# Every mount above the hips rides the same lift as the torso, or a longer
+	# leg would leave the head, tail, wings and accessory floating at the old
+	# height while the body moved out from under them.
+	var neck_y := 1.28 + _hip_lift
 	if family == "slime":
 		neck_y = 0.95
 	else:
 		_m(body, "Neck", _cyl(0.085, 0.11, 0.18), bm, Vector3(0, neck_y, 0.01))
 	_refs["neck_top"] = _anchor(body, "NeckTop", Vector3(0, neck_y + 0.14, 0.02))
-	_refs["tail_mount"] = _anchor(body, "TailMount", Vector3(0, 0.62, -0.17))
-	_refs["wing_mount"] = _anchor(body, "WingMount", Vector3(0, 1.1, -0.17))
+	_refs["tail_mount"] = _anchor(body, "TailMount", Vector3(0, 0.62 + _hip_lift, -0.17))
+	_refs["wing_mount"] = _anchor(body, "WingMount", Vector3(0, 1.1 + _hip_lift, -0.17))
 	_refs["accessory_mount"] = _anchor(body, "AccessoryMount", Vector3(0, neck_y, 0))
-	_refs["chest_front"] = _anchor(body, "ChestFront", Vector3(0, 1.02, 0.19))
+	_refs["chest_front"] = _anchor(body, "ChestFront", Vector3(0, 1.02 + _hip_lift, 0.19))
 
 
 func _leg(body: Node3D, side: float, family: String) -> void:
@@ -585,7 +681,12 @@ func _leg(body: Node3D, side: float, family: String) -> void:
 			["equine", "cervine", "bovine", "caprine", "suid"]:
 		_build_digitigrade_leg(body, side, suffix, bm)
 		return
-	_m(body, "Leg" + suffix, _capsule(0.09, 0.5), _block_mat("leg"), Vector3(side * 0.13, 0.32, 0))
+	# The leg grows from a FIXED FOOT upward: height 0.5*len, centre at
+	# 0.07 + 0.25*len (its bottom stays at 0.07). At len 1.0 that is the original
+	# capsule(0.09, 0.5) at y 0.32 exactly. Girth scales the radius only, so
+	# length and thickness stay independent knobs.
+	_m(body, "Leg" + suffix, _capsule(0.09 * _limb_girth, NOMINAL_LEG_HEIGHT * _leg_len),
+			_block_mat("leg"), Vector3(side * 0.13, 0.07 + 0.25 * _leg_len, 0))
 	match family:
 		"equine", "cervine", "bovine", "caprine", "suid":
 			# A hoof is never a sock, so a hoofed kemono gets its sock block as a
@@ -605,13 +706,19 @@ func _leg(body: Node3D, side: float, family: String) -> void:
 func _build_digitigrade_leg(body: Node3D, side: float, suffix: String, bm: Material) -> void:
 	var taper: float = clampf(float(proportions.get("limbTaper", 0.7)), 0.3, 1.0)
 	var x := side * 0.13
-	_m(body, "Thigh" + suffix, _capsule(0.095, 0.26), bm,
-			Vector3(x, 0.48, 0.02), Vector3(16.0, 0, side * -4.0))
-	_m(body, "Shin" + suffix, _capsule(0.095 * taper, 0.26), bm,
-			Vector3(x, 0.27, -0.05), Vector3(-22.0, 0, 0))
+	# Three segments, all stretched by the SAME leg-length factor and each
+	# re-centred about the ankle so the raked thigh/shin angles hold their shape.
+	# Scaling only the thigh (or only the heights, without moving the centres)
+	# pulls the chain apart and the pose stops reading as digitigrade. At
+	# _leg_len 1.0 every literal below is the original one.
+	var l := _leg_len
+	_m(body, "Thigh" + suffix, _capsule(0.095 * _limb_girth, 0.26 * l), bm,
+			Vector3(x, 0.11 + 0.37 * l, 0.02), Vector3(16.0, 0, side * -4.0))
+	_m(body, "Shin" + suffix, _capsule(0.095 * taper * _limb_girth, 0.26 * l), bm,
+			Vector3(x, 0.11 + 0.16 * l, -0.05), Vector3(-22.0, 0, 0))
 	# Ankle + paw carry the "shin/foot" half of the kemono sock block.
-	_m(body, "Ankle" + suffix, _capsule(0.075 * taper, 0.17), _block_mat("ankle"),
-			Vector3(x, 0.11, 0.01), Vector3(16.0, 0, 0))
+	_m(body, "Ankle" + suffix, _capsule(0.075 * taper * _limb_girth, 0.17 * l), _block_mat("ankle"),
+			Vector3(x, 0.11 * l, 0.01), Vector3(16.0, 0, 0))
 	# The paw: a short pad standing on the toes rather than a flat foot.
 	_m(body, "Paw" + suffix, _sphere(0.075), _block_mat("paw"),
 			Vector3(x, 0.035, 0.07), Vector3.ZERO, Vector3(1.0, 0.55, 1.6))
@@ -627,26 +734,45 @@ func _arm(body: Node3D, side: float, family: String) -> void:
 	var shoulder: float = clampf(float(proportions.get("shoulderHeadWidths", 1.0)) , 0.8, 1.8)
 	var taper: float = clampf(float(proportions.get("limbTaper", 1.0)), 0.3, 1.0)
 	var arm_x := 0.3 * lerpf(1.0, shoulder, 0.35)
-	var arm_r := 0.07 * lerpf(1.0, taper, 0.4)
+	# Girth thickens the arm; length hangs it from a FIXED SHOULDER so a longer
+	# arm reaches further down rather than lifting out of the shoulder socket.
+	# The shoulder pivots are the pre-axis tops: 1.14 (single-capsule arm) and
+	# 1.12 (the JRPG sleeve/forearm split). Every expression below is the
+	# original literal at _arm_len 1.0.
+	var arm_r := 0.07 * lerpf(1.0, taper, 0.4) * _limb_girth
+	var a := _arm_len
+	# The whole arm rides the torso lift too — the shoulder is part of the chest.
+	var shoulder_y := 1.14 + _hip_lift
+	var jrpg_shoulder_y := 1.12 + _hip_lift
 	if _is_jrpg_lane():
 		# Short sleeve + bare forearm. The split exists for the blocking rule,
 		# not for detail: with the whole arm sleeved a clothed hero shows only
 		# neck and hands, which lands UNDER jrpg-bases.md's 15-25% skin band —
 		# a bare forearm is the standard way that band is met.
-		_m(body, "Arm" + suffix, _capsule(arm_r, 0.26), arm_mat,
-				Vector3(side * arm_x, 0.99, 0.01), Vector3(0, 0, side * -14.0))
-		_m(body, "Forearm" + suffix, _capsule(arm_r * 0.9, 0.24), _mat(_body_region()),
-				Vector3(side * (arm_x + 0.03), 0.78, 0.015), Vector3(0, 0, side * -14.0))
+		_m(body, "Arm" + suffix, _capsule(arm_r, 0.26 * a), arm_mat,
+				Vector3(side * arm_x, jrpg_shoulder_y - 0.13 * a, 0.01), Vector3(0, 0, side * -14.0))
+		_m(body, "Forearm" + suffix, _capsule(arm_r * 0.9, 0.24 * a), _mat(_body_region()),
+				Vector3(side * (arm_x + 0.03), jrpg_shoulder_y - 0.34 * a, 0.015), Vector3(0, 0, side * -14.0))
 	else:
-		_m(body, "Arm" + suffix, _capsule(arm_r, 0.44), arm_mat,
-				Vector3(side * arm_x, 0.92, 0.01), Vector3(0, 0, side * -14.0))
+		_m(body, "Arm" + suffix, _capsule(arm_r, 0.44 * a), arm_mat,
+				Vector3(side * arm_x, shoulder_y - 0.22 * a, 0.01), Vector3(0, 0, side * -14.0))
 	# jrpg-bases.md hands 1.4-1.6x; kemono "mitt hands" land on the same knob.
 	# The glove half of the kemono sock block rides here; the JRPG hand has no
 	# entry in the plan, so it stays the bare skin the 15-25% rule counts.
 	var hand_mat := _block_mat("hand")
 	var hand_scale: float = clampf(float(proportions.get("handScale", 1.0)), 0.9, 1.6)
+	# The hand follows the wrist down as the arm lengthens. Both lanes put the
+	# wrist at shoulder - 0.44*len, which is 0.68 at len 1.0 either way. The hand
+	# keeps its OWN size knob (handScale) — limb girth is arms and legs, not
+	# extremities, so a thick-limbed character does not get balloon hands.
+	# NOTE the two different coefficients: the JRPG wrist sits flush at the
+	# forearm's end (1.12 - 0.44) while the single-capsule arm's hand hangs 0.02
+	# BELOW the capsule bottom (1.14 - 0.44 - 0.02). Both evaluate to the
+	# original 0.68 at len 1.0; using one coefficient for both silently moves the
+	# hand 2 cm on every non-JRPG character.
+	var wrist_y := (jrpg_shoulder_y - 0.44 * a) if _is_jrpg_lane() else (shoulder_y - 0.46 * a)
 	_m(body, "Hand" + suffix, _sphere(0.07 * hand_scale), hand_mat,
-			Vector3(side * (arm_x + 0.06), 0.68, 0.02))
+			Vector3(side * (arm_x + 0.06), wrist_y, 0.02))
 
 
 # =============================================================================

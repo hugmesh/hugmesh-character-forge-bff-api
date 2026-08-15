@@ -170,6 +170,17 @@ export interface Char3dBody {
   curve: number;
   /** 0.0–1.0 — chest volume. Same centring contract as {@link curve}. */
   top: number;
+  /**
+   * 0.0–1.0 — leg LENGTH. Same centring contract as {@link curve}: 0.5 is the
+   * pre-axis silhouette exactly. The assembler keeps the foot on the ground and
+   * lifts the hips (and everything above them) by the difference, so a longer
+   * leg makes a taller character rather than one sunk into the floor.
+   */
+  legs: number;
+  /** 0.0–1.0 — arm LENGTH. Grows downward from a fixed shoulder. */
+  arms: number;
+  /** 0.0–1.0 — limb GIRTH (arm/leg thickness), orthogonal to both lengths. */
+  limb: number;
 }
 
 export interface Char3dHead {
@@ -218,7 +229,12 @@ export function defaultChar3dConfig(): Char3dConfig {
   return {
     schemaVersion: 1,
     name: 'Untitled',
-    body: { archetype: 'canid', build: 0.5, height: 1.0, curve: 0.5, top: 0.5 },
+    body: {
+      archetype: 'canid', build: 0.5, height: 1.0,
+      // Every shape axis starts at its centred stop — the default body is
+      // deliberately androgynous, and is a proportion set rather than a preset.
+      curve: 0.5, top: 0.5, legs: 0.5, arms: 0.5, limb: 0.5,
+    },
     head: { family: 'canid', variant: '', snoutLength: 0.5, earStyle: null, hornStyle: null },
     parts: { tail: null, wings: null, ears: null, feature: null, accessory: null, markings: null, hair: null },
     materials: { ...DEFAULT_MATERIALS },
@@ -390,6 +406,9 @@ export function normalizeChar3dConfig(input: unknown): Char3dConfig {
       // it" while the editor shows a moved slider.
       curve: clampNumber(rawBody['curve'], 0, 1, 0.5),
       top: clampNumber(rawBody['top'], 0, 1, 0.5),
+      legs: clampNumber(rawBody['legs'], 0, 1, 0.5),
+      arms: clampNumber(rawBody['arms'], 0, 1, 0.5),
+      limb: clampNumber(rawBody['limb'], 0, 1, 0.5),
     },
     head: {
       family: clampEnum(rawHead['family'], HEAD_FAMILIES, 'humanoid'),

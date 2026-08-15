@@ -70,6 +70,7 @@ func _run_all() -> void:
 	_test_v2_head_geometry()
 	_test_v2_body_geometry()
 	_test_body_shape_axes()
+	_test_body_proportion_axes()
 	_test_shape_axes_reach_every_family()
 	_test_vrm_addon_vendored()
 	_test_mouth_quad_factory()
@@ -1519,6 +1520,134 @@ func _test_body_shape_axes() -> void:
 ## out in X than any hip flare reaches, so a whole-rig box is dominated by
 ## geometry these axes never touch and would report "nothing moved" for a change
 ## that is plainly visible on screen.
+## body.legs / body.arms / body.limb — limb LENGTH (x2) and limb GIRTH.
+##
+## Same three claims as _test_body_shape_axes, plus the two this round adds:
+##   4. a longer leg keeps the FOOT ON THE FLOOR and lifts the hips instead —
+##      the whole reason _hip_lift exists, and the thing that silently breaks if
+##      a Y literal above the hips is ever added without the lift, and
+##   5. the furry lane's leg band is TIGHTER than the humanoid one. That is the
+##      "reasonable constraints for humanoid or furry type" requirement, and it
+##      is asserted rather than merely commented because a digitigrade leg is a
+##      three-segment raked chain that stops reading as digitigrade when it is
+##      stretched as hard as a single humanoid capsule.
+##
+## Claim 1 is checked on THREE families deliberately: canid (digitigrade),
+## humanoid (plantigrade) and robot (its own strut primitives). The curve/top
+## round shipped inert on slime and robot precisely because only the default
+## branch was covered, so "every branch answers the slider" is now a test.
+func _test_body_proportion_axes() -> void:
+	var a := CharacterAssembler.new()
+	get_root().add_child(a)
+
+	# 1. Each axis is VISIBLE, on every family that has limbs to move.
+	for family in ["canid", "humanoid", "robot"]:
+		for axis in ["legs", "arms", "limb"]:
+			var seen := {}
+			for value in [0.0, 0.5, 1.0]:
+				var cfg := Char3DConfig.defaults()
+				cfg.body.archetype = family
+				cfg.head.family = family
+				cfg.body[axis] = value
+				a.apply_config(cfg)
+				var key := snappedf(_limb_signature(a), 0.0005)
+				_check(not seen.has(key),
+						"%s body.%s %.1f moves the limbs (distinct from %s)"
+						% [family, axis, value, seen.get(key, "-")])
+				seen[key] = "%.1f" % value
+			_check(seen.size() == 3,
+					"all three %s body.%s stops are visually distinct" % [family, axis])
+
+	# 2. The centred stop is EXACT — these are the literals _build_body, _leg and
+	#    _arm hardcoded before the axes existed.
+	var mid := Char3DConfig.defaults()
+	mid.body.archetype = "humanoid"
+	mid.head.family = "humanoid"
+	a.apply_config(mid)
+	var body: Node3D = a.get_node("Rig/Body")
+	var leg: MeshInstance3D = body.get_node("LegL")
+	_check(is_equal_approx(leg.position.y, 0.32), "legs 0.5 keeps the original Leg y (0.32)")
+	_check(is_equal_approx((leg.mesh as CapsuleMesh).height, 0.5),
+			"legs 0.5 keeps the original Leg height (0.5)")
+	_check(is_equal_approx((leg.mesh as CapsuleMesh).radius, 0.09),
+			"limb 0.5 keeps the original Leg radius (0.09)")
+	var hips: MeshInstance3D = body.get_node("Hips")
+	_check(is_equal_approx(hips.position.y, 0.62), "legs 0.5 keeps the original Hips y (0.62)")
+	var hand: MeshInstance3D = body.get_node("HandL")
+	_check(is_equal_approx(hand.position.y, 0.68), "arms 0.5 keeps the original Hand y (0.68)")
+
+	# 3. MIGRATION GUARD — a definition written before these keys existed must be
+	#    indistinguishable from the centred stop, forever.
+	var centred := _limb_signature(a)
+	var legacy := Char3DConfig.defaults()
+	legacy.body.archetype = "humanoid"
+	legacy.head.family = "humanoid"
+	legacy.body.erase("legs")
+	legacy.body.erase("arms")
+	legacy.body.erase("limb")
+	_check(not legacy.body.has("legs") and not legacy.body.has("limb"),
+			"the legacy fixture really is missing the proportion keys")
+	a.apply_config(legacy)
+	_check(is_equal_approx(_limb_signature(a), centred),
+			"a definition omitting legs/arms/limb renders the SAME as 0.5")
+
+	# 4. FEET STAY ON THE FLOOR. A longer leg must raise the hips, not bury the
+	#    foot — measured as the lowest point of the leg, which may not move.
+	var floors := []
+	for value in [0.0, 0.5, 1.0]:
+		var cfg := Char3DConfig.defaults()
+		cfg.body.archetype = "humanoid"
+		cfg.head.family = "humanoid"
+		cfg.body.legs = value
+		a.apply_config(cfg)
+		var l: MeshInstance3D = a.get_node("Rig/Body/LegL")
+		var box: AABB = l.transform * l.mesh.get_aabb()
+		floors.append(snappedf(box.position.y, 0.0005))
+	_check(floors[0] == floors[1] and floors[1] == floors[2],
+			"the leg's bottom is fixed at every legs stop (feet stay on the floor): %s" % [floors])
+
+	# 5. The furry lane is CONSTRAINED TIGHTER than the humanoid one. Compare the
+	#    full sweep of each: the digitigrade leg must travel LESS.
+	var travel := {}
+	for family in ["humanoid", "canid"]:
+		var span := []
+		for value in [0.0, 1.0]:
+			var cfg := Char3DConfig.defaults()
+			cfg.body.archetype = family
+			cfg.head.family = family
+			cfg.body.legs = value
+			a.apply_config(cfg)
+			span.append(a.get_node("Rig/Body/Hips").position.y)
+		travel[family] = absf(span[1] - span[0])
+	_check(travel["canid"] < travel["humanoid"],
+			"the digitigrade (furry) leg band is tighter than the plantigrade one: %.4f < %.4f"
+			% [travel["canid"], travel["humanoid"]])
+
+	a.queue_free()
+
+
+## One number that changes whenever any limb moves or thickens: the summed
+## y-position and radius of the limb primitives that exist on this rig. A whole
+## -rig AABB is useless here because the head dominates it and never moves with
+## these axes.
+func _limb_signature(a: CharacterAssembler) -> float:
+	var body: Node3D = a.get_node("Rig/Body")
+	var total := 0.0
+	for name in ["LegL", "LegR", "ArmL", "ArmR", "HandL", "ThighL", "ShinL", "AnkleL", "ForearmL"]:
+		if not body.has_node(name):
+			continue
+		var mi: MeshInstance3D = body.get_node(name)
+		total += mi.position.y * 3.0
+		var m: Mesh = mi.mesh
+		if m is CapsuleMesh:
+			total += (m as CapsuleMesh).height + (m as CapsuleMesh).radius * 7.0
+		elif m is CylinderMesh:
+			total += (m as CylinderMesh).height + (m as CylinderMesh).top_radius * 7.0
+		elif m is SphereMesh:
+			total += (m as SphereMesh).radius * 7.0
+	return total
+
+
 func _torso_aabb(a: CharacterAssembler) -> AABB:
 	var body: Node3D = a.get_node("Rig/Body")
 	var out := AABB()

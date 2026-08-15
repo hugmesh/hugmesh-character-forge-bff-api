@@ -70,6 +70,21 @@ export class ForgeStateService {
     this.patchBody({ top });
   }
 
+  /** Leg LENGTH (0=short, 0.5=today's silhouette, 1=long). */
+  setLegs(legs: number): void {
+    this.patchBody({ legs });
+  }
+
+  /** Arm LENGTH (0=short, 0.5=today's silhouette, 1=long). */
+  setArms(arms: number): void {
+    this.patchBody({ arms });
+  }
+
+  /** Limb GIRTH — arm/leg thickness (0=slender, 0.5=today's, 1=thick). */
+  setLimb(limb: number): void {
+    this.patchBody({ limb });
+  }
+
   setFamily(family: HeadFamily): void {
     this.patchHead({ family });
   }

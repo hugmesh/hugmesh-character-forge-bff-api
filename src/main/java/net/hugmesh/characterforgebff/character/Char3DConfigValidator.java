@@ -153,7 +153,7 @@ public final class Char3DConfigValidator {
     private static final Set<String> SOURCE_KEYS = Set.of(
             "packId", "slots", "palette", "defaultExpression");
     private static final Set<String> BODY_KEYS = Set.of(
-            "archetype", "build", "height", "curve", "top");
+            "archetype", "build", "height", "curve", "top", "legs", "arms", "limb");
     private static final Set<String> HEAD_KEYS = Set.of(
             "family", "variant", "snoutLength", "earStyle", "hornStyle");
     /** Every admissible materials key: the seven canonical + the four extended. */
@@ -311,6 +311,23 @@ public final class Char3DConfigValidator {
         // guarantee it and a headless test asserts omitted == 0.5.
         out.put("curve", clampedNumber(body.get("curve"), 0.0, 1.0, 0.5, "definition.body.curve"));
         out.put("top", clampedNumber(body.get("top"), 0.0, 1.0, 0.5, "definition.body.top"));
+        // PROPORTION axes — the same migration-free contract as curve/top: 0.5 is
+        // the centred stop and reproduces the pre-axis silhouette exactly.
+        //
+        // These exist so a body is described by its PROPORTIONS rather than by a
+        // body-type preset: `legs` and `arms` are limb LENGTH, `limb` is limb
+        // GIRTH. Together with the existing height/build/curve/top that is the
+        // whole shape surface, and every one of them starts androgynous at the
+        // midpoint — there is no gendered starting point to opt out of.
+        //
+        // Ranges are 0..1 here rather than a physical unit because the server's
+        // job is bounds, not anatomy: what a given value MEANS is the assembler's
+        // (per-family) business, and the humanoid/furry limits live there because
+        // only the assembler knows whether a leg is one capsule or a digitigrade
+        // three-segment chain.
+        out.put("legs", clampedNumber(body.get("legs"), 0.0, 1.0, 0.5, "definition.body.legs"));
+        out.put("arms", clampedNumber(body.get("arms"), 0.0, 1.0, 0.5, "definition.body.arms"));
+        out.put("limb", clampedNumber(body.get("limb"), 0.0, 1.0, 0.5, "definition.body.limb"));
         return out;
     }
 

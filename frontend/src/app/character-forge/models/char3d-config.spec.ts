@@ -23,11 +23,14 @@ describe('normalizeChar3dConfig (§3 clamp mirror)', () => {
       // canid starting character, which is a product choice, not a clamp).
       expect(cfg.schemaVersion).toBe(1);
       expect(cfg.name).toBe('Untitled');
-      // curve/top land on the CENTRED 0.5 — the value defined to reproduce the
-      // pre-axis silhouette, so garbage input degrades to today's character
-      // rather than to a reshaped one.
+      // EVERY shape axis lands on the CENTRED 0.5 — the value defined to
+      // reproduce the pre-axis silhouette, so garbage input degrades to today's
+      // character rather than to a reshaped one. It is also what makes the
+      // default body androgynous by construction: there is no body-type preset
+      // to start from, only proportions parked at their midpoints.
       expect(cfg.body).toEqual({
-        archetype: 'humanoid', build: 0.5, height: 1.0, curve: 0.5, top: 0.5,
+        archetype: 'humanoid', build: 0.5, height: 1.0,
+        curve: 0.5, top: 0.5, legs: 0.5, arms: 0.5, limb: 0.5,
       });
       expect(cfg.head).toEqual({
         family: 'humanoid', variant: '', snoutLength: 0.5, earStyle: null, hornStyle: null,

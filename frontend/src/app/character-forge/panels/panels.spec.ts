@@ -142,9 +142,20 @@ describe('ConfigEditorComponent (body shape axes)', () => {
     return { fixture, el: fixture.nativeElement as HTMLElement };
   }
 
-  const AXES: Array<{ testid: string; label: string; field: 'curve' | 'top' }> = [
+  /**
+   * Every 0..1 shape axis the editor exposes. The proportion axes (legs/arms/
+   * limb) are in the SAME table as curve/top on purpose: the previous round
+   * shipped its axes "untested on the UI half", and the cheapest guard against
+   * repeating that is that adding an axis to the editor without adding it here
+   * is immediately visible as a missing row.
+   */
+  type ShapeAxis = 'curve' | 'top' | 'legs' | 'arms' | 'limb';
+  const AXES: Array<{ testid: string; label: string; field: ShapeAxis }> = [
     { testid: 'cf-curve', label: 'Curve', field: 'curve' },
     { testid: 'cf-top', label: 'Top', field: 'top' },
+    { testid: 'cf-legs', label: 'Legs', field: 'legs' },
+    { testid: 'cf-arms', label: 'Arms', field: 'arms' },
+    { testid: 'cf-limb', label: 'Limb size', field: 'limb' },
   ];
 
   for (const axis of AXES) {
@@ -180,10 +191,36 @@ describe('ConfigEditorComponent (body shape axes)', () => {
       input.value = '0.25';
       input.dispatchEvent(new Event('input'));
       expect(state.config().body[axis.field]).toBe(0.25);
-      // ...and only that axis moved: the other one is still at its default.
-      const other = axis.field === 'curve' ? 'top' : 'curve';
-      expect(state.config().body[other]).toBe(0.5);
+      // ...and ONLY that axis moved: every other one is still centred. With
+      // five axes sharing one patchBody path, a typo that writes the wrong key
+      // would otherwise pass unnoticed.
+      for (const other of AXES) {
+        if (other.field === axis.field) {
+          continue;
+        }
+        expect(state.config().body[other.field])
+          .withContext(`editing ${axis.field} must not move ${other.field}`)
+          .toBe(0.5);
+      }
       expect(state.config().body.build).toBe(0.5);
     });
   }
+
+  it('disables the limb axes on a slime and says why (no silently-inert slider)', () => {
+    // A slime is two blobs — it has no legs or arms for these axes to drive.
+    // The honest affordance is a disabled control plus a reason, which is
+    // exactly what the curve/top round was missing on the families where its
+    // sliders did nothing.
+    state.applyConfig({ ...state.config(), body: { ...state.config().body, archetype: 'slime' } });
+    const { el } = editor();
+    for (const testid of ['cf-legs', 'cf-arms', 'cf-limb']) {
+      expect(el.querySelector<HTMLInputElement>(`[data-testid="${testid}"]`)!.disabled)
+        .withContext(`${testid} must be disabled on a limbless body`)
+        .toBeTrue();
+    }
+    expect(el.querySelector('[data-testid="cf-limb-inert"]')?.textContent)
+      .toContain('no separate limbs');
+    // The torso axes still apply, so they must stay enabled.
+    expect(el.querySelector<HTMLInputElement>('[data-testid="cf-curve"]')!.disabled).toBeFalse();
+  });
 });

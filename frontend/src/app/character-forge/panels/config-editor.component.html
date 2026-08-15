@@ -72,6 +72,45 @@
         aria-label="Chest volume (flat to full)"
       />
     </label>
+    <label class="row">
+      <span class="name">Legs</span>
+      <input
+        type="range" min="0" max="1" step="0.05"
+        data-testid="cf-legs"
+        [value]="state.config().body.legs"
+        (input)="onLegs($event)"
+        [disabled]="limbAxesInert() ? true : null"
+        aria-label="Leg length (short to long)"
+      />
+    </label>
+    <label class="row">
+      <span class="name">Arms</span>
+      <input
+        type="range" min="0" max="1" step="0.05"
+        data-testid="cf-arms"
+        [value]="state.config().body.arms"
+        (input)="onArms($event)"
+        [disabled]="limbAxesInert() ? true : null"
+        aria-label="Arm length (short to long)"
+      />
+    </label>
+    <label class="row">
+      <span class="name">Limb size</span>
+      <input
+        type="range" min="0" max="1" step="0.05"
+        data-testid="cf-limb"
+        [value]="state.config().body.limb"
+        (input)="onLimb($event)"
+        [disabled]="limbAxesInert() ? true : null"
+        aria-label="Limb thickness (slender to thick)"
+      />
+    </label>
+    @if (limbAxesInert()) {
+      <p class="hint" data-testid="cf-limb-inert">
+        This body has no separate limbs, so leg, arm and limb size do not apply
+        to it — the two shape axes above still do.
+      </p>
+    }
   </fieldset>
 
   <fieldset class="panel">

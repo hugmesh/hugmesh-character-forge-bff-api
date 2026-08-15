@@ -141,7 +141,12 @@ static func defaults() -> Dictionary:
 	return {
 		"schemaVersion": SCHEMA_VERSION,
 		"name": "Untitled",
-		"body": {"archetype": "canid", "build": 0.5, "height": 1.0, "curve": 0.5, "top": 0.5},
+		# Every shape axis starts at its centred stop — the default body is
+		# deliberately androgynous, and is a set of PROPORTIONS rather than a preset.
+		"body": {
+			"archetype": "canid", "build": 0.5, "height": 1.0,
+			"curve": 0.5, "top": 0.5, "legs": 0.5, "arms": 0.5, "limb": 0.5,
+		},
 		"head": {
 			"family": "canid",
 			"variant": "",
@@ -197,6 +202,12 @@ static func sanitize(raw: Dictionary) -> Dictionary:
 		# centred silhouette while the editor's slider says otherwise.
 		out.body["curve"] = _clamp_num(body_raw.get("curve"), 0.0, 1.0, 0.5)
 		out.body["top"] = _clamp_num(body_raw.get("top"), 0.0, 1.0, 0.5)
+		# PROPORTION axes: `legs`/`arms` are limb LENGTH, `limb` is limb GIRTH.
+		# Same centring contract as curve/top — 0.5 rebuilds today's silhouette
+		# exactly, so a stored definition that predates them is unchanged.
+		out.body["legs"] = _clamp_num(body_raw.get("legs"), 0.0, 1.0, 0.5)
+		out.body["arms"] = _clamp_num(body_raw.get("arms"), 0.0, 1.0, 0.5)
+		out.body["limb"] = _clamp_num(body_raw.get("limb"), 0.0, 1.0, 0.5)
 
 	var head_raw: Variant = raw.get("head")
 	if head_raw is Dictionary:

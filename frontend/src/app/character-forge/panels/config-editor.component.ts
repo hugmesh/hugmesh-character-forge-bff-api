@@ -113,6 +113,32 @@ export class ConfigEditorComponent {
     this.state.setTop(Number((ev.target as HTMLInputElement).value));
   }
 
+  onLegs(ev: Event): void {
+    this.state.setLegs(Number((ev.target as HTMLInputElement).value));
+  }
+
+  onArms(ev: Event): void {
+    this.state.setArms(Number((ev.target as HTMLInputElement).value));
+  }
+
+  onLimb(ev: Event): void {
+    this.state.setLimb(Number((ev.target as HTMLInputElement).value));
+  }
+
+  /**
+   * True when the limb-LENGTH axes have nothing to drive on this body.
+   *
+   * A slime has no legs and no arms — the assembler builds two blobs — so
+   * `legs`/`arms` are inert by anatomy rather than by oversight. The honest
+   * affordance is to disable the control and say why: the previous shape-axis
+   * round shipped two families where dragging a slider did nothing at all, with
+   * nothing in the UI admitting it. Girth still applies to neither, so it is
+   * covered by the same flag.
+   */
+  limbAxesInert(): boolean {
+    return this.state.config().body.archetype === 'slime';
+  }
+
   onFamily(ev: Event): void {
     this.state.setFamily((ev.target as HTMLSelectElement).value as HeadFamily);
   }
