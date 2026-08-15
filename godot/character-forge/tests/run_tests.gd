@@ -99,6 +99,8 @@ func _run_all() -> void:
 	# ── single-atlas per-region recolour (the retired 'preserve' verdict) ────
 	_test_atlas_recolour_reaches_every_single_atlas_model()
 	_test_atlas_recolour_rides_the_shared_palette()
+	_test_boundary_free_recolour_reaches_every_100avatar()
+	_test_atlas_clusters_are_deterministic_and_ranked()
 
 	# ── runtime bone-weight mesh surgery (the retired "NOT POSSIBLE" verdict) ─
 	_test_mesh_surgery_matches_the_pipeline_count()
@@ -2446,7 +2448,7 @@ func _test_pack_catalogue_loads() -> void:
 		_check(String(e.style) in Char3DConfig.STYLES, "'%s' names a real style" % key)
 		if bool(e.recolorable):
 			recolorable += 1
-	_check(recolorable == 40, "40 entries are region-recolourable, got %d" % recolorable)
+	_check(recolorable == 48, "all 48 entries are region-recolourable, got %d" % recolorable)
 
 	# The VRoid meshes must never become mixable parts (pixiv's guideline bars
 	# any app that generates or outputs models from recombined VRoid meshes).
@@ -2457,7 +2459,7 @@ func _test_pack_catalogue_loads() -> void:
 
 	# The recorded capability gaps are carried through, not silently dropped.
 	var blocked := CharForgePacks.blocked()
-	_check(blocked.size() == 2, "2 recorded capability gaps, got %d" % blocked.size())
+	_check(blocked.size() == 1, "1 recorded capability gap, got %d" % blocked.size())
 	for b in blocked:
 		_check(String(b.get("evidence", "")).length() > 40,
 				"capability gap '%s' carries real evidence" % String(b.get("id", "")))
@@ -2924,7 +2926,7 @@ func _test_bridge_pack_surface() -> void:
 			_check(e.has("tris") and e.has("joints") and e.has("bytes"),
 					"host entry '%s' carries its cost so the UI can warn" % e.key)
 	_check(count == 48, "the host catalogue carries all 48 entries, got %d" % count)
-	_check(doc.blocked.size() == 2, "the host catalogue carries the capability gaps")
+	_check(doc.blocked.size() == 1, "the host catalogue carries the capability gap")
 
 
 func _test_studio_pack_controls() -> void:
@@ -3481,3 +3483,128 @@ func _test_atlas_recolour_rides_the_shared_palette() -> void:
 			"recolour rewrote the shared palette IN PLACE — no material was touched")
 	_check(mat.get_shader_parameter("palette_tex") == before,
 			"the atlas material still points at that same palette after a recolour")
+
+# ── boundary-free atlas recolour (the 100Avatars line) ───────────────────────
+#
+# These avatars have NO per-part boundary: one mesh node, one primitive, one
+# material, no COLOR_0, no VRM annotation, and UV islands that are anatomical
+# rather than material. The regions therefore come from the TEXTURE's own base
+# colours, which is the one partition that IS material.
+
+const CLUSTER_KEYS := [
+	"filler-jimmy", "filler-skull", "filler-cactusboy", "filler-froggy",
+	"filler-teddy", "filler-mint", "filler-skelly", "filler-polybot",
+]
+
+func _test_boundary_free_recolour_reaches_every_100avatar() -> void:
+	for key in CLUSTER_KEYS:
+		var host := CharacterAssembler.new()
+		get_root().add_child(host)
+		host.apply_config(Char3DConfig.defaults())
+		var mount := CharForgeMount.new(host)
+		get_root().add_child(mount)
+		var entry := CharForgePacks.basis_entry(CharForgePacks.entry(String(key)))
+		var root := mount.mount("head", entry)
+		_check(root != null, "%s mounts" % key)
+		if root == null:
+			get_root().remove_child(mount)
+			mount.free()
+			get_root().remove_child(host)
+			host.free()
+			continue
+
+		var report := mount.mount_report()
+		var found: Array = report.atlasClusters
+		_check(report.recolorable, "%s reports itself recolourable" % key)
+		_check(found.size() >= 2,
+				"%s resolved at least two base colours (got %d)" % [key, found.size()])
+		_check(mount.last_error.is_empty(), "%s bound cleanly: %s" % [key, mount.last_error])
+
+		# The atlas is a ShaderMaterial (MToon) on a VRM, NOT a BaseMaterial3D —
+		# reading only albedo_texture finds nothing on any of these, which is
+		# exactly the bug this path had first time round.
+		var shaded := 0
+		for node in CharForgeMount._walk(root):
+			if not (node is MeshInstance3D):
+				continue
+			var mi := node as MeshInstance3D
+			if mi.mesh == null:
+				continue
+			for i in range(mi.mesh.get_surface_count()):
+				var override := mi.get_surface_override_material(i) as ShaderMaterial
+				if override == null:
+					continue
+				shaded += 1
+				_check(float(override.get_shader_parameter("atlas_cluster_count")) >= 2.0,
+						"%s: the material carries its measured clusters" % key)
+				_check(override.get_shader_parameter("atlas_tex") != null,
+						"%s: the material still samples the VENDOR atlas" % key)
+				# The single-node path must be OFF or both branches write ALBEDO.
+				_check(float(override.get_shader_parameter("atlas_strength")) == 0.0,
+						"%s: the per-node tint path is disabled on a cluster material" % key)
+		_check(shaded > 0, "%s had its surfaces rebound" % key)
+
+		# SHARES ARE REAL PERCENTAGES: they are the fraction of texels that
+		# classify to each cluster, so they sum to 1 — not the quantised bucket
+		# counts the centres were seeded from, which do not.
+		var total := 0.0
+		var previous := 2.0
+		for row in found:
+			var record: Dictionary = row
+			total += float(record.share)
+			_check(String(record.region) in Char3DConfig.ALL_MATERIAL_REGIONS,
+					"%s: cluster bound to a real palette region" % key)
+			_check(float(record.share) <= previous + 0.0001,
+					"%s: clusters are ranked by area, largest first" % key)
+			previous = float(record.share)
+		_check(absf(total - 1.0) < 0.02,
+				"%s: cluster shares sum to 100%% (got %.1f%%)" % [key, total * 100.0])
+
+		get_root().remove_child(mount)
+		mount.free()
+		get_root().remove_child(host)
+		host.free()
+
+
+## Clustering must be DETERMINISTIC — same bytes, same answer — or the region a
+## colour gets could differ between two runs of the same avatar, and a test
+## could never pin it. Dictionary key order is not stable in general, so the
+## ranking is explicitly tie-broken rather than left to hash order.
+func _test_atlas_clusters_are_deterministic_and_ranked() -> void:
+	var root := CharForgeMount.instantiate_asset(
+			"res://assets/packs/polygonalmind-100avatars-v1/models/100avatars_003_jimmy.vrm")
+	_check(root != null, "the jimmy VRM parses")
+	if root == null:
+		return
+	var mi: MeshInstance3D = null
+	for node in root.find_children("*", "MeshInstance3D", true, false):
+		if (node as MeshInstance3D).mesh != null:
+			mi = node as MeshInstance3D
+			break
+	_check(mi != null, "jimmy has a mesh")
+	if mi == null:
+		root.free()
+		return
+	var atlas := CharForgeGlbLoader.atlas_texture_of(mi)
+	_check(atlas != null, "the MToon _MainTex atlas is found on a VRM ShaderMaterial")
+
+	var first := CharForgeGlbLoader.cluster_atlas(mi, atlas)
+	var second := CharForgeGlbLoader.cluster_atlas(mi, atlas)
+	_check(first.size() == second.size() and first.size() > 0,
+			"clustering returns the same count twice (%d/%d)" % [first.size(), second.size()])
+	var identical := true
+	for i in range(mini(first.size(), second.size())):
+		if not (first[i].color as Color).is_equal_approx(second[i].color) \
+				or absf(float(first[i].share) - float(second[i].share)) > 0.0001:
+			identical = false
+	_check(identical, "clustering is deterministic across runs")
+	_check(first.size() <= CharForgeGlbLoader.MAX_ATLAS_CLUSTERS,
+			"clustering never exceeds the %d the shader can hold"
+					% CharForgeGlbLoader.MAX_ATLAS_CLUSTERS)
+	# Distinct enough to be different MATERIALS, not shades of one.
+	for i in range(first.size()):
+		for k in range(i + 1, first.size()):
+			_check(CharForgeGlbLoader._color_distance(first[i].color, first[k].color)
+							>= CharForgeGlbLoader.MERGE_DISTANCE,
+					"clusters %d and %d are distinct colours, not one ramp" % [i, k])
+	root.free()

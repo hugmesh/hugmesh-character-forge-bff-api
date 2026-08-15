@@ -299,8 +299,16 @@
       ]
     },
     "polygonalmind-100avatars-v1": {
-      "policy": "preserve",
-      "reason": "Each avatar bakes to one atlas material (mat_NNN); the same atlas problem as KayKit. Scoped to the VRM importer corpus anyway, not to player avatars."
+      "policy": "hue-clusters",
+      "reason": "NO per-part boundary exists on these avatars, and that was measured across all 8 rather than assumed: one mesh node, one primitive, one material, no COLOR_0, no VRM firstPerson/blendShape/spring-bone annotation, and UV islands that are ANATOMICAL (94 large islands carrying only 23 distinct dominant colours between them). So there is nothing to bind a region to. What IS a material partition is the texture: each avatar resolves to just 2-4 BASE COLOURS. The engine measures those at mount time and classifies every texel to the nearest, taking its region from regionOrder by AREA - the jrpg-bases.md 60/30/10 blocking, so the biggest colour is the base coat. Measured accuracy ~88% of texels; the margin gate leaves ambiguous texels on the vendor colour rather than guessing, and misassignment is mostly benign because a dark texel lands on a dark region. Works on the two JPEG-textured avatars too: being non-indexed blocks an index->region LUT, not classification.",
+      "regionOrder": [
+        "fur",
+        "accent",
+        "detail",
+        "line"
+      ],
+      "clusters": 4,
+      "margin": 0.06
     },
     "khronos-fox-v1": {
       "policy": "preserve",
@@ -371,6 +379,7 @@
             "M00_001_01_Accessory_Tie_01_CLOTH": "detail"
           },
           "atlasRegions": {},
+          "atlasClusters": {},
           "hiddenMeshes": [],
           "licenseSpdx": "CC0-1.0",
           "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
@@ -438,6 +447,7 @@
             "M00_001_01_Accessory_Tie_01_CLOTH": "detail"
           },
           "atlasRegions": {},
+          "atlasClusters": {},
           "hiddenMeshes": [],
           "licenseSpdx": "CC0-1.0",
           "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
@@ -479,6 +489,7 @@
             "Backpack": "accent"
           },
           "atlasRegions": {},
+          "atlasClusters": {},
           "hiddenMeshes": [],
           "licenseSpdx": "CC-BY-3.0",
           "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
@@ -529,6 +540,7 @@
             "MI_Eyes": "iris"
           },
           "atlasRegions": {},
+          "atlasClusters": {},
           "hiddenMeshes": [],
           "licenseSpdx": "CC0-1.0",
           "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
@@ -571,6 +583,7 @@
             "MI_Eyes": "iris"
           },
           "atlasRegions": {},
+          "atlasClusters": {},
           "hiddenMeshes": [],
           "licenseSpdx": "CC0-1.0",
           "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
@@ -616,6 +629,7 @@
             "MI_Regular_Male": "skin"
           },
           "atlasRegions": {},
+          "atlasClusters": {},
           "hiddenMeshes": [],
           "licenseSpdx": "CC0-1.0",
           "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
@@ -659,6 +673,7 @@
             "MI_Regular_Male": "skin"
           },
           "atlasRegions": {},
+          "atlasClusters": {},
           "hiddenMeshes": [],
           "licenseSpdx": "CC0-1.0",
           "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
@@ -703,6 +718,7 @@
             "MI_Regular_Male": "skin"
           },
           "atlasRegions": {},
+          "atlasClusters": {},
           "hiddenMeshes": [],
           "licenseSpdx": "CC0-1.0",
           "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
@@ -747,6 +763,7 @@
             "MI_Regular_Male": "skin"
           },
           "atlasRegions": {},
+          "atlasClusters": {},
           "hiddenMeshes": [],
           "licenseSpdx": "CC0-1.0",
           "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
@@ -797,6 +814,7 @@
             "Knight_LegLeft": "fur",
             "Knight_LegRight": "fur"
           },
+          "atlasClusters": {},
           "hiddenMeshes": [
             "1H_Sword",
             "1H_Sword_Offhand",
@@ -855,6 +873,7 @@
             "Barbarian_LegLeft": "fur",
             "Barbarian_LegRight": "fur"
           },
+          "atlasClusters": {},
           "hiddenMeshes": [
             "1H_Axe",
             "1H_Axe_Offhand",
@@ -910,6 +929,7 @@
             "Mage_LegLeft": "fur",
             "Mage_LegRight": "fur"
           },
+          "atlasClusters": {},
           "hiddenMeshes": [
             "1H_Wand",
             "2H_Staff",
@@ -964,6 +984,7 @@
             "Rogue_LegLeft": "fur",
             "Rogue_LegRight": "fur"
           },
+          "atlasClusters": {},
           "hiddenMeshes": [
             "1H_Crossbow",
             "2H_Crossbow",
@@ -1019,6 +1040,7 @@
             "Rogue_LegLeft": "fur",
             "Rogue_LegRight": "fur"
           },
+          "atlasClusters": {},
           "hiddenMeshes": [
             "1H_Crossbow",
             "2H_Crossbow",
@@ -1104,6 +1126,7 @@
             "MI_Eyes": "iris"
           },
           "atlasRegions": {},
+          "atlasClusters": {},
           "hiddenMeshes": [],
           "licenseSpdx": "CC0-1.0",
           "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
@@ -1146,6 +1169,7 @@
             "MI_Eyes": "iris"
           },
           "atlasRegions": {},
+          "atlasClusters": {},
           "hiddenMeshes": [],
           "licenseSpdx": "CC0-1.0",
           "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
@@ -1222,6 +1246,7 @@
             "Material.024": "detail"
           },
           "atlasRegions": {},
+          "atlasClusters": {},
           "hiddenMeshes": [],
           "licenseSpdx": "CC0-1.0",
           "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
@@ -1298,6 +1323,7 @@
             "Material.024": "detail"
           },
           "atlasRegions": {},
+          "atlasClusters": {},
           "hiddenMeshes": [],
           "licenseSpdx": "CC0-1.0",
           "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
@@ -1375,6 +1401,7 @@
             "Material.024": "detail"
           },
           "atlasRegions": {},
+          "atlasClusters": {},
           "hiddenMeshes": [],
           "licenseSpdx": "CC0-1.0",
           "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
@@ -1417,6 +1444,7 @@
             "MI_Eyes": "iris"
           },
           "atlasRegions": {},
+          "atlasClusters": {},
           "hiddenMeshes": [],
           "headDonor": {
             "packId": "quaternius-animals-v1",
@@ -1515,6 +1543,7 @@
             "MI_Eyes": "iris"
           },
           "atlasRegions": {},
+          "atlasClusters": {},
           "hiddenMeshes": [],
           "headDonor": {
             "packId": "quaternius-animals-v1",
@@ -1613,6 +1642,7 @@
             "MI_Eyes": "iris"
           },
           "atlasRegions": {},
+          "atlasClusters": {},
           "hiddenMeshes": [],
           "headDonor": {
             "packId": "quaternius-animals-v1",
@@ -1711,6 +1741,7 @@
             "MI_Eyes": "iris"
           },
           "atlasRegions": {},
+          "atlasClusters": {},
           "hiddenMeshes": [],
           "headDonor": {
             "packId": "quaternius-animals-v1",
@@ -1809,6 +1840,7 @@
             "MI_Eyes": "iris"
           },
           "atlasRegions": {},
+          "atlasClusters": {},
           "hiddenMeshes": [],
           "headDonor": {
             "packId": "quaternius-animals-v1",
@@ -1907,6 +1939,7 @@
             "MI_Eyes": "iris"
           },
           "atlasRegions": {},
+          "atlasClusters": {},
           "hiddenMeshes": [],
           "headDonor": {
             "packId": "quaternius-animals-v1",
@@ -2054,6 +2087,7 @@
             "Material.024": "detail"
           },
           "atlasRegions": {},
+          "atlasClusters": {},
           "hiddenMeshes": [],
           "licenseSpdx": "CC0-1.0",
           "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
@@ -2130,6 +2164,7 @@
             "Material.024": "detail"
           },
           "atlasRegions": {},
+          "atlasClusters": {},
           "hiddenMeshes": [],
           "licenseSpdx": "CC0-1.0",
           "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
@@ -2206,6 +2241,7 @@
             "Material.024": "detail"
           },
           "atlasRegions": {},
+          "atlasClusters": {},
           "hiddenMeshes": [],
           "licenseSpdx": "CC0-1.0",
           "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
@@ -2283,6 +2319,7 @@
             "Material.024": "detail"
           },
           "atlasRegions": {},
+          "atlasClusters": {},
           "hiddenMeshes": [],
           "licenseSpdx": "CC0-1.0",
           "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
@@ -2359,6 +2396,7 @@
             "Material.024": "detail"
           },
           "atlasRegions": {},
+          "atlasClusters": {},
           "hiddenMeshes": [],
           "licenseSpdx": "CC0-1.0",
           "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
@@ -2435,6 +2473,7 @@
             "Material.024": "detail"
           },
           "atlasRegions": {},
+          "atlasClusters": {},
           "hiddenMeshes": [],
           "licenseSpdx": "CC0-1.0",
           "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
@@ -2511,6 +2550,7 @@
             "Material.024": "detail"
           },
           "atlasRegions": {},
+          "atlasClusters": {},
           "hiddenMeshes": [],
           "licenseSpdx": "CC0-1.0",
           "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
@@ -2587,6 +2627,7 @@
             "Material.024": "detail"
           },
           "atlasRegions": {},
+          "atlasClusters": {},
           "hiddenMeshes": [],
           "licenseSpdx": "CC0-1.0",
           "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
@@ -2663,6 +2704,7 @@
             "Material.024": "detail"
           },
           "atlasRegions": {},
+          "atlasClusters": {},
           "hiddenMeshes": [],
           "licenseSpdx": "CC0-1.0",
           "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
@@ -2739,6 +2781,7 @@
             "Material.024": "detail"
           },
           "atlasRegions": {},
+          "atlasClusters": {},
           "hiddenMeshes": [],
           "licenseSpdx": "CC0-1.0",
           "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
@@ -2816,6 +2859,7 @@
             "Material.024": "detail"
           },
           "atlasRegions": {},
+          "atlasClusters": {},
           "hiddenMeshes": [],
           "licenseSpdx": "CC0-1.0",
           "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
@@ -2863,6 +2907,7 @@
             "Skeleton_Warrior_LegLeft": "fur",
             "Skeleton_Warrior_LegRight": "fur"
           },
+          "atlasClusters": {},
           "hiddenMeshes": [],
           "licenseSpdx": "CC0-1.0",
           "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
@@ -2909,6 +2954,7 @@
             "Skeleton_Mage_LegRight": "fur",
             "Skeleton_Mage_Skull": "skin"
           },
+          "atlasClusters": {},
           "hiddenMeshes": [],
           "licenseSpdx": "CC0-1.0",
           "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
@@ -2956,6 +3002,7 @@
             "Skeleton_Rogue_LegLeft": "fur",
             "Skeleton_Rogue_LegRight": "fur"
           },
+          "atlasClusters": {},
           "hiddenMeshes": [],
           "licenseSpdx": "CC0-1.0",
           "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
@@ -3002,6 +3049,7 @@
             "Skeleton_Minion_LegLeft": "fur",
             "Skeleton_Minion_LegRight": "fur"
           },
+          "atlasClusters": {},
           "hiddenMeshes": [],
           "licenseSpdx": "CC0-1.0",
           "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
@@ -3044,10 +3092,20 @@
           "tris": 4528,
           "joints": 65,
           "bytes": 847304,
-          "recolorable": false,
-          "materialPolicy": "preserve",
+          "recolorable": true,
+          "materialPolicy": "hue-clusters",
           "slots": {},
           "atlasRegions": {},
+          "atlasClusters": {
+            "regionOrder": [
+              "fur",
+              "accent",
+              "detail",
+              "line"
+            ],
+            "clusters": 4,
+            "margin": 0.06
+          },
           "hiddenMeshes": [],
           "licenseSpdx": "CC-BY-4.0",
           "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
@@ -3078,10 +3136,20 @@
           "tris": 3636,
           "joints": 65,
           "bytes": 701208,
-          "recolorable": false,
-          "materialPolicy": "preserve",
+          "recolorable": true,
+          "materialPolicy": "hue-clusters",
           "slots": {},
           "atlasRegions": {},
+          "atlasClusters": {
+            "regionOrder": [
+              "fur",
+              "accent",
+              "detail",
+              "line"
+            ],
+            "clusters": 4,
+            "margin": 0.06
+          },
           "hiddenMeshes": [],
           "licenseSpdx": "CC-BY-4.0",
           "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
@@ -3112,10 +3180,20 @@
           "tris": 4284,
           "joints": 65,
           "bytes": 951312,
-          "recolorable": false,
-          "materialPolicy": "preserve",
+          "recolorable": true,
+          "materialPolicy": "hue-clusters",
           "slots": {},
           "atlasRegions": {},
+          "atlasClusters": {
+            "regionOrder": [
+              "fur",
+              "accent",
+              "detail",
+              "line"
+            ],
+            "clusters": 4,
+            "margin": 0.06
+          },
           "hiddenMeshes": [],
           "licenseSpdx": "CC-BY-4.0",
           "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
@@ -3146,10 +3224,20 @@
           "tris": 3330,
           "joints": 65,
           "bytes": 642560,
-          "recolorable": false,
-          "materialPolicy": "preserve",
+          "recolorable": true,
+          "materialPolicy": "hue-clusters",
           "slots": {},
           "atlasRegions": {},
+          "atlasClusters": {
+            "regionOrder": [
+              "fur",
+              "accent",
+              "detail",
+              "line"
+            ],
+            "clusters": 4,
+            "margin": 0.06
+          },
           "hiddenMeshes": [],
           "licenseSpdx": "CC-BY-4.0",
           "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
@@ -3180,10 +3268,20 @@
           "tris": 3068,
           "joints": 65,
           "bytes": 623356,
-          "recolorable": false,
-          "materialPolicy": "preserve",
+          "recolorable": true,
+          "materialPolicy": "hue-clusters",
           "slots": {},
           "atlasRegions": {},
+          "atlasClusters": {
+            "regionOrder": [
+              "fur",
+              "accent",
+              "detail",
+              "line"
+            ],
+            "clusters": 4,
+            "margin": 0.06
+          },
           "hiddenMeshes": [],
           "licenseSpdx": "CC-BY-4.0",
           "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
@@ -3214,10 +3312,20 @@
           "tris": 2164,
           "joints": 65,
           "bytes": 447724,
-          "recolorable": false,
-          "materialPolicy": "preserve",
+          "recolorable": true,
+          "materialPolicy": "hue-clusters",
           "slots": {},
           "atlasRegions": {},
+          "atlasClusters": {
+            "regionOrder": [
+              "fur",
+              "accent",
+              "detail",
+              "line"
+            ],
+            "clusters": 4,
+            "margin": 0.06
+          },
           "hiddenMeshes": [],
           "licenseSpdx": "CC-BY-4.0",
           "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
@@ -3248,10 +3356,20 @@
           "tris": 2880,
           "joints": 65,
           "bytes": 567060,
-          "recolorable": false,
-          "materialPolicy": "preserve",
+          "recolorable": true,
+          "materialPolicy": "hue-clusters",
           "slots": {},
           "atlasRegions": {},
+          "atlasClusters": {
+            "regionOrder": [
+              "fur",
+              "accent",
+              "detail",
+              "line"
+            ],
+            "clusters": 4,
+            "margin": 0.06
+          },
           "hiddenMeshes": [],
           "licenseSpdx": "CC-BY-4.0",
           "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
@@ -3282,10 +3400,20 @@
           "tris": 2130,
           "joints": 55,
           "bytes": 485920,
-          "recolorable": false,
-          "materialPolicy": "preserve",
+          "recolorable": true,
+          "materialPolicy": "hue-clusters",
           "slots": {},
           "atlasRegions": {},
+          "atlasClusters": {
+            "regionOrder": [
+              "fur",
+              "accent",
+              "detail",
+              "line"
+            ],
+            "clusters": 4,
+            "margin": 0.06
+          },
           "hiddenMeshes": [],
           "licenseSpdx": "CC-BY-4.0",
           "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
@@ -3300,14 +3428,6 @@
     }
   ],
   "blocked": [
-    {
-      "id": "polygonalmind-100avatars-atlas-recolor",
-      "wanted": "Per-region recolour on the 100Avatars line.",
-      "verdict": "NOT SHIPPED - but a measured, bounded route now exists; this is unbuilt work, not a dead end.",
-      "evidence": "Four boundaries were measured across all 8 shipped avatars. (1) STRUCTURE gives nothing: 1 mesh node, 1 mesh, 1 PRIMITIVE, 1 material per file, and no COLOR_0 attribute. (2) VRM METADATA gives nothing: firstPerson.meshAnnotations empty on all 8 (not even the head is annotated), spring-bone groups empty, no blendShape materialValues, and the single materialProperties entry points _MainTex and _ShadeTexture at the SAME image. (3) BONE WEIGHT does split the mesh (jimmy: head 1411 / torso 123 / arm 864 / leg 142 vertices) but ANATOMICALLY: one head group carries face, hair and eyes together, and the groups share atlas texels heavily - as little as 2% of a group's texels are exclusive to it. (4) UV ISLANDS are a genuinely good boundary, which an earlier version of this entry wrongly denied existed: 94 large islands across the 8 avatars (median 12 each), 97% internally single-hue. They are also anatomical, though - those 94 islands carry only 23 distinct dominant colours between them (jimmy: 14 islands, 2 colours), so assigning a house region per island would repaint body parts rather than materials. THE SAME MEASUREMENT IS THE ROUTE: each avatar resolves to just 2-4 base colours (jimmy 2, cactusboy 2, mint 2, skelly 2, teddy 3, skull 4, froggy 4, polybot 4), and THAT is a material partition. A per-texel hue classifier - nearest of N baked hues -> house region - recolours these correctly with no mesh split and no extra texture. The two JPEG-textured avatars (froggy, polybot) are NOT excluded: being non-indexed blocks an index->region LUT, not hue classification.",
-      "blocker": "Unbuilt, not impossible. It needs: a 23-row hue->region table in this file (the same shape as the materialPolicy slot maps, and smaller than the 39-row monsters map); house_toon_core's atlas branch generalised from ONE atlas_hue uniform to up to 4 (hue, region) pairs picking the nearest; and pack_mount binding one such material for the whole mesh. Everything else - the hue-selective tint, the luminance-preserving ramp, the shared-palette recolour path - already ships for the KayKit lines.",
-      "shippedInstead": "The vendor material is preserved and the UI marks these entries 'fixed colours'. They are the BYO-VRM importer's reference corpus rather than player avatars, so the editor loses nothing while this is outstanding."
-    },
     {
       "id": "oga-base-rigged-stylized-humanoid-yw",
       "wanted": "The CC0 'Base Rigged Stylized Humanoid Character (YW)' as a second anime base.",
@@ -3324,6 +3444,6 @@
   "totals": {
     "lanes": 5,
     "entries": 48,
-    "recolorable": 40
+    "recolorable": 48
   }
 }

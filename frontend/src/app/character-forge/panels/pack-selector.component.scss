@@ -136,6 +136,18 @@
   }
 }
 
+// Small colour chip next to an atlas-derived region, so the mapping between a
+// vendor colour and a house region is visible rather than described.
+.swatch {
+  display: inline-block;
+  width: 0.6rem;
+  height: 0.6rem;
+  margin-right: 0.2rem;
+  border-radius: 2px;
+  vertical-align: baseline;
+  border: 1px solid rgba(0, 0, 0, 0.35);
+}
+
 .import-slot {
   display: flex;
   flex-direction: column;

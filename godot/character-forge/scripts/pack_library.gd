@@ -223,6 +223,9 @@ static func basis_entry(e: Dictionary) -> Dictionary:
 		# the asset pipeline so the mapping is reviewable in the catalogue rather
 		# than guessed from node names at runtime.
 		"atlasRegions": e.get("atlasRegions", {}) if e.get("atlasRegions", {}) is Dictionary else {},
+		# Region order for a character with NO per-part boundary: the Nth largest
+		# base colour in its atlas takes the Nth region here.
+		"atlasClusters": e.get("atlasClusters", {}) if e.get("atlasClusters", {}) is Dictionary else {},
 		# A SECOND vendored model whose head is split off by bone weight at mount
 		# time and grafted onto this body (scripts/mesh_surgery.gd). Copied
 		# verbatim, licence fields included: CharForgeRegistry validates the donor

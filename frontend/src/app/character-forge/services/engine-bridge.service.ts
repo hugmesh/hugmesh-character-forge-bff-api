@@ -66,6 +66,12 @@ export interface PackMountReport {
   atlasRegions?: { node: string; region: string; coverage: number; source: string }[];
   atlasSkipped?: string[];
   /**
+   * For a model with NO per-part boundary (the 100Avatars line): the base
+   * colours measured out of its atlas and the region each one drives. `share`
+   * is the fraction of texels that classify to it, so these sum to 1.
+   */
+  atlasClusters?: { color: string; region: string; share: number }[];
+  /**
    * Set when a SECOND vendored model's head was split off by bone weight and
    * grafted onto this body. It carries its own licence because it is a separate
    * third-party asset visible in the same avatar — crediting only the body

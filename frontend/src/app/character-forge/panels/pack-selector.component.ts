@@ -107,10 +107,19 @@ export class PackSelectorComponent {
    */
   recolourNote(report: PackMountReport): string {
     if (!report.recolorable) return 'no (baked atlas)';
+    // A model with no per-part boundary recolours by atlas base colour instead,
+    // so "N of M parts" would be meaningless for it — it has one part.
+    const clusters = report.atlasClusters?.length ?? 0;
+    if (clusters) return `yes, ${clusters} colours from the atlas`;
     const bound = report.atlasRegionsBound ?? 0;
     if (!bound) return 'yes';
     const skipped = report.atlasSkipped?.length ?? 0;
     return `yes, ${bound} of ${bound + skipped} parts`;
+  }
+
+  /** Whole-percent share, so the template needs no DecimalPipe import. */
+  sharePct(share: number): number {
+    return Math.round(share * 100);
   }
 
   /** Human-readable cost, so a 166-joint VRoid base is not a surprise in VR. */

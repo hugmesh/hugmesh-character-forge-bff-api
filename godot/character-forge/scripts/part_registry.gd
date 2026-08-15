@@ -255,6 +255,31 @@ func _register(target: Dictionary, key: String, entry: Dictionary, allowed_keys:
 						% [node_name, atlas_region])
 	clean["atlasRegions"] = atlas_regions
 
+	# ATLAS CLUSTERS — the boundary-free path: {regionOrder: [...], clusters: n,
+	# margin: f}. Every named region is validated here so a typo cannot reach the
+	# shader as a silently wrong palette cell.
+	var clusters := {}
+	var clusters_raw: Variant = entry.get("atlasClusters", {})
+	if clusters_raw is Dictionary and not (clusters_raw as Dictionary).is_empty():
+		var spec: Dictionary = clusters_raw
+		var order: Array = []
+		var order_raw: Variant = spec.get("regionOrder", [])
+		if order_raw is Array:
+			for region_name in order_raw:
+				if String(region_name) in Char3DConfig.ALL_MATERIAL_REGIONS:
+					order.append(String(region_name))
+				else:
+					last_errors.append("atlasClusters.regionOrder names unknown region '%s'"
+							% String(region_name))
+		if order.is_empty():
+			last_errors.append("atlasClusters needs a non-empty regionOrder")
+		clusters = {
+			"regionOrder": order,
+			"clusters": int(spec.get("clusters", 4)),
+			"margin": float(spec.get("margin", 0.06)),
+		}
+	clean["atlasClusters"] = clusters
+
 	var slots_raw: Variant = entry.get("slots", DEFAULT_SLOT_MAP)
 	var slots := {}
 	if slots_raw is Dictionary:
@@ -266,7 +291,7 @@ func _register(target: Dictionary, key: String, entry: Dictionary, allowed_keys:
 			slots[String(slot_name).to_lower()] = region
 	else:
 		last_errors.append("slots must be a Dictionary of materialName -> region")
-	if slots.is_empty() and not preserve and atlas_regions.is_empty():
+	if slots.is_empty() and not preserve and atlas_regions.is_empty() and clusters.is_empty():
 		last_errors.append("slots map is empty — a mesh basis must declare its regions")
 	clean["slots"] = slots
 

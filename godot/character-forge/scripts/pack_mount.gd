@@ -79,6 +79,9 @@ var _atlas_bound := 0
 ## Per-node record of what recoloured, and the parts deliberately left on vendor
 ## colours because no single region colour would be right for them.
 var _atlas_nodes: Array = []
+## Base colours resolved out of a vendor atlas when the model has no per-part
+## boundary at all ([] for every other entry).
+var _atlas_clusters: Array = []
 var _atlas_skipped: Array = []
 var _height_scale := 1.0
 ## Provenance + measurements for a runtime-split donor head ({} when the mount
@@ -279,6 +282,7 @@ func clear() -> void:
 	_merged = 0
 	_atlas_bound = 0
 	_atlas_nodes = []
+	_atlas_clusters = []
 	_atlas_skipped = []
 	_height_scale = 1.0
 	_donor = {}
@@ -347,6 +351,24 @@ func mount(kind: String, entry: Dictionary) -> Node3D:
 		# SHADING source and a house region colour supplies the hue, per mesh
 		# node — see CharForgeGlbLoader.bind_atlas_regions. Entries with no
 		# atlasRegions map keep their vendor colours exactly as before.
+		# BOUNDARY-FREE recolour first: an avatar with no per-part boundary at all
+		# takes its regions from the TEXTURE's base colours instead.
+		var cluster_spec: Variant = entry.get("atlasClusters", {})
+		if cluster_spec is Dictionary and not (cluster_spec as Dictionary).is_empty():
+			var spec: Dictionary = cluster_spec
+			var order: Variant = spec.get("regionOrder", [])
+			var clustered := CharForgeGlbLoader.bind_atlas_clusters(
+					root, assembler.materials,
+					order if order is Array else [],
+					float(spec.get("margin", 0.06)),
+					int(spec.get("clusters", CharForgeGlbLoader.MAX_ATLAS_CLUSTERS)))
+			_atlas_bound = int(clustered.bound)
+			_atlas_clusters = clustered.clusters.duplicate(true)
+			if _atlas_bound == 0:
+				last_error = "atlas cluster recolour found no atlas on %s" \
+						% String(entry.get("key", ""))
+				push_warning("CharForgeMount: " + last_error)
+
 		var node_regions: Variant = entry.get("atlasRegions", {})
 		if node_regions is Dictionary and not (node_regions as Dictionary).is_empty():
 			var atlas := CharForgeGlbLoader.bind_atlas_regions(
@@ -474,6 +496,7 @@ func mount_report() -> Dictionary:
 		"atlasRegionsBound": _atlas_bound,
 		"atlasRegions": _atlas_nodes.duplicate(true),
 		"atlasSkipped": _atlas_skipped.duplicate(),
+		"atlasClusters": _atlas_clusters.duplicate(true),
 		"meshesHidden": _hidden,
 		"piecesMerged": _merged,
 		"heightScale": _height_scale,

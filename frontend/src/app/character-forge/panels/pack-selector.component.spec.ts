@@ -60,11 +60,14 @@ describe('PackSelectorComponent (style tabs + BYO import)', () => {
       .withContext('the single-atlas Knight is region-recolourable')
       .toBeTrue();
 
-    // The 100Avatars line genuinely still cannot: one mesh node, one material,
-    // nothing to assign a region along. It must keep saying so.
+    // The 100Avatars line recolours too now — not by finding a boundary (it has
+    // none) but by taking its regions from the texture's own base colours.
     expect(PACK_ENTRIES.find((e) => e.key === 'filler-jimmy')!.recolorable)
-      .withContext('100Avatars has no per-part boundary to recolour along')
-      .toBeFalse();
+      .withContext('100Avatars recolours via measured atlas base colours')
+      .toBeTrue();
+    expect(PACK_ENTRIES.every((e) => e.recolorable))
+      .withContext('every catalogue entry is region-recolourable')
+      .toBeTrue();
 
     const ubc = el.querySelector('[data-testid="cf-pack-jrpg-ubc-b"]')!;
     expect(ubc.textContent).not.toContain('fixed colours');
@@ -206,7 +209,6 @@ describe('PackSelectorComponent (style tabs + BYO import)', () => {
     const gaps = el.querySelector('[data-testid="cf-pack-gaps"]')!;
     // Two gaps remain, and each still shows its EVIDENCE rather than a bare
     // "unavailable" — that is the property worth pinning, not any one phrase.
-    expect(gaps.textContent).toContain('100Avatars');
     expect(gaps.textContent).toContain('NOT VENDORED');
     for (const gap of PACK_BLOCKED) {
       expect(gap.evidence.length)
@@ -277,6 +279,31 @@ describe('PackSelectorComponent (style tabs + BYO import)', () => {
     // The parts left alone are named, not silently different.
     expect(el.querySelector('[data-testid="cf-pack-atlas-skipped"]')!.textContent)
       .toContain('2H_Sword');
+  });
+
+  it('shows which atlas colour drives which region on a boundary-free model', () => {
+    // These avatars have no per-part boundary at all, so "N of M parts" would be
+    // meaningless — they have one part. The honest note is which measured colour
+    // drives which region, since that is not guessable from looking at the model.
+    engine.mountReport.set({
+      key: 'filler-jimmy', kind: 'head', displayName: 'Jimmy (100Avatars)', lane: 'import',
+      mounted: true, recolorable: true, surfacesRebound: 0, meshesHidden: 0,
+      heightScale: 1.0, lipSyncChannels: ['strip'], visemes: true,
+      licenseSpdx: 'CC0-1.0', attribution: 'PolygonalMind', sourceUrl: 'https://100avatars.com',
+      imported: false, error: '', atlasRegionsBound: 1,
+      atlasClusters: [
+        { color: 'fccc84', region: 'fur', share: 0.55 },
+        { color: 'fcfcfc', region: 'accent', share: 0.16 },
+      ],
+    });
+    const el: HTMLElement = render().nativeElement;
+    const note = el.querySelector('[data-testid="cf-pack-clusters"]')!;
+    expect(note).withContext('the atlas-derived regions are shown').toBeTruthy();
+    expect(note.textContent).toContain('fur');
+    expect(note.textContent).toContain('55%');
+    // And the summary must not claim parts it does not have.
+    expect(el.querySelector('[data-testid="cf-pack-report"]')!.textContent)
+      .toContain('2 colours from the atlas');
   });
 
   it('credits a grafted donor head separately from the body it rides', () => {

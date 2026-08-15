@@ -128,8 +128,8 @@ for (const [packId, policy] of Object.entries(lanesSrc.materialPolicy)) {
     fail(`materialPolicy names unknown pack '${packId}'`);
     continue;
   }
-  if (!['map', 'preserve', 'atlas'].includes(policy.policy)) {
-    fail(`${packId}: policy must be 'map', 'atlas' or 'preserve', got '${policy.policy}'`);
+  if (!['map', 'preserve', 'atlas', 'hue-clusters'].includes(policy.policy)) {
+    fail(`${packId}: policy must be 'map', 'atlas', 'hue-clusters' or 'preserve', got '${policy.policy}'`);
   }
   if (!policy.reason || policy.reason.length < 20) {
     fail(`${packId}: a material policy needs a real reason`);
@@ -186,6 +186,33 @@ for (const [packId, policy] of Object.entries(lanesSrc.materialPolicy)) {
     }
   } else if (policy.nodeRegions) {
     fail(`${packId}: nodeRegions only applies to an 'atlas' policy`);
+  }
+
+  // HUE-CLUSTERS: for characters with NO per-part boundary at all. Regions come
+  // from the texture's own base colours, assigned by AREA — the jrpg-bases.md
+  // 60/30/10 blocking applied to whatever the engine measures at mount time.
+  // That is why this is a short ordered list and not a per-avatar colour table:
+  // a rule about proportion holds for an avatar nobody has looked at.
+  if (policy.policy === 'hue-clusters') {
+    const order = policy.regionOrder || [];
+    if (!Array.isArray(order) || !order.length) {
+      fail(`${packId}: a 'hue-clusters' policy needs a regionOrder list`);
+    }
+    for (const region of Array.isArray(order) ? order : []) {
+      if (!REGIONS.includes(region)) {
+        fail(`${packId}: regionOrder names unknown palette region '${region}'`);
+      }
+    }
+    const n = policy.clusters ?? 4;
+    if (!Number.isInteger(n) || n < 1 || n > 4) {
+      fail(`${packId}: clusters must be an integer 1..4 (the shader packs them into vec4s)`);
+    }
+    if (Array.isArray(order) && order.length < n) {
+      fail(`${packId}: regionOrder has ${order.length} entries for ${n} clusters — `
+        + `the last would be reused, which hides a missing decision`);
+    }
+  } else if (policy.regionOrder) {
+    fail(`${packId}: regionOrder only applies to a 'hue-clusters' policy`);
   }
   for (const slot of Object.keys(policy.unverifiedSlots || {})) {
     if (!(slot in slots)) fail(`${packId}: unverifiedSlots names '${slot}', which is not in the slot map`);
@@ -383,10 +410,15 @@ for (const lane of lanesSrc.lanes) {
       // A single-atlas character IS recolourable — per mesh node, through the
       // atlas — even though its vendor material is preserved as the shading
       // source. See lanes.json materialPolicy '<pack>'.policy === 'atlas'.
-      recolorable: policy.policy === 'map' || policy.policy === 'atlas',
+      recolorable: policy.policy === 'map' || policy.policy === 'atlas'
+        || policy.policy === 'hue-clusters',
       materialPolicy: policy.policy,
       slots: policy.policy === 'map' ? policy.slots : {},
       atlasRegions,
+      atlasClusters: policy.policy === 'hue-clusters'
+        ? { regionOrder: policy.regionOrder, clusters: policy.clusters ?? 4,
+            margin: policy.margin ?? 0.06 }
+        : {},
       // Engine-only (scripts/pack_mount.gd) — deliberately NOT in the frontend
       // catalog: the selector shows what a model IS, not how it is assembled.
       hiddenMeshes: Array.isArray(hidden) ? [...hidden] : [],

@@ -151,6 +151,18 @@
         lip-sync: {{ mounted.lipSyncChannels.length ? mounted.lipSyncChannels.join(', ') : 'none' }}@if (mounted.meshesHidden) {, {{ mounted.meshesHidden }} props hidden}.
         @if (mounted.error) { <span class="warn">{{ mounted.error }}</span> }
       </p>
+      @if (mounted.atlasClusters?.length) {
+        <!-- This model has no per-part boundary at all; its regions come from
+             the base colours measured in its own atlas. Shown because which
+             colour drives which region is not guessable from the model. -->
+        <p class="mount-note donor" data-testid="cf-pack-clusters">
+          Colours taken from the atlas:
+          @for (c of mounted.atlasClusters; track c.color) {
+            <span class="swatch" [style.background]="'#' + c.color"></span>{{ c.region }}
+            ({{ sharePct(c.share) }}%){{ $last ? '' : ', ' }}
+          }
+        </p>
+      }
       @if (mounted.atlasSkipped?.length) {
         <!-- Parts that mix two materials in one mesh node. Any single region
              colour would be wrong for most of their surface, so they keep the

@@ -140,6 +140,56 @@ func atlas_region(region_name: String, atlas: Texture2D,
 	return mat
 
 
+## A material that recolours a vendor atlas with NO per-part boundary, by
+## classifying each texel to the nearest of up to four measured base colours.
+##
+## This is what makes the 100Avatars line recolourable. Those avatars are one
+## mesh node with one material and no annotation of any kind, so there is
+## nothing to bind a region TO — but their texture only holds 2-4 base colours,
+## and that is a material partition. `clusters` comes from
+## CharForgeGlbLoader.cluster_atlas and carries {color, share, luma} largest
+## first; `regions` is the house region each one takes.
+##
+## The uniforms are packed into vec4s rather than arrays deliberately: the
+## Compatibility renderer is the target, and this keeps the shader to plain
+## vec4 uniforms. Recolouring stays free — the region colours ride the shared
+## palette texture, so recolor() updates this material without touching it.
+func atlas_clusters(regions: Array, atlas: Texture2D, clusters: Array,
+		margin: float = 0.06) -> ShaderMaterial:
+	var mat := _make(String(regions[0]) if not regions.is_empty() else "fur", false)
+	mat.set_shader_parameter("atlas_tex", atlas)
+	# The single-node path must stay off, or both branches would write ALBEDO.
+	mat.set_shader_parameter("atlas_strength", 0.0)
+	var r := Color(0, 0, 0, 0)
+	var g := Color(0, 0, 0, 0)
+	var b := Color(0, 0, 0, 0)
+	var cx := Color(0, 0, 0, 0)
+	var cy := Color(0, 0, 0, 0)
+	var luma := Color(0.5, 0.5, 0.5, 0.5)
+	var used := mini(clusters.size(), 4)
+	for i in range(used):
+		var entry: Dictionary = clusters[i]
+		var color: Color = entry.color
+		var region := String(regions[mini(i, regions.size() - 1)])
+		var cell := CharForgePalette.region_uv(region)
+		r[i] = color.r
+		g[i] = color.g
+		b[i] = color.b
+		cx[i] = cell.x
+		cy[i] = cell.y
+		luma[i] = maxf(float(entry.get("luma", 0.5)), 0.001)
+	mat.set_shader_parameter("atlas_base_r", Vector4(r.r, r.g, r.b, r.a))
+	mat.set_shader_parameter("atlas_base_g", Vector4(g.r, g.g, g.b, g.a))
+	mat.set_shader_parameter("atlas_base_b", Vector4(b.r, b.g, b.b, b.a))
+	mat.set_shader_parameter("atlas_cell_x", Vector4(cx.r, cx.g, cx.b, cx.a))
+	mat.set_shader_parameter("atlas_cell_y", Vector4(cy.r, cy.g, cy.b, cy.a))
+	mat.set_shader_parameter("atlas_cluster_luma", Vector4(luma.r, luma.g, luma.b, luma.a))
+	mat.set_shader_parameter("atlas_cluster_count", float(used))
+	mat.set_shader_parameter("atlas_cluster_margin", clampf(margin, 0.0, 0.5))
+	mat.resource_name = "charforge_atlas_clusters_%d" % used
+	return mat
+
+
 ## A flat colour that is NOT a palette region (sclera white, blush pink, ...).
 ## The palette sampler's hint_default_white makes an unassigned palette texture
 ## read as white, so albedo_tint alone carries the colour.

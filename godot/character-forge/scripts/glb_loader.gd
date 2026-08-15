@@ -55,6 +55,14 @@ const HUE_TOLERANCE := 0.083
 ## sides rather than splitting a cluster.
 const MIN_ATLAS_COVERAGE := 0.60
 
+## Boundary-free atlas recolour (see cluster_atlas): how many base colours to
+## resolve, the quantisation grid that collapses a shading ramp onto its base,
+## and how close two candidates may be before the second counts as a variant of
+## the first rather than a material of its own.
+const MAX_ATLAS_CLUSTERS := 4
+const ATLAS_QUANT := 24
+const MERGE_DISTANCE := 0.18
+
 ## Fallback palette regions by common material-name substring, tried only when
 ## the registry slot map has no exact answer. Keeps a well-meaning but
 ## non-conforming GLB from rendering as flat white.
@@ -169,16 +177,41 @@ static func _swap_node_materials(node: Node, mats: CharForgeMaterials,
 	return swapped
 
 
+## Uniform names that carry the base-colour texture on a vendor ShaderMaterial.
+## `_MainTex` is MToon's, which is what the vendored VRM addon binds — a VRM
+## arrives as a ShaderMaterial, NOT a BaseMaterial3D, so looking only at
+## albedo_texture finds nothing on every VRM in the catalogue.
+const ATLAS_UNIFORM_CANDIDATES := ["_MainTex", "albedo_texture", "texture_albedo",
+		"base_texture", "main_tex"]
+
+
 ## The single baked atlas a vendor material renders from, or null.
 static func atlas_texture_of(mi: MeshInstance3D) -> Texture2D:
 	if mi == null or mi.mesh == null:
 		return null
 	for i in range(mi.mesh.get_surface_count()):
-		var material := mi.mesh.surface_get_material(i)
+		var material: Material = mi.get_surface_override_material(i)
+		if material == null:
+			material = mi.mesh.surface_get_material(i)
 		if material is BaseMaterial3D:
 			var tex := (material as BaseMaterial3D).albedo_texture
 			if tex != null:
 				return tex
+		elif material is ShaderMaterial:
+			var shader_mat := material as ShaderMaterial
+			for candidate in ATLAS_UNIFORM_CANDIDATES:
+				var value: Variant = shader_mat.get_shader_parameter(String(candidate))
+				if value is Texture2D:
+					return value as Texture2D
+			# Unknown vendor shader: the first texture uniform it exposes is a
+			# better guess than giving up, and a wrong guess is visible rather
+			# than silent (the recolour simply looks wrong, and the report names
+			# the clusters it found).
+			if shader_mat.shader != null:
+				for uniform in shader_mat.shader.get_shader_uniform_list():
+					var raw: Variant = shader_mat.get_shader_parameter(String(uniform.name))
+					if raw is Texture2D:
+						return raw as Texture2D
 	return null
 
 
@@ -263,6 +296,166 @@ static func atlas_profile(mi: MeshInstance3D, atlas: Texture2D) -> Dictionary:
 		"coverage": float(covered) / float(colors.size()),
 		"samples": colors.size(),
 	}
+
+
+## Up to `count` BASE COLOURS of an atlas, ordered by how much of the mesh uses
+## them, sampled along the mesh's own UVs.
+##
+## This is the boundary-free half of atlas recolour. Some vendored avatars (the
+## 100Avatars line) have no per-part boundary at all: one mesh node, one
+## primitive, one material, no COLOR_0, no VRM annotation, and UV islands that
+## are anatomical rather than material (measured: 94 islands carrying only 23
+## distinct colours). But each of those avatars resolves to just 2-4 BASE
+## COLOURS, and that IS a material partition — so the regions are taken from the
+## texture instead of from the geometry.
+##
+## Deterministic by construction: colours are quantised to a coarse grid, ranked
+## by texel count, and a candidate within MERGE_DISTANCE of an already-taken
+## centre is skipped as a shading variant of it. Same input, same answer, every
+## run — which is what lets a test pin the result.
+##
+## Returns [{"color": Color, "share": float, "luma": float}, ...], largest first.
+static func cluster_atlas(mi: MeshInstance3D, atlas: Texture2D,
+		count: int = MAX_ATLAS_CLUSTERS) -> Array:
+	var out: Array = []
+	if mi == null or mi.mesh == null or atlas == null or count <= 0:
+		return out
+	var image := atlas.get_image()
+	if image == null:
+		return out
+	if image.is_compressed():
+		image = image.duplicate()
+		if image.decompress() != OK:
+			return out
+	var width := image.get_width()
+	var height := image.get_height()
+	if width <= 0 or height <= 0:
+		return out
+
+	var tally := {}
+	var samples: Array[Color] = []
+	for s in range(mi.mesh.get_surface_count()):
+		var arrays: Array = mi.mesh.surface_get_arrays(s)
+		if arrays.size() <= Mesh.ARRAY_TEX_UV or arrays[Mesh.ARRAY_TEX_UV] == null:
+			continue
+		for uv in (arrays[Mesh.ARRAY_TEX_UV] as PackedVector2Array):
+			var x := clampi(int(uv.x * float(width)), 0, width - 1)
+			var y := clampi(int(uv.y * float(height)), 0, height - 1)
+			var c := image.get_pixel(x, y)
+			samples.append(c)
+			# Quantise so a shading ramp collapses onto its base colour.
+			var key := "%d,%d,%d" % [int(c.r * 255.0) / ATLAS_QUANT,
+					int(c.g * 255.0) / ATLAS_QUANT, int(c.b * 255.0) / ATLAS_QUANT]
+			tally[key] = int(tally.get(key, 0)) + 1
+	var total := samples.size()
+	if total == 0:
+		return out
+
+	var ranked: Array = tally.keys()
+	ranked.sort_custom(func(a, b):
+		var ca := int(tally[a])
+		var cb := int(tally[b])
+		# Tie-break on the key so the order is stable, not hash-order dependent.
+		return ca > cb if ca != cb else String(a) < String(b))
+	for key in ranked:
+		var parts := String(key).split(",")
+		var color := Color(
+				(float(int(parts[0])) * ATLAS_QUANT + ATLAS_QUANT * 0.5) / 255.0,
+				(float(int(parts[1])) * ATLAS_QUANT + ATLAS_QUANT * 0.5) / 255.0,
+				(float(int(parts[2])) * ATLAS_QUANT + ATLAS_QUANT * 0.5) / 255.0)
+		var duplicate_of := false
+		for taken in out:
+			if _color_distance(color, taken.color) < MERGE_DISTANCE:
+				duplicate_of = true
+				break
+		if duplicate_of:
+			continue
+		out.append({
+			"color": color,
+			"share": 0.0,
+			"luma": maxf(0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b, 0.001),
+		})
+		if out.size() >= count:
+			break
+	if out.is_empty():
+		return out
+
+	# SHARE is the fraction of texels that actually CLASSIFY to each cluster —
+	# the same nearest-colour rule the shader applies — not the size of the
+	# quantised bucket the centre came from. Those differ: the buckets are a
+	# seeding heuristic and leave a fifth of the texels unaccounted for, so
+	# reporting them would publish percentages that do not sum to what is on
+	# screen.
+	var hits := PackedInt32Array()
+	hits.resize(out.size())
+	for sample in samples:
+		var best := 0
+		var best_distance := 1e9
+		for i in range(out.size()):
+			var d := _color_distance(sample, out[i].color)
+			if d < best_distance:
+				best_distance = d
+				best = i
+		hits[best] += 1
+	for i in range(out.size()):
+		out[i].share = float(hits[i]) / float(total)
+	# Re-rank on the TRUE share. The bucket counts only seeded the centres, and
+	# they disagree with classification often enough to matter (measured: on the
+	# teddy avatar the second bucket owns 45% of texels and the first 33%). The
+	# catalogue's rule is "the largest colour is the base coat", so the order
+	# handed to regionOrder has to be the order of what is actually on screen.
+	out.sort_custom(func(a, b):
+		return float(a.share) > float(b.share) if not is_equal_approx(float(a.share), float(b.share)) \
+				else float(a.luma) < float(b.luma))
+	return out
+
+
+static func _color_distance(a: Color, b: Color) -> float:
+	return Vector3(a.r - b.r, a.g - b.g, a.b - b.b).length()
+
+
+## Recolours a character that has NO per-part boundary, by classifying every
+## texel to the nearest atlas base colour and taking its region from that.
+##
+## `region_order` is the catalogue's answer to "which region does the Nth
+## largest colour get" — the jrpg-bases.md 60/30/10 blocking, applied to area:
+## the biggest colour is the base coat, the next the accent, the rest detail and
+## line. That is a rule about proportion, so it holds for an avatar nobody has
+## looked at, which a per-avatar colour table would not.
+##
+## Returns {bound: int, clusters: Array}. bound is 0 when the mesh has no atlas.
+static func bind_atlas_clusters(root: Node, mats: CharForgeMaterials,
+		region_order: Array, margin: float = 0.06,
+		count: int = MAX_ATLAS_CLUSTERS) -> Dictionary:
+	var report := {"bound": 0, "clusters": []}
+	if root == null or mats == null or region_order.is_empty():
+		return report
+	for node in _walk(root):
+		if not (node is MeshInstance3D):
+			continue
+		var mi := node as MeshInstance3D
+		if mi.mesh == null:
+			continue
+		var atlas := atlas_texture_of(mi)
+		if atlas == null:
+			continue
+		var found := cluster_atlas(mi, atlas, count)
+		if found.is_empty():
+			continue
+		var regions: Array = []
+		for i in range(found.size()):
+			regions.append(String(region_order[mini(i, region_order.size() - 1)]))
+		var material := mats.atlas_clusters(regions, atlas, found, margin)
+		for i in range(mi.mesh.get_surface_count()):
+			mi.set_surface_override_material(i, material)
+		report.bound += 1
+		for i in range(found.size()):
+			report.clusters.append({
+				"color": (found[i].color as Color).to_html(false),
+				"region": regions[i],
+				"share": float(found[i].share),
+			})
+	return report
 
 
 ## FIXUP (b2): PER-REGION RECOLOUR OF A SINGLE-ATLAS CHARACTER.

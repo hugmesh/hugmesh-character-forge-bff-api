@@ -72,6 +72,36 @@ uniform float atlas_reference_luma : hint_range(0.001, 1.0) = 0.5;
 uniform float atlas_hue : hint_range(0.0, 1.0) = 0.0;
 uniform float atlas_hue_tolerance : hint_range(0.001, 0.5) = 0.083;
 
+// ── MULTI-CLUSTER ATLAS RECOLOUR (the 100Avatars line) ───────────────────────
+// The KayKit path above tints ONE mesh node toward ONE region, which needs a
+// per-part boundary. Some vendored avatars have none: one mesh node, one
+// primitive, one material, no per-vertex colour, no VRM annotation. Measured,
+// their UV islands are anatomical (94 islands carrying only 23 distinct
+// colours), so no boundary in the FILE is a material boundary.
+//
+// What IS a material boundary is the texture itself: each of those avatars
+// resolves to only 2-4 base colours. So this path classifies each TEXEL to the
+// nearest base colour and takes its region from that — no boundary needed at
+// all, and no mesh split.
+//
+// Packed as vec4s rather than arrays because the Compatibility renderer is the
+// target and uniform arrays are the fussier path there: _r/_g/_b hold the RGB
+// of up to four base colours, _cell_x/_cell_y their palette cells, _luma their
+// reference luminances. atlas_cluster_count 0.0 makes the whole branch inert.
+uniform vec4 atlas_base_r = vec4(0.0);
+uniform vec4 atlas_base_g = vec4(0.0);
+uniform vec4 atlas_base_b = vec4(0.0);
+uniform vec4 atlas_cell_x = vec4(0.0);
+uniform vec4 atlas_cell_y = vec4(0.0);
+uniform vec4 atlas_cluster_luma = vec4(0.5);
+uniform float atlas_cluster_count = 0.0;
+// Confidence gate. When the two nearest base colours are closer together than
+// this, the texel is AMBIGUOUS and keeps the vendor's colour rather than being
+// assigned a region that is a coin toss. Measured: ~88% of texels classify
+// correctly, and this is what keeps the other ~12% from becoming visible
+// speckle in the wrong hue.
+uniform float atlas_cluster_margin : hint_range(0.0, 0.5) = 0.06;
+
 // Ramp: number of band boundaries in the half-Lambert ramp. 1 => 2 bands,
 // 2 => 3 bands (the supported stylistic range; toon=1, anime=2).
 uniform float band_cuts : hint_range(1.0, 3.0, 1.0) = 1.0;
@@ -127,6 +157,32 @@ void fragment() {
 				? 1.0
 				: 1.0 - smoothstep(atlas_hue_tolerance, atlas_hue_tolerance * 1.6, dist);
 		albedo.rgb = mix(vendor, tinted, selected * atlas_strength);
+	}
+	if (atlas_cluster_count > 0.0) {
+		vec3 vendor = texture(atlas_tex, UV).rgb;
+		float luma = dot(vendor, vec3(0.2126, 0.7152, 0.0722));
+		// Nearest of up to four base colours, plain RGB distance. Measured
+		// against chromaticity- and saturation-weighted metrics: plain RGB won
+		// (87.8% vs 83.3%), and chromaticity collapses entirely on an
+		// achromatic avatar, where black and white share one chromaticity.
+		float best = 1e9;
+		float second = 1e9;
+		int pick = 0;
+		for (int i = 0; i < 4; i++) {
+			if (float(i) >= atlas_cluster_count) { break; }
+			vec3 base = vec3(atlas_base_r[i], atlas_base_g[i], atlas_base_b[i]);
+			float d = distance(vendor, base);
+			if (d < best) { second = best; best = d; pick = i; }
+			else if (d < second) { second = d; }
+		}
+		if (second - best >= atlas_cluster_margin) {
+			vec2 cell = vec2(atlas_cell_x[pick], atlas_cell_y[pick]);
+			vec3 region_rgb = texture(palette_tex, cell).rgb;
+			float ratio = luma / max(atlas_cluster_luma[pick], 0.001);
+			albedo.rgb = clamp(region_rgb * ratio, vec3(0.0), vec3(1.0));
+		} else {
+			albedo.rgb = vendor;
+		}
 	}
 	ALBEDO = albedo.rgb;
 #ifdef HOUSE_TOON_TRANSPARENT
