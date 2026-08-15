@@ -475,45 +475,79 @@ func _build_body(rig: Node3D, family: String) -> void:
 	_refs["body"] = body
 	var bm := _mat(_body_region())
 
+	# SHAPE AXES (Char3DConfig body.curve / body.top). Deliberately not mesh
+	# morphs: a scoping pass found ZERO body morph targets across all 75
+	# vendored models (the 11 that have any are .vrm and all FACIAL —
+	# base_female.vrm carries 56, every one of them on "Face.baked", while
+	# "Body.baked" has none), so a morph slider would need asset authoring. The
+	# procedural assembler is the one route that always exists, and it already
+	# scales its primitives.
+	#
+	# Read HERE, above the match, because EVERY branch owes the sliders an
+	# answer. They first landed inside the default branch only, which left the
+	# two families that build their own primitives — slime and robot — silently
+	# inert: 2 of the 29 selectable families where dragging Curve or Top did
+	# nothing at all, with no UI affordance saying so. Both have a plain reading
+	# of the axes (below), so they are DRIVEN rather than disabled; a slider that
+	# is present and does nothing is the worse of the two honest options.
+	#
+	# Orthogonal to `build`: build scales the WHOLE rig (rebuild() writes
+	# rig.scale from it), while these re-proportion the torso blocks that are
+	# already here. No primitive is added in any branch, so the colour-blocking
+	# region map and the Quest-3 triangle budget are untouched, and
+	# proportions.gd's shoulder widths stay build's job.
+	#
+	# Every band is CENTRED on the pre-axis literal, so 0.5 rebuilds today's
+	# silhouette EXACTLY — in all three branches. That is the whole migration
+	# story: every stored definition predates these keys, the BFF has no
+	# migration mechanism (Liquibase 001, definition is jsonb), so absent -> 0.5
+	# must be a no-op. It is byte-identical, not merely close — each midpoint
+	# below rounds to the same float32 the old literal did, and run_tests.gd
+	# asserts it family by family.
+	var curve: float = config.body.curve
+	var top: float = config.body.top
+
 	match family:
 		"slime":
-			_m(body, "Base", _sphere(0.34), bm, Vector3(0, 0.3, 0), Vector3.ZERO, Vector3(1.15, 0.75, 1.05))
-			_m(body, "Torso", _sphere(0.26), bm, Vector3(0, 0.75, 0), Vector3.ZERO, Vector3(1.0, 1.1, 0.95))
+			# A slime is TWO blobs, so each axis owns one: the Base is its hips,
+			# the Torso is its top, and what reads on screen is the ratio between
+			# their widths. Nothing narrows a waist here because there is no
+			# third block to narrow — the Torso is waist and chest at once, and
+			# driving it from both axes would make each slider's effect depend on
+			# where the other one is parked.
+			_m(body, "Base", _sphere(0.34), bm, Vector3(0, 0.3, 0), Vector3.ZERO,
+					Vector3(lerpf(1.00, 1.30, curve), 0.75, lerpf(0.95, 1.15, curve)))
+			_m(body, "Torso", _sphere(0.26), bm, Vector3(0, 0.75, 0), Vector3.ZERO,
+					Vector3(lerpf(0.90, 1.10, top), 1.1, lerpf(0.87, 1.03, top)))
 			_m(body, "Core", _sphere(0.09), _mat("accent"), Vector3(0, 0.75, 0.05))
 		"robot":
-			_m(body, "Hips", _box(Vector3(0.34, 0.18, 0.24)), bm, Vector3(0, 0.6, 0))
+			# A robot is a chassis: `curve` widens the pelvis block, `top` widens
+			# the torso block, both in X *and* Z for the same reason the default
+			# branch does — a shape that only changes head-on reads as a bug from
+			# the side. These two primitives carried NO scale argument before the
+			# axes existed, so their bands are centred on 1.0 rather than on a
+			# literal, and the centred stop must come out exactly Vector3.ONE.
+			var chassis_scale := Vector3(lerpf(0.85, 1.15, curve), 1.0, lerpf(0.92, 1.08, curve))
+			var torso_scale := Vector3(lerpf(0.88, 1.12, top), 1.0, lerpf(0.92, 1.08, top))
+			var torso_z := lerpf(-0.012, 0.012, top)
+			_m(body, "Hips", _box(Vector3(0.34, 0.18, 0.24)), bm, Vector3(0, 0.6, 0),
+					Vector3.ZERO, chassis_scale)
 			_m(body, "LegL", _cyl(0.07, 0.08, 0.5), _mat("detail"), Vector3(0.12, 0.3, 0))
 			_m(body, "LegR", _cyl(0.07, 0.08, 0.5), _mat("detail"), Vector3(-0.12, 0.3, 0))
 			_m(body, "FootL", _box(Vector3(0.14, 0.07, 0.2)), bm, Vector3(0.12, 0.045, 0.03))
 			_m(body, "FootR", _box(Vector3(0.14, 0.07, 0.2)), bm, Vector3(-0.12, 0.045, 0.03))
-			_m(body, "Torso", _box(Vector3(0.42, 0.4, 0.28)), bm, Vector3(0, 0.98, 0))
-			_m(body, "Panel", _box(Vector3(0.2, 0.16, 0.02)), _mat("accent"), Vector3(0, 1.0, 0.145))
+			_m(body, "Torso", _box(Vector3(0.42, 0.4, 0.28)), bm, Vector3(0, 0.98, torso_z),
+					Vector3.ZERO, torso_scale)
+			# The panel is surface DETAIL, so it rides on the chassis face instead
+			# of sitting at a fixed z: half the torso depth (0.28 / 2), scaled,
+			# plus the 0.005 it always stood proud. A fixed z would sink into the
+			# chest at top 1.0 and float off it at top 0.0. At the centred stop
+			# that expression is the original 0.145 to the last float32 bit.
+			_m(body, "Panel", _box(Vector3(0.2, 0.16, 0.02)), _mat("accent"),
+					Vector3(0, 1.0, torso_z + 0.14 * torso_scale.z + 0.005))
 			_arm(body, 1.0, family)
 			_arm(body, -1.0, family)
 		_:
-			# SHAPE AXES (Char3DConfig body.curve / body.top). Deliberately not
-			# mesh morphs: a scoping pass found ZERO body morph targets across
-			# all 75 vendored models (the 11 that have any are .vrm and all
-			# FACIAL — base_female.vrm carries 56, every one of them on
-			# "Face.baked", while "Body.baked" has none), so a morph slider
-			# would need asset authoring. The procedural assembler is the one
-			# route that always exists, and it already scales its primitives.
-			#
-			# Orthogonal to `build`: build scales the WHOLE rig (rebuild()
-			# writes rig.scale from it), while these re-proportion the three
-			# torso blocks that are already here. No primitive is added, so the
-			# colour-blocking region map and the Quest-3 triangle budget are
-			# untouched, and proportions.gd's shoulder widths stay build's job.
-			#
-			# Every band is CENTRED on the pre-axis literal, so 0.5 rebuilds
-			# today's silhouette EXACTLY. That is the whole migration story:
-			# every stored definition predates these keys, the BFF has no
-			# migration mechanism (Liquibase 001, definition is jsonb), so
-			# absent -> 0.5 must be a no-op. It is byte-identical, not merely
-			# close — each midpoint below rounds to the same float32 the old
-			# literal did, and run_tests.gd asserts it.
-			var curve: float = config.body.curve
-			var top: float = config.body.top
 			# Hips flare in X *and* Z — a curvy hip has to read from the side as
 			# well as the front — and the waist narrows in step, which is what
 			# makes this a RATIO rather than just "bigger hips".

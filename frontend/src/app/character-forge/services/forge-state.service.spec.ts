@@ -40,11 +40,48 @@ describe('ForgeStateService (config editor state)', () => {
     expect(svc.config().parts.wings).toBe('wings_feathered_01');
   });
 
+  /**
+   * The two shape axes, which the store treats exactly like build/height. Kept
+   * as its own spec because the axes shipped with NO state-service coverage at
+   * all: deleting setCurve/setTop left the suite green, so nothing said whether
+   * the sliders wrote anywhere.
+   */
+  it('setCurve/setTop write their own field and nothing else', () => {
+    const before = svc.config();
+    svc.setCurve(0.25);
+    svc.setTop(0.9);
+    const after = svc.config();
+    expect(after.body.curve).toBe(0.25);
+    expect(after.body.top).toBe(0.9);
+    // Orthogonal to `build`/`height` in the store as well as in the assembler.
+    expect(after.body.build).toBe(before.body.build);
+    expect(after.body.height).toBe(before.body.height);
+    expect(after.body.archetype).toBe(before.body.archetype);
+    expect(after.head).toEqual(before.head);
+    // Immutable update, and it really reaches the definition the server sees.
+    expect(after).not.toBe(before);
+    expect(before.body.curve).toBe(0.5);
+    const sent = JSON.parse(svc.definitionJson()) as { body: Record<string, number> };
+    expect(sent.body['curve']).toBe(0.25);
+    expect(sent.body['top']).toBe(0.9);
+  });
+
+  it('the default character sits at the CENTRED stop on both shape axes', () => {
+    // 0.5 is the value defined to reproduce the pre-axis silhouette exactly, so
+    // a default character must never start anywhere else.
+    expect(svc.config().body.curve).toBe(0.5);
+    expect(svc.config().body.top).toBe(0.5);
+  });
+
   it('out-of-range edits land CLAMPED (the store never holds invalid state)', () => {
     svc.setBuild(42);
     expect(svc.config().body.build).toBe(1);
     svc.setHeight(0.01);
     expect(svc.config().body.height).toBe(0.5);
+    svc.setCurve(42);
+    expect(svc.config().body.curve).toBe(1);
+    svc.setTop(-5);
+    expect(svc.config().body.top).toBe(0);
     svc.setSnoutLength(-5);
     expect(svc.config().head.snoutLength).toBe(0);
     svc.setName('n'.repeat(500));

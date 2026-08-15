@@ -1,4 +1,4 @@
-import { Component, effect, inject, signal } from '@angular/core';
+import { Component, DestroyRef, effect, inject, signal } from '@angular/core';
 import { EngineCanvasComponent } from './panels/engine-canvas.component';
 import { ConfigEditorComponent } from './panels/config-editor.component';
 import { ImportVnComponent } from './panels/import-vn.component';
@@ -16,7 +16,7 @@ import { AvatarFanoutService, PlatformResult } from './services/avatar-fanout.se
  * "instant" threshold), long enough that a slider drag coalesces into one
  * assembler rebuild instead of one per tick.
  */
-const SET_CONFIG_DEBOUNCE_MS = 80;
+export const SET_CONFIG_DEBOUNCE_MS = 80;
 
 /**
  * The forge studio page (route '' of the character-forge remote): the Godot
@@ -54,6 +54,10 @@ export class CharacterForgeComponent {
   /** Last config JSON the ENGINE sent us — suppresses the setConfig echo. */
   private lastEngineJson: string | null = null;
 
+  /** The edit waiting out the debounce window (null = nothing owed to the engine). */
+  private pendingConfigJson: string | null = null;
+  private pushTimer: ReturnType<typeof setTimeout> | null = null;
+
   constructor() {
     // Editor → engine: push every (clamped) config change; the bridge queues
     // until the game registers CharForge, so this is safe from first paint.
@@ -64,15 +68,29 @@ export class CharacterForgeComponent {
     // full rebuild per `input` event, i.e. per SLIDER TICK — a single drag of
     // the build slider fires dozens. The effect's cleanup cancels the pending
     // push, so a drag costs exactly one rebuild, ~80ms after the user stops.
-    // Cleanup also runs on destroy, so no timer outlives the page.
+    //
+    // The pending EDIT is deliberately kept outside the timer (in
+    // `pendingConfigJson`) rather than captured in the closure, because cancel
+    // and drop are not the same thing. Cleanup runs for two different reasons:
+    // a newer edit arrived — cancel, the effect body immediately re-arms with
+    // the newer JSON — or the page is being destroyed, where cancelling alone
+    // would SILENTLY LOSE an edit made within 80ms of navigating away (the
+    // engine bridge is a root singleton and outlives this component, so the
+    // dropped edit is not academic: the engine keeps rendering the stale
+    // character). Destroy therefore FLUSHES; see flushConfig().
     effect(onCleanup => {
       const json = this.state.definitionJson();
       if (json === this.lastEngineJson) {
         return;
       }
-      const timer = setTimeout(() => this.engine.setConfig(json), SET_CONFIG_DEBOUNCE_MS);
-      onCleanup(() => clearTimeout(timer));
+      this.pendingConfigJson = json;
+      this.pushTimer = setTimeout(() => this.flushConfig(), SET_CONFIG_DEBOUNCE_MS);
+      onCleanup(() => this.cancelPush());
     });
+    // Ordering-independent by construction: whichever of this hook and the
+    // effect cleanup Angular runs first, the other is a no-op (flushConfig
+    // clears the timer itself; cancelPush leaves the pending JSON alone).
+    inject(DestroyRef).onDestroy(() => this.flushConfig());
     // Engine → editor: in-engine edits replace the live config (normalized).
     // The echo guard pins the NORMALIZED form, so the effect above skips the
     // push-back regardless of the engine's JSON key order.
@@ -84,6 +102,36 @@ export class CharacterForgeComponent {
       }
       this.lastEngineJson = this.state.definitionJson();
     });
+  }
+
+  /**
+   * Hand the engine whatever edit is still sitting in the debounce window, now.
+   *
+   * Called on destroy and before every snapshot. The snapshot case is the one
+   * that was visibly wrong: `engine.snapshot()` captures what the ENGINE holds,
+   * so adjusting a slider and clicking "Use everywhere" inside the same 80ms
+   * uploaded the character as it was BEFORE that edit — the config the page was
+   * showing and the avatar the mesh received disagreed, with nothing on screen
+   * hinting why. Flushing first closes the page-side half of that: the engine is
+   * told before it is asked. (The engine still captures its last rendered frame,
+   * so a capture can trail the push by a frame — that is the engine's own
+   * pacing, and it already fails closed when no frame has rendered at all.)
+   */
+  private flushConfig(): void {
+    this.cancelPush();
+    const json = this.pendingConfigJson;
+    this.pendingConfigJson = null;
+    if (json !== null) {
+      this.engine.setConfig(json);
+    }
+  }
+
+  /** Cancel the pending push WITHOUT dropping what it owed (see the effect). */
+  private cancelPush(): void {
+    if (this.pushTimer !== null) {
+      clearTimeout(this.pushTimer);
+      this.pushTimer = null;
+    }
   }
 
   onSeed(ev: Event): void {
@@ -121,6 +169,7 @@ export class CharacterForgeComponent {
     this.platformResults.set([]);
     this.status.set('Applying the posed snapshot across platforms…');
     try {
+      this.flushConfig();   // never upload a character one edit out of date
       const base64 = await this.engine.snapshot(512, 512);
       // Decode in-process rather than fetch('data:…'): this app's CSP
       // connect-src is 'self' blob: https: wss: — no data:, so fetching a data
@@ -157,6 +206,7 @@ export class CharacterForgeComponent {
       return; // aria-disabled control; the hint below explains why.
     }
     try {
+      this.flushConfig();   // same staleness window as useEverywhere()
       const base64 = await this.engine.snapshot(512, 512);
       const a = document.createElement('a');
       a.href = `data:image/png;base64,${base64}`;

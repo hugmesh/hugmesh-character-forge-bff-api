@@ -152,7 +152,12 @@ cross-user `/lookup` surface needs no separate moderation pass:
 
 - **unknown keys → 400** at every level (root/source/body/head/parts/materials);
 - **numeric fields clamp** into range (`build` 0..1, `height` 0.5..1.5,
-  `snoutLength` 0..1; a wrong type still rejects);
+  `body.curve` 0..1, `body.top` 0..1, `snoutLength` 0..1; a wrong type still
+  rejects). `curve` (hip-to-waist ratio) and `top` (chest volume) are the shape
+  axes, orthogonal to `build`: **both default to 0.5, and 0.5 is defined to
+  reproduce the pre-axis silhouette exactly**, which is what lets them exist
+  with no migration — every definition stored before they were added validates
+  with the defaults and must keep rendering byte-identically;
 - **hex colours** must match `^#[0-9a-fA-F]{3,8}$`; **ids** must match
   `^[A-Za-z0-9_-]{1,64}$`;
 - **families / archetypes / styles / pack ids / expressions are enum-checked**

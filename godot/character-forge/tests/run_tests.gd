@@ -70,6 +70,7 @@ func _run_all() -> void:
 	_test_v2_head_geometry()
 	_test_v2_body_geometry()
 	_test_body_shape_axes()
+	_test_shape_axes_reach_every_family()
 	_test_vrm_addon_vendored()
 	_test_mouth_quad_factory()
 	_test_shader_contract()
@@ -1528,6 +1529,106 @@ func _torso_aabb(a: CharacterAssembler) -> AABB:
 		out = out.merge(box) if seeded else box
 		seeded = true
 	return out
+
+
+## THE INERT-FAMILY GUARD, and the reason it exists: the shape axes first
+## shipped inside _build_body's DEFAULT branch only, so "slime" and "robot" —
+## the two families that assemble their own primitives — ignored both sliders
+## completely. For 2 of the 29 selectable families Curve and Top were pure
+## decoration, with nothing in the UI admitting it. Every other test in this
+## file happens to drive a default-branch family, so nothing went red.
+##
+## Hence a sweep of ALL of Char3DConfig.FAMILIES rather than a sample: the day
+## some future family earns its own branch and forgets the axes, this fails on
+## the commit that does it. That is the only durable fix for the class of bug —
+## the per-branch assertions below just pin today's two special cases.
+func _test_shape_axes_reach_every_family() -> void:
+	var a := CharacterAssembler.new()
+	get_root().add_child(a)
+
+	for fam in Char3DConfig.FAMILIES:
+		for axis in ["curve", "top"]:
+			var sigs := {}
+			var tris := {}
+			for value in [0.0, 0.5, 1.0]:
+				var cfg := Char3DConfig.defaults()
+				cfg.head.family = fam
+				cfg.body[axis] = value
+				a.apply_config(cfg)
+				sigs[_head_signature(a.get_node("Rig/Body"))] = true
+				tris[_triangles(a)] = true
+			_check(sigs.size() == 3,
+					"family '%s': body.%s reshapes the body at all three stops" % [fam, axis])
+			# Same budget contract the default branch carries: an axis
+			# re-proportions what is already there, it never adds a primitive.
+			_check(tris.size() == 1,
+					"family '%s': body.%s adds no geometry at any setting" % [fam, axis])
+
+	# The centred stop is still the PRE-AXIS silhouette in the two hand-built
+	# branches, exactly as it is in the default one. Same literals _build_body
+	# hardcoded before the axes reached them — float32 scale/position storage is
+	# what makes the centred midpoints land on the identical bits.
+	var slime := Char3DConfig.defaults()
+	slime.head.family = "slime"
+	a.apply_config(slime)
+	var slime_body: Node3D = a.get_node("Rig/Body")
+	_check((slime_body.get_node("Base") as MeshInstance3D).scale == Vector3(1.15, 0.75, 1.05),
+			"slime curve 0.5 keeps the original Base scale")
+	_check((slime_body.get_node("Torso") as MeshInstance3D).scale == Vector3(1.0, 1.1, 0.95),
+			"slime top 0.5 keeps the original Torso scale")
+
+	var robot := Char3DConfig.defaults()
+	robot.head.family = "robot"
+	a.apply_config(robot)
+	var robot_body: Node3D = a.get_node("Rig/Body")
+	# The robot's blocks carried NO scale argument before the axes, so "unchanged"
+	# here means literally Vector3.ONE, not a preserved literal.
+	_check((robot_body.get_node("Hips") as MeshInstance3D).scale == Vector3.ONE,
+			"robot curve 0.5 leaves the Hips chassis unscaled, as it was")
+	var robot_torso: MeshInstance3D = robot_body.get_node("Torso")
+	_check(robot_torso.scale == Vector3.ONE, "robot top 0.5 leaves the Torso chassis unscaled")
+	_check(robot_torso.position == Vector3(0, 0.98, 0),
+			"robot top 0.5 keeps the original Torso position")
+	# The panel's z is now derived from the torso's depth instead of hardcoded,
+	# so the centred stop has to land back on the literal it replaced, to the bit.
+	_check((robot_body.get_node("Panel") as MeshInstance3D).position == Vector3(0, 1.0, 0.145),
+			"robot top 0.5 keeps the original Panel position")
+	# ...and it really does ride the face at the extremes, which is the whole
+	# reason it is derived: a fixed z sinks into the chest at top 1.0.
+	for value in [0.0, 1.0]:
+		var cfg := Char3DConfig.defaults()
+		cfg.head.family = "robot"
+		cfg.body.top = value
+		a.apply_config(cfg)
+		var b: Node3D = a.get_node("Rig/Body")
+		var torso: MeshInstance3D = b.get_node("Torso")
+		var panel: MeshInstance3D = b.get_node("Panel")
+		var face_z: float = torso.position.z + 0.14 * torso.scale.z
+		_check(panel.position.z > face_z and panel.position.z < face_z + 0.02,
+				"robot top %.1f keeps the Panel proud of the chest face" % value)
+
+	# THE MIGRATION GUARD, per branch. Every slime/robot stored before today has
+	# no curve/top in its jsonb definition and the BFF has no migration
+	# mechanism, so "absent" has to keep rendering as 0.5/0.5 forever.
+	for fam in ["slime", "robot"]:
+		var centred := Char3DConfig.defaults()
+		centred.head.family = fam
+		centred.body.curve = 0.5
+		centred.body.top = 0.5
+		a.apply_config(centred)
+		var centred_sig := _head_signature(a.get_node("Rig/Body"))
+		var legacy := Char3DConfig.defaults()
+		legacy.head.family = fam
+		legacy.body.erase("curve")
+		legacy.body.erase("top")
+		_check(not legacy.body.has("curve") and not legacy.body.has("top"),
+				"the legacy '%s' fixture really omits both keys" % fam)
+		a.apply_config(legacy)
+		_check(_head_signature(a.get_node("Rig/Body")) == centred_sig,
+				"a '%s' definition omitting curve/top renders exactly as 0.5/0.5" % fam)
+
+	get_root().remove_child(a)
+	a.free()
 
 
 # ── VRM ingest ───────────────────────────────────────────────────────────────

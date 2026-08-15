@@ -1,4 +1,5 @@
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ConfigEditorComponent } from './config-editor.component';
 import { EngineCanvasComponent } from './engine-canvas.component';
 import { ImportVnComponent } from './import-vn.component';
 import { ForgeStateService } from '../services/forge-state.service';
@@ -114,4 +115,75 @@ describe('ImportVnComponent (import-from-VN)', () => {
     }
     expect(cmp.error()).toBeNull();
   });
+});
+
+/**
+ * The UI half of the body.curve / body.top shape axes.
+ *
+ * Written because the axes shipped with none: the two `<input>` blocks could
+ * have been deleted outright and every spec in the repo would still have gone
+ * green, which is the same thing as having no slider. So this asserts the
+ * controls EXIST, carry the 0..1 contract the store and the server clamp to,
+ * show the live value, and write back on `input` — the four things a user
+ * actually depends on.
+ */
+describe('ConfigEditorComponent (body shape axes)', () => {
+  let state: ForgeStateService;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ imports: [ConfigEditorComponent] });
+    state = TestBed.inject(ForgeStateService);
+    state.reset();
+  });
+
+  function editor(): { fixture: ComponentFixture<ConfigEditorComponent>; el: HTMLElement } {
+    const fixture = TestBed.createComponent(ConfigEditorComponent);
+    fixture.detectChanges();
+    return { fixture, el: fixture.nativeElement as HTMLElement };
+  }
+
+  const AXES: Array<{ testid: string; label: string; field: 'curve' | 'top' }> = [
+    { testid: 'cf-curve', label: 'Curve', field: 'curve' },
+    { testid: 'cf-top', label: 'Top', field: 'top' },
+  ];
+
+  for (const axis of AXES) {
+    it(`renders the ${axis.label} slider over the 0..1 clamp contract`, () => {
+      const { el } = editor();
+      const input = el.querySelector<HTMLInputElement>(`[data-testid="${axis.testid}"]`);
+      expect(input).withContext(`${axis.testid} must render`).not.toBeNull();
+      expect(input!.type).toBe('range');
+      // The bounds are not cosmetic: they are the range the state mirror and
+      // Char3DConfigValidator both clamp to, so a widened slider would silently
+      // produce values the server rewrites.
+      expect(input!.min).toBe('0');
+      expect(input!.max).toBe('1');
+      expect(input!.step).toBe('0.05');
+      expect(input!.getAttribute('aria-label')).toBeTruthy();
+      // The visible name, so the two axes cannot be swapped unnoticed.
+      expect(input!.closest('label')!.textContent).toContain(axis.label);
+    });
+
+    it(`the ${axis.label} slider shows the live config and writes edits back`, () => {
+      const { fixture, el } = editor();
+      const input = el.querySelector<HTMLInputElement>(`[data-testid="${axis.testid}"]`)!;
+      // Starts at the centred stop — the value defined to reproduce the
+      // pre-axis silhouette.
+      expect(input.value).toBe('0.5');
+
+      // Config → UI.
+      state.applyConfig({ ...state.config(), body: { ...state.config().body, [axis.field]: 0.8 } });
+      fixture.detectChanges();
+      expect(input.value).toBe('0.8');
+
+      // UI → config, through the store's clamp mirror.
+      input.value = '0.25';
+      input.dispatchEvent(new Event('input'));
+      expect(state.config().body[axis.field]).toBe(0.25);
+      // ...and only that axis moved: the other one is still at its default.
+      const other = axis.field === 'curve' ? 'top' : 'curve';
+      expect(state.config().body[other]).toBe(0.5);
+      expect(state.config().body.build).toBe(0.5);
+    });
+  }
 });
