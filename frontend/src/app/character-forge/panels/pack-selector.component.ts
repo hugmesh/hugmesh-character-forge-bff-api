@@ -129,10 +129,29 @@ export class PackSelectorComponent {
       this.state.setBodyArchetype(entry.archetype as BodyArchetype);
     }
     this.engine.setPack(entry.key);
+    // "Loading", NOT the licence line. This used to assert success the instant
+    // the message was QUEUED — before the engine had even seen the key — so a
+    // refused mount still read as "<model> — CC0-1.0, <author>". The credit line
+    // is written below, once the engine confirms it actually mounted.
+    this.status.set(`Loading ${entry.displayName}…`);
+
+    const report = await this.engine.waitForPack();
+    if (report && !report.mounted) {
+      this.status.set(`${entry.displayName} did not load: ${report.error || 'the engine refused it'}`);
+      return;
+    }
+    if (!report) {
+      // No engine (dev / bundle absent): the selector still works as a picker,
+      // so say what is true rather than claiming a mount that cannot happen.
+      this.status.set(`${entry.displayName} selected — the 3D engine is not running.`);
+      return;
+    }
     this.status.set(
       `${entry.displayName} — ${entry.licenseSpdx}, ${entry.attribution}`
       + (entry.recolorable ? '' : '. Fixed colours: this model is one baked atlas.'),
     );
+    // Only snapshot AFTER a confirmed mount — thumbnailing a refused mount
+    // caches a picture of whatever was previously on stage under the new key.
     await this.captureThumbnail(entry.key);
   }
 

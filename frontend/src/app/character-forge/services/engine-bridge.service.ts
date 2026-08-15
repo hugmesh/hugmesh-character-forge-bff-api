@@ -108,6 +108,8 @@ const IMPORT_TIMEOUT_MS = 30_000;
 const MAX_BUFFER_PX = 2048;
 /** Buffer side used when the canvas is measured before layout (box still 0). */
 const FALLBACK_CANVAS_PX = 512;
+/** How long to wait for the engine's verdict on a setPack before giving up. */
+const PACK_TIMEOUT_MS = 15_000;
 
 function safeJson(text: unknown): Record<string, unknown> | null {
   if (typeof text !== 'string') {
@@ -166,6 +168,7 @@ export class EngineBridgeService {
   private pollHandle: ReturnType<typeof setInterval> | null = null;
   private resizeObserver: ResizeObserver | null = null;
   private importResolve: ((report: PackMountReport) => void) | null = null;
+  private packResolve: ((report: PackMountReport) => void) | null = null;
 
   constructor(private readonly zone: NgZone) {}
 
@@ -276,7 +279,15 @@ export class EngineBridgeService {
       this.zone.run(() => this.configListener?.(json));
     };
     bridge.onPackChanged = (json: string) => {
-      this.zone.run(() => this.mountReport.set(parseReport(json)));
+      this.zone.run(() => {
+        const report = parseReport(json);
+        this.mountReport.set(report);
+        const resolve = this.packResolve;
+        this.packResolve = null;
+        if (report) {
+          resolve?.(report);
+        }
+      });
     };
     bridge.onImportResult = (json: string) => {
       this.zone.run(() => {
@@ -336,6 +347,36 @@ export class EngineBridgeService {
    */
   setPack(key: string): void {
     this.send({ v: 1, t: 'setPack', key });
+  }
+
+  /**
+   * The engine's VERDICT on the pack just requested — resolves with the mount
+   * report, or null when there is no live bridge to answer.
+   *
+   * setPack is fire-and-forget by design (it is queued before the engine even
+   * boots), which meant the page had no way to learn that a mount FAILED and so
+   * asserted success the moment the message was queued. That is precisely how a
+   * key the engine did not recognise produced a cheerful licence line.
+   *
+   * Time-boxed: a wedged engine resolves null rather than leaving the selector
+   * spinning forever, which is the same bargain importModel already makes.
+   */
+  async waitForPack(): Promise<PackMountReport | null> {
+    if (!this.bridge) {
+      return null;
+    }
+    return new Promise<PackMountReport | null>(resolve => {
+      const timer = setTimeout(() => {
+        if (this.packResolve) {
+          this.packResolve = null;
+          resolve(null);
+        }
+      }, PACK_TIMEOUT_MS);
+      this.packResolve = report => {
+        clearTimeout(timer);
+        resolve(report);
+      };
+    });
   }
 
   /**

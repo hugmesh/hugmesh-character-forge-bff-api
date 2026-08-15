@@ -2911,6 +2911,22 @@ func _test_studio_pack_controls() -> void:
 	studio.select_pack("")
 	_check(not studio.mount.mount_report().mounted, "select_pack('') unmounts")
 
+	# AN UNKNOWN KEY MUST FAIL LOUDLY. It used to `return` in silence, leaving
+	# whatever was already mounted on stage — so the report the host received
+	# described the PREVIOUS model and the page read it as success. That is how a
+	# rename left 10 of 42 entries dead for a release with nobody noticing: every
+	# dead card printed a cheerful licence line.
+	studio.select_pack("monster-dragon")
+	_check(studio.mount.mount_report().mounted, "a real key still mounts (control)")
+	studio.select_pack("no-such-pack-key-v9")
+	var bad: Dictionary = studio.mount.mount_report()
+	_check(not bad.mounted,
+			"an unknown key reports mounted:false, NOT the previously mounted model")
+	_check(String(bad.error).contains("no-such-pack-key-v9"),
+			"the failure report names the key that was refused, got %s" % [bad.error])
+	_check(String(bad.key).is_empty(),
+			"the refused mount does not claim the stale key")
+
 	get_root().remove_child(studio)
 	studio.free()
 

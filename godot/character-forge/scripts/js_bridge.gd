@@ -83,7 +83,29 @@ func _ready() -> void:
 	_bind("importModel", _js_import_model)
 	var window: JavaScriptObject = JavaScriptBridge.get_interface("window")
 	window.CharForge = _iface
-	JavaScriptBridge.eval("window.dispatchEvent(new CustomEvent('charforge-ready'));", true)
+	# Announce readiness WITHOUT JavaScriptBridge.eval().
+	#
+	# eval() compiles a string as JavaScript, which a nonce-CSP refuses unless
+	# it carries 'unsafe-eval'. Every HugMesh UI ships a strict nonce policy and
+	# the host shell's applies to any remote mounted into it, so the old
+	#   JavaScriptBridge.eval("window.dispatchEvent(new CustomEvent(...))")
+	# threw on every boot:
+	#   EvalError: Evaluating a string as JavaScript violates the following
+	#   Content Security Policy directive ... 'unsafe-eval' is not an allowed
+	#   source of script
+	# It was survivable — the interface above is already installed by then, so
+	# the page's poller still found window.CharForge — but it put a hard error in
+	# every operator's console on every load and made the boot look broken.
+	#
+	# create_object() calls the real constructor through the bridge instead of
+	# compiling source, so it needs no CSP concession at all. 'wasm-unsafe-eval'
+	# (which the shell DOES grant, for WebAssembly) would never have covered
+	# eval() — that is a separate token, and granting 'unsafe-eval' to make one
+	# announcement work would weaken the policy for the whole shell.
+	var ready_event: JavaScriptObject = JavaScriptBridge.create_object(
+			"CustomEvent", "charforge-ready")
+	if ready_event != null:
+		window.dispatchEvent(ready_event)
 
 
 ## True when running under a web host (interface installed).

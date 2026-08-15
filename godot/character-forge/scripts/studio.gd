@@ -236,7 +236,34 @@ func select_pack(key: String) -> void:
 		return
 	var entry := CharForgePacks.entry(key)
 	if entry.is_empty():
+		# An unknown key used to `return` here in silence, leaving the previous
+		# model mounted — so _on_bridge_pack still emitted mount_report() and the
+		# page received a report describing the model already on stage. The UI
+		# read that as success and wrote an optimistic status line, which is how
+		# TEN dead catalogue entries survived unnoticed after a rename moved the
+		# lane keys in the frontend but not in the engine's own lanes.json.
+		#
+		# Fail LOUDLY and specifically instead: drop what is on stage so no stale
+		# model can be mistaken for the requested one, and record the key that
+		# was asked for. mount_report() then answers mounted:false with a reason,
+		# which the selector renders.
 		_pack_key = ""
+		# ORDER MATTERS, twice over:
+		#  * the registry must go back to procedural FIRST. Leaving the previous
+		#    model's registry in place means apply_config() below still resolves a
+		#    mesh basis for this family and re-mounts the very model we are trying
+		#    to drop — the stale-model-reported-as-success bug, one layer down.
+		#  * last_error must be set AFTER apply_config(), because mount() opens
+		#    with `last_error = ""`; setting it first lets any re-entrant mount
+		#    silently erase the reason.
+		assembler.registry = CharForgeRegistry.default_registry()
+		mount.clear()
+		assembler.apply_config(cfg)
+		var reason := "unknown pack key '%s' — not in this engine's catalogue" % key
+		mount.last_error = reason
+		push_warning("CharForgeStudio: %s" % reason)
+		_refresh_ui()
+		_emit_config_changed()
 		return
 	assembler.registry = CharForgePacks.registry_for(key)
 	if String(entry.get("mount", "")) == "body":

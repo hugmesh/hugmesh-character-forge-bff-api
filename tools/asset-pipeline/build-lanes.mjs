@@ -20,6 +20,31 @@
  * usage: node build-lanes.mjs
  */
 import { readFileSync, writeFileSync } from 'node:fs';
+
+/**
+ * `--check` regenerates BOTH outputs in memory and diffs them against what is
+ * committed, writing nothing and exiting 1 on any difference.
+ *
+ * It exists because the engine's lanes.json and the frontend's generated
+ * catalogue are the SAME data compiled twice, and nothing in CI compared them:
+ * the Angular suite reads only the frontend copy and the Godot suite reads only
+ * the engine copy, so both stayed green while ten lane keys disagreed and 24% of
+ * the catalogue was dead in the browser. The single thing that had ever kept
+ * them in step was somebody remembering to run this script.
+ */
+const CHECK = process.argv.includes('--check');
+const drift = [];
+const emit = (path, content) => {
+  if (!CHECK) {
+    writeFileSync(path, content);
+    return;
+  }
+  let current = null;
+  try { current = readFileSync(path, 'utf8'); } catch { current = null; }
+  if (current !== content) {
+    drift.push(current === null ? `${path} (missing)` : path);
+  }
+};
 import { dirname, resolve } from 'node:path';
 
 const HERE = dirname(new URL(import.meta.url).pathname);
@@ -287,7 +312,7 @@ const out = {
     recolorable: lanes.reduce((a, l) => a + l.entries.filter((e) => e.recolorable).length, 0),
   },
 };
-writeFileSync(resolve(PACKS, 'lanes.json'), `${JSON.stringify(out, null, 2)}\n`);
+emit(resolve(PACKS, 'lanes.json'), `${JSON.stringify(out, null, 2)}\n`);
 
 // ── frontend catalog ────────────────────────────────────────────────────────
 const ts = `/**
@@ -399,9 +424,19 @@ export const PACK_BLOCKED: readonly {
   readonly shippedInstead: string;
 }[] = ${JSON.stringify(lanesSrc.blocked, null, 2)} as const;
 `;
-writeFileSync(CATALOG_TS, ts);
+emit(CATALOG_TS, ts);
 
 console.log(
   `lanes: ${out.totals.lanes} lanes, ${out.totals.entries} entries ` +
     `(${out.totals.recolorable} recolourable), ${Object.keys(policies).length} material policies`,
 );
+
+if (CHECK) {
+  if (drift.length) {
+    console.error('build-lanes --check: the committed catalogues do NOT match their source.');
+    for (const f of drift) console.error(`  - ${f}`);
+    console.error("Run 'node tools/asset-pipeline/build-lanes.mjs' and commit the result.");
+    process.exit(1);
+  }
+  console.log('build-lanes --check: engine lanes.json and the frontend catalogue both match the source.');
+}

@@ -119,6 +119,21 @@ jobs:
       - name: Production build
         run: npm run build
 
+      # CATALOGUE PARITY. The engine's assets/packs/lanes.json and the frontend's
+      # pack-catalog.generated.ts are the same data compiled twice from
+      # tools/asset-pipeline/lanes.json, and nothing else in this workflow compares
+      # them: the karma job above reads only the frontend copy, the godot job below
+      # reads only the engine copy, so BOTH stay green while the two disagree.
+      #
+      # That is not hypothetical. A rename moved ten lane keys in the frontend and
+      # not in the engine, and 10 of 42 catalogue entries (24%) were dead in the
+      # browser for a whole release — every one of them reporting success — with a
+      # fully green CI. The regenerate step is offline, needs no npm deps and takes
+      # milliseconds, so there is no reason for it not to gate every merge.
+      - name: Catalogue parity (engine lanes.json == frontend catalogue == source)
+        working-directory: ${{ github.workspace }}
+        run: node tools/asset-pipeline/build-lanes.mjs --check
+
   godot:
     name: godot (character maker — headless GDScript suite)
     runs-on: [self-hosted, hugmesh-x86]

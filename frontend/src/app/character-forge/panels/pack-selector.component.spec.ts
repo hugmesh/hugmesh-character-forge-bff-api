@@ -113,7 +113,60 @@ describe('PackSelectorComponent (style tabs + BYO import)', () => {
     expect(state.config().body.archetype).toBe('dragon');
     expect(engine.pendingMessages()).toContain({ v: 1, t: 'setPack', key: 'monster-dragon' });
     expect(component.selectedKey()).toBe('monster-dragon');
+    // NO bridge is attached here, so the message is only QUEUED — nothing has
+    // mounted. This used to assert the licence line, which was the bug: the
+    // credit was printed for a mount that had not happened and could not.
+    expect(component.status()).toContain('the 3D engine is not running');
+    expect(component.status()).not.toContain('CC0-1.0');
+  });
+
+  /**
+   * The mount report is the ONLY thing that knows whether a model loaded, so the
+   * selector must wait for it before it says anything about the model. Ten
+   * catalogue entries were dead for a whole release while the page cheerfully
+   * printed their licence, because the status was written at QUEUE time.
+   */
+  function bridgeAnswering(report: Record<string, unknown>): void {
+    engine.registerBridge({
+      setConfig: () => {}, setExpression: () => {}, setOpenness: () => {},
+      randomize: () => {}, snapshot: () => '',
+      setPack: () => {
+        // The engine answers asynchronously, exactly as the real one does.
+        setTimeout(() => engine['bridge']!.onPackChanged!(JSON.stringify(report)), 0);
+      },
+    } as never);
+  }
+
+  it('prints the licence only AFTER the engine confirms the mount', async () => {
+    const fixture = render();
+    const component = fixture.componentInstance;
+    const dragon = PACK_ENTRIES.find(e => e.key === 'monster-dragon')!;
+    bridgeAnswering({ key: 'monster-dragon', mounted: true, error: '', lipSyncChannels: [] });
+
+    await component.choose(dragon);
     expect(component.status()).toContain('CC0-1.0');
+  });
+
+  it('a REFUSED mount says so instead of printing a credit for it', async () => {
+    const fixture = render();
+    const component = fixture.componentInstance;
+    const dragon = PACK_ENTRIES.find(e => e.key === 'monster-dragon')!;
+    bridgeAnswering({
+      key: '', mounted: false, lipSyncChannels: [],
+      error: "unknown pack key 'monster-dragon' — not in this engine's catalogue",
+    });
+
+    await component.choose(dragon);
+    fixture.detectChanges();
+
+    expect(component.status()).toContain('did not load');
+    expect(component.status()).toContain('unknown pack key');
+    expect(component.status()).not.toContain('CC0-1.0');
+    // …and the failure is on SCREEN, not only in the status line: a failed
+    // report used to render nothing at all.
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('[data-testid="cf-pack-report-failed"]')?.textContent)
+      .toContain('unknown pack key');
   });
 
   it('takes only the ARCHETYPE from a body-mount model so the beast head survives', async () => {

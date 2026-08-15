@@ -151,6 +151,15 @@
         lip-sync: {{ mounted.lipSyncChannels.length ? mounted.lipSyncChannels.join(', ') : 'none' }}@if (mounted.meshesHidden) {, {{ mounted.meshesHidden }} props hidden}.
         @if (mounted.error) { <span class="warn">{{ mounted.error }}</span> }
       </p>
+    } @else if (mounted.error) {
+      <!-- A FAILED mount used to render nothing at all, so the engine could
+           refuse a model and the page would go on showing the optimistic
+           success line written before the engine ever answered. That is how ten
+           dead entries stayed invisible. -->
+      <p class="mount-note failed" role="alert" data-testid="cf-pack-report-failed">
+        <strong>That model did not load.</strong>
+        <span class="warn">{{ mounted.error }}</span>
+      </p>
     }
   }
 
