@@ -194,7 +194,34 @@ describe('PackSelectorComponent (style tabs + BYO import)', () => {
   it('lists the recorded capability gaps instead of hiding them', () => {
     const el: HTMLElement = render().nativeElement;
     const gaps = el.querySelector('[data-testid="cf-pack-gaps"]')!;
-    expect(gaps.textContent).toContain('NOT POSSIBLE AT RUNTIME');
+    // Two gaps remain, and each still shows its evidence rather than a bare
+    // "unavailable".
+    expect(gaps.textContent).toContain('materialPolicy');
+    expect(gaps.textContent).toContain('NOT VENDORED');
+  });
+
+  it('no longer claims the animal-head graft is impossible', () => {
+    // This panel used to publish "NOT POSSIBLE AT RUNTIME" for grafting a CC0
+    // animal head onto the humanoid rig. It is implemented now (the split is
+    // done by bone weight at runtime), so the claim has to be gone — AND the
+    // capability has to be real. Asserting only the first half would pass just
+    // as well if somebody had quietly deleted the honest note.
+    const el: HTMLElement = render().nativeElement;
+    const gaps = el.querySelector('[data-testid="cf-pack-gaps"]')!;
+    expect(gaps.textContent).not.toContain('NOT POSSIBLE AT RUNTIME');
+
+    const donors = PACK_CATALOG.flatMap((lane) => lane.entries).filter((e) => e.headDonor);
+    expect(donors.length)
+      .withContext('body + real animal head entries now ship')
+      .toBe(6);
+    for (const entry of donors) {
+      expect(entry.headDonor!.tris)
+        .withContext(`${entry.key} publishes the head's measured triangle count`)
+        .toBeGreaterThan(0);
+      expect(entry.headDonor!.attribution)
+        .withContext(`${entry.key} credits the donor separately from the body`)
+        .toBeTruthy();
+    }
   });
 
   it('shows the engine mount report when a model is on stage', () => {
@@ -210,6 +237,42 @@ describe('PackSelectorComponent (style tabs + BYO import)', () => {
     expect(note.textContent).toContain('no (baked atlas)');
     expect(note.textContent).toContain('strip');
     expect(note.textContent).toContain('7 props hidden');
+  });
+
+  it('credits a grafted donor head separately from the body it rides', () => {
+    engine.mountReport.set({
+      key: 'kemono-wolf-head', kind: 'body', displayName: 'Wolf head + mesh body (A base)',
+      lane: 'kemono', mounted: true, recolorable: true, surfacesRebound: 9, meshesHidden: 0,
+      heightScale: 1.0, lipSyncChannels: ['strip'], visemes: false,
+      licenseSpdx: 'CC0-1.0', attribution: 'Quaternius (Tomás Laulhé)',
+      sourceUrl: 'https://quaternius.com', imported: false, error: '',
+      headDonor: {
+        key: 'wolf', displayName: 'Wolf', packId: 'quaternius-animals-v1',
+        triangles: 554, vertices: 1142, seamTriangles: 32,
+        joints: ['Head', 'Ear1.L'], alignedTo: 'Head', lateralPairs: 17,
+        heightScale: 45.4, licenseSpdx: 'CC0-1.0',
+        attribution: 'Quaternius (Tomás Laulhé)', sourceUrl: 'https://quaternius.com',
+        retrievedAt: '2026-07-29',
+      },
+    });
+    const el: HTMLElement = render().nativeElement;
+    const credit = el.querySelector('[data-testid="cf-pack-donor"]')!;
+    expect(credit).withContext('a grafted donor head is credited').toBeTruthy();
+    expect(credit.textContent).toContain('Wolf');
+    expect(credit.textContent).toContain('554');
+    expect(credit.textContent).toContain('CC0-1.0');
+  });
+
+  it('shows no donor credit when the head is procedural', () => {
+    engine.mountReport.set({
+      key: 'kemono-ubc-body-a', kind: 'body', displayName: 'Mesh body + beast head',
+      lane: 'kemono', mounted: true, recolorable: true, surfacesRebound: 4, meshesHidden: 0,
+      heightScale: 1.0, lipSyncChannels: ['strip'], visemes: false,
+      licenseSpdx: 'CC0-1.0', attribution: 'Quaternius', sourceUrl: 'https://quaternius.com',
+      imported: false, error: '',
+    });
+    const el: HTMLElement = render().nativeElement;
+    expect(el.querySelector('[data-testid="cf-pack-donor"]')).toBeNull();
   });
 
   describe('import tab', () => {

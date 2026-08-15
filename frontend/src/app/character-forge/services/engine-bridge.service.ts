@@ -55,6 +55,28 @@ export interface PackMountReport {
   attribution: string;
   sourceUrl: string;
   imported: boolean;
+  /**
+   * Set when a SECOND vendored model's head was split off by bone weight and
+   * grafted onto this body. It carries its own licence because it is a separate
+   * third-party asset visible in the same avatar — crediting only the body
+   * would under-report what is on screen.
+   */
+  headDonor?: {
+    key: string;
+    displayName: string;
+    packId: string;
+    triangles: number;
+    vertices: number;
+    seamTriangles: number;
+    joints: string[];
+    alignedTo: string;
+    lateralPairs: number;
+    heightScale: number;
+    licenseSpdx: string;
+    attribution: string;
+    sourceUrl: string;
+    retrievedAt: string;
+  };
   error: string;
   /** Only on an import: the file's OWN in-file terms (VRM metadata). */
   license?: Record<string, string | boolean>;

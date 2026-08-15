@@ -96,6 +96,13 @@ func _run_all() -> void:
 	_test_bridge_pack_surface()
 	_test_studio_pack_controls()
 
+	# ── runtime bone-weight mesh surgery (the retired "NOT POSSIBLE" verdict) ─
+	_test_mesh_surgery_matches_the_pipeline_count()
+	_test_mesh_surgery_lands_the_face_forward()
+	_test_mesh_surgery_refuses_what_it_cannot_split()
+	_test_pack_mount_donor_head_graft()
+	_test_registry_holds_a_donor_to_the_same_licence_bar()
+
 	await _test_glb_round_trip()
 
 	print("")
@@ -2414,7 +2421,7 @@ func _test_pack_catalogue_loads() -> void:
 			"lanes come back in the UI's tab order, got " + ", ".join(ids))
 
 	var entries := CharForgePacks.entries()
-	_check(entries.size() == 42, "42 catalogue entries, got %d" % entries.size())
+	_check(entries.size() == 48, "48 catalogue entries, got %d" % entries.size())
 	var seen := {}
 	var recolorable := 0
 	for e in entries:
@@ -2435,7 +2442,7 @@ func _test_pack_catalogue_loads() -> void:
 		_check(String(e.style) in Char3DConfig.STYLES, "'%s' names a real style" % key)
 		if bool(e.recolorable):
 			recolorable += 1
-	_check(recolorable == 25, "25 entries are region-recolourable, got %d" % recolorable)
+	_check(recolorable == 31, "31 entries are region-recolourable, got %d" % recolorable)
 
 	# The VRoid meshes must never become mixable parts (pixiv's guideline bars
 	# any app that generates or outputs models from recombined VRoid meshes).
@@ -2446,14 +2453,26 @@ func _test_pack_catalogue_loads() -> void:
 
 	# The recorded capability gaps are carried through, not silently dropped.
 	var blocked := CharForgePacks.blocked()
-	_check(blocked.size() == 3, "3 recorded capability gaps, got %d" % blocked.size())
-	var graft_recorded := false
+	_check(blocked.size() == 2, "2 recorded capability gaps, got %d" % blocked.size())
 	for b in blocked:
-		if String(b.get("id", "")) == "quaternius-animal-head-graft":
-			graft_recorded = true
-			_check(String(b.get("evidence", "")).length() > 40,
-					"the animal-head graft blocker carries real evidence")
-	_check(graft_recorded, "the animal-head graft is recorded as NOT POSSIBLE, with evidence")
+		_check(String(b.get("evidence", "")).length() > 40,
+				"capability gap '%s' carries real evidence" % String(b.get("id", "")))
+		# The animal-head graft used to be the third gap, recorded as "NOT
+		# POSSIBLE AT RUNTIME". It is implemented now (CharForgeMeshSurgery), so
+		# the entry has to be GONE — and, below, the capability has to be real.
+		# Deleting a blocker without shipping the thing it blocked would just be
+		# a quieter version of the same hole.
+		_check(String(b.get("id", "")) != "quaternius-animal-head-graft",
+				"the animal-head graft is no longer recorded as impossible")
+	var with_donor := 0
+	for e in entries:
+		var d: Variant = e.get("headDonor", {})
+		if d is Dictionary and not (d as Dictionary).is_empty():
+			with_donor += 1
+			_check(int((d as Dictionary).get("tris", 0)) > 0,
+					"donor entry '%s' publishes a measured head triangle count" % String(e.key))
+	_check(with_donor == 6,
+			"six real body+donor-head entries replaced the blocked graft, got %d" % with_donor)
 
 	# A vendored pack that reaches no lane must say why — otherwise 7 MB of
 	# models sit in the repo that neither the engine nor the UI can ever show.
@@ -2487,7 +2506,7 @@ func _test_pack_entries_all_register() -> void:
 				% [e.key, ", ".join(registry.last_errors)])
 		if ok:
 			accepted += 1
-	_check(accepted == 42, "all 42 entries register, got %d" % accepted)
+	_check(accepted == 48, "all 48 entries register, got %d" % accepted)
 
 	# ... and the gate still bites: strip the licence and the same entry is out.
 	var stripped := CharForgePacks.basis_entry(CharForgePacks.entry("kemono-cat"))
@@ -2864,8 +2883,8 @@ func _test_bridge_pack_surface() -> void:
 					"host entry '%s' carries its provenance" % e.key)
 			_check(e.has("tris") and e.has("joints") and e.has("bytes"),
 					"host entry '%s' carries its cost so the UI can warn" % e.key)
-	_check(count == 42, "the host catalogue carries all 42 entries, got %d" % count)
-	_check(doc.blocked.size() == 3, "the host catalogue carries the capability gaps")
+	_check(count == 48, "the host catalogue carries all 48 entries, got %d" % count)
+	_check(doc.blocked.size() == 2, "the host catalogue carries the capability gaps")
 
 
 func _test_studio_pack_controls() -> void:
@@ -3018,3 +3037,302 @@ func _test_pack_mount_composed_outfit() -> void:
 	mount.free()
 	get_root().remove_child(host)
 	host.free()
+
+
+# ── runtime bone-weight mesh surgery ─────────────────────────────────────────
+#
+# lanes.json carried a blocked[] entry reading "NOT POSSIBLE AT RUNTIME —
+# measured, not assumed" for grafting a CC0 animal head onto the humanoid rig.
+# Its evidence was right (the donors are one skinned mesh with no head NODE) and
+# its conclusion was wrong: the per-vertex bone weights that identify a head are
+# already in the surface arrays. These tests are what let that verdict be
+# deleted rather than merely disbelieved.
+
+const DONOR_KEYS := [
+	"kemono-wolf-head", "kemono-fox-head", "kemono-husky-head",
+	"kemono-shiba-inu-head", "kemono-deer-head", "kemono-horse-head",
+]
+
+## Centroid of the first surface whose material name contains `want`.
+func _surface_centroid(mesh: Mesh, want: String) -> Vector3:
+	for s in range(mesh.get_surface_count()):
+		var material := mesh.surface_get_material(s)
+		if material == null or not material.resource_name.to_lower().contains(want):
+			continue
+		var verts: PackedVector3Array = mesh.surface_get_arrays(s)[Mesh.ARRAY_VERTEX]
+		if verts.is_empty():
+			return Vector3.INF
+		var sum := Vector3.ZERO
+		for v in verts:
+			sum += v
+		return sum / float(verts.size())
+	return Vector3.INF
+
+
+## THE PARITY GUARD. The triangle budget in the catalogue is computed by
+## tools/asset-pipeline/glb-head-tris.mjs (Node), the split itself by
+## CharForgeMeshSurgery (GDScript). Two implementations of one rule drift
+## silently, so every shipped donor is required to produce EXACTLY the number
+## the pipeline baked in — a change to either side that is not mirrored fails
+## here, by donor name.
+func _test_mesh_surgery_matches_the_pipeline_count() -> void:
+	for key in DONOR_KEYS:
+		var entry := CharForgePacks.entry(String(key))
+		_check(not entry.is_empty(), "%s is in the catalogue" % key)
+		if entry.is_empty():
+			continue
+		var donor: Dictionary = entry.get("headDonor", {})
+		_check(not donor.is_empty(), "%s carries a headDonor" % key)
+		if donor.is_empty():
+			continue
+		var scene := CharForgeMount.instantiate_asset(String(donor.glb))
+		_check(scene != null, "%s: the donor GLB instantiates" % key)
+		if scene == null:
+			continue
+		var joints := PackedStringArray()
+		for pattern in donor.get("headJoints", []):
+			joints.append(String(pattern))
+		var report: Dictionary = CharForgeMeshSurgery.extract_head(
+				scene, null, joints, CharForgeMeshSurgery.DEFAULT_THRESHOLD,
+				bool(donor.get("keepSeam", true)))
+		_check(report.node != null,
+				"%s: the head splits off (%s)" % [key, String(report.get("error", ""))])
+		if report.node == null:
+			scene.free()
+			continue
+		_check(int(report.triangles) == int(donor.tris),
+				"%s: engine split %d triangles, the pipeline baked %d"
+						% [key, int(report.triangles), int(donor.tris)])
+		_check(int(report.seamTriangles) == int(donor.seamTris),
+				"%s: engine counted %d seam triangles, the pipeline %d"
+						% [key, int(report.seamTriangles), int(donor.seamTris)])
+		_check(int(report.vertices) == int(donor.vertices),
+				"%s: engine kept %d vertices, the pipeline counted %d"
+						% [key, int(report.vertices), int(donor.vertices)])
+		# DE-SKINNED on purpose: the output becomes a plain node under a
+		# BoneAttachment3D, so carrying bones/weights forward would be a second
+		# skeleton nobody drives.
+		var mi: MeshInstance3D = report.node
+		var arrays: Array = mi.mesh.surface_get_arrays(0)
+		_check(arrays[Mesh.ARRAY_BONES] == null and arrays[Mesh.ARRAY_WEIGHTS] == null,
+				"%s: the extracted head is de-skinned" % key)
+		_check(CharForgeMeshSurgery.mesh_height(mi.mesh) > 0.0,
+				"%s: the extracted head has real extent" % key)
+		mi.free()
+		scene.free()
+
+
+## The claim that makes a per-donor calibration table unnecessary: `side x up`
+## is the same ANATOMICAL direction on a quadruped and on a biped, so aligning
+## the two frames cannot land the head backwards. Both halves are probed here
+## with independent evidence — the target's toes and the donor's face — because
+## the runtime deliberately does no such probe.
+func _test_mesh_surgery_lands_the_face_forward() -> void:
+	var body := CharForgeMount.instantiate_asset(
+			"res://assets/packs/quaternius-base-v1/models/ubc_superhero_a.glb")
+	_check(body != null, "the UBC body loads")
+	if body == null:
+		return
+	var target := CharForgeGlbLoader.find_skeleton(body)
+	var head_bone := target.find_bone("Head")
+	var lateral: Dictionary = CharForgeMeshSurgery.lateral_axis(target)
+	_check(int(lateral.pairs) >= 20,
+			"the UBC rig's left/right pairs are discovered from names, found %d"
+					% int(lateral.pairs))
+	var frame := CharForgeMeshSurgery.rig_frame(lateral.axis,
+			CharForgeMeshSurgery.body_up(target, head_bone))
+	# TARGET probe: the toes are forward of the ankle.
+	var foot := target.get_bone_global_rest(target.find_bone("foot_l")).origin
+	var ball := target.get_bone_global_rest(target.find_bone("ball_l")).origin
+	_check(frame.z.dot((ball - foot).normalized()) > 0.5,
+			"side x up is the direction the UBC rig FACES — the toes agree (dot %.3f)"
+					% frame.z.dot((ball - foot).normalized()))
+
+	# DONOR probe: after alignment the face lands on +Z, the target's forward.
+	var landmarks := {
+		"kemono-wolf-head": "nose",
+		"kemono-fox-head": "black",
+		"kemono-shiba-inu-head": "eyes_pupil",
+		"kemono-husky-head": "material.003",
+		"kemono-horse-head": "muzzle",
+		"kemono-deer-head": "eye_black",
+	}
+	for key in landmarks:
+		var donor: Dictionary = CharForgePacks.entry(String(key)).get("headDonor", {})
+		if donor.is_empty():
+			continue
+		var scene := CharForgeMount.instantiate_asset(String(donor.glb))
+		if scene == null:
+			continue
+		var report: Dictionary = CharForgeMeshSurgery.extract_head(scene, target)
+		if report.node == null:
+			_check(false, "%s: aligned extraction failed (%s)" % [key, String(report.error)])
+			scene.free()
+			continue
+		var mi: MeshInstance3D = report.node
+		var face := _surface_centroid(mi.mesh, String(landmarks[key]))
+		_check(face != Vector3.INF, "%s: the '%s' surface survived the split"
+				% [key, String(landmarks[key])])
+		if face != Vector3.INF:
+			_check(face.z > 0.0 and face.z > absf(face.x),
+					"%s: '%s' faces the target's forward (+Z), got %v"
+							% [key, String(landmarks[key]), face])
+		_check(String(report.alignedTo) == "Head",
+				"%s: reports which bone it aligned to" % key)
+		mi.free()
+		scene.free()
+	body.free()
+
+
+## A wrong joint set must FAIL, not quietly extract the whole animal. This is
+## the failure mode that would put a complete wolf on a humanoid's shoulders.
+func _test_mesh_surgery_refuses_what_it_cannot_split() -> void:
+	var scene := CharForgeMount.instantiate_asset(
+			"res://assets/packs/quaternius-animals-v1/models/wolf.glb")
+	_check(scene != null, "the wolf donor loads")
+	if scene == null:
+		return
+	var skeleton := CharForgeGlbLoader.find_skeleton(scene)
+	var mi: MeshInstance3D = null
+	for node in scene.find_children("*", "MeshInstance3D", true, false):
+		if (node as MeshInstance3D).mesh != null:
+			mi = node as MeshInstance3D
+			break
+	_check(mi != null, "the wolf has a skinned mesh")
+	if mi == null:
+		scene.free()
+		return
+
+	var empty: Dictionary = CharForgeMeshSurgery.split(mi, skeleton, PackedStringArray())
+	_check(empty.mesh == null and String(empty.error).contains("empty joint set"),
+			"an empty joint set refuses rather than extracting everything")
+	var unknown: Dictionary = CharForgeMeshSurgery.split(
+			mi, skeleton, PackedStringArray(["NoSuchBone"]))
+	_check(unknown.mesh == null,
+			"a joint set this rig lacks is an error, not an empty mesh")
+	var rigless: Dictionary = CharForgeMeshSurgery.split(
+			mi, null, PackedStringArray(["Head"]))
+	_check(rigless.mesh == null and String(rigless.error).contains("skeleton"),
+			"a bone-weight split without the rig refuses")
+
+	# A single-bone joint set matches real geometry but nowhere near a head; the
+	# MIN_TRIANGLES floor is what stops that shipping as "a head".
+	var sliver: Dictionary = CharForgeMeshSurgery.split(
+			mi, skeleton, PackedStringArray(["Ear4.L"]))
+	_check(sliver.mesh == null or int(sliver.triangles) >= CharForgeMeshSurgery.MIN_TRIANGLES,
+			"a joint set too small to be a head is refused, not shipped as a few polygons")
+
+	var unaligned: Dictionary = CharForgeMeshSurgery.extract_head(scene, null)
+	_check(String(unaligned.alignedTo).is_empty(),
+			"an extraction with no target says it aligned to nothing")
+	if unaligned.node != null:
+		(unaligned.node as Node).free()
+	scene.free()
+
+
+func _test_pack_mount_donor_head_graft() -> void:
+	var host := CharacterAssembler.new()
+	get_root().add_child(host)
+	var cfg := Char3DConfig.defaults()
+	cfg.head.family = "canid"
+	cfg.body.archetype = "humanoid"
+	host.apply_config(cfg)
+	var procedural_head := host.rig_ref("head")
+	var procedural_height := CharForgeMount.measure_height(procedural_head)
+	_check(procedural_head != null, "the procedural canid head exists before the graft")
+
+	var mount := CharForgeMount.new(host)
+	get_root().add_child(mount)
+	var entry := CharForgePacks.basis_entry(CharForgePacks.entry("kemono-wolf-head"))
+	var root := mount.mount("body", entry)
+	_check(root != null, "the body + wolf-head entry mounts")
+	if root == null:
+		get_root().remove_child(mount)
+		mount.free()
+		get_root().remove_child(host)
+		host.free()
+		return
+	_check(mount.last_error.is_empty(),
+			"the donor graft needed no fallback: " + mount.last_error)
+
+	var report := mount.mount_report()
+	var donor: Dictionary = report.headDonor
+	_check(not donor.is_empty(), "the mount report names the donor head")
+	_check(int(donor.get("triangles", 0)) == 554,
+			"the wolf head arrived at its measured 554 triangles, got %d"
+					% int(donor.get("triangles", 0)))
+	# The donor is a SECOND third-party asset on screen: crediting only the body
+	# would under-report what is being drawn.
+	_check(String(donor.get("licenseSpdx", "")) == "CC0-1.0",
+			"the donor carries its own licence, not the body's")
+	_check(not String(donor.get("attribution", "")).is_empty(),
+			"the donor is attributed separately from the body")
+	_check(String(donor.get("alignedTo", "")) == "Head",
+			"the report says which target bone the head was aligned to")
+	_check(int(donor.get("lateralPairs", 0)) > 0,
+			"the alignment was measured off real left/right bone pairs")
+
+	_check(not procedural_head.visible,
+			"the PROCEDURAL head is hidden — the donor head replaced it")
+	_check(not host.rig_ref("rig").visible, "the procedural body is hidden under the mesh body")
+
+	var skeleton := CharForgeGlbLoader.find_skeleton(root)
+	var graft := skeleton.find_child(CharForgeMount.HEAD_GRAFT_NAME, false, false)
+	_check(graft is BoneAttachment3D, "the donor head hangs off a BoneAttachment3D")
+	if graft is BoneAttachment3D:
+		_check((graft as BoneAttachment3D).bone_name == "Head",
+				"the donor head bound to the rig's Head bone")
+		var grafted: MeshInstance3D = null
+		for child in graft.get_children():
+			if child is MeshInstance3D:
+				grafted = child as MeshInstance3D
+		_check(grafted != null, "the graft carries the extracted mesh")
+		if grafted != null:
+			# SIZE: the donor head arrives the size of the procedural head it
+			# replaced, so the turntable camera does not need to know which is on.
+			# WORLD height. measure_height() reports a node's own LOCAL aabb, so
+			# measuring the MeshInstance3D itself would ignore the fit scale that
+			# is the entire point of this assertion.
+			var shown := (grafted.global_transform * grafted.mesh.get_aabb()).size.y
+			_check(procedural_height > 0.0
+					and absf(shown - procedural_height) / procedural_height < 0.15,
+					"the wolf head was fitted to the procedural head's height (%.4f vs %.4f)"
+							% [shown, procedural_height])
+			_check(int(grafted.mesh.get_surface_count()) > 0, "the grafted mesh has surfaces")
+
+	get_root().remove_child(mount)
+	mount.free()
+	get_root().remove_child(host)
+	host.free()
+
+
+## A donor is a separate vendor's asset, so it faces the SAME provenance bar as
+## the body — an entry whose donor is uncredited or off-licence must be rejected
+## whole, not mounted with a bare body.
+func _test_registry_holds_a_donor_to_the_same_licence_bar() -> void:
+	var base := CharForgePacks.basis_entry(CharForgePacks.entry("kemono-wolf-head"))
+	_check(base.get("headDonor", {}) is Dictionary
+			and not (base.get("headDonor", {}) as Dictionary).is_empty(),
+			"the shipped entry carries its donor through basis_entry()")
+
+	var good := CharForgeRegistry.new()
+	_check(good.register_body("humanoid", base.duplicate(true)),
+			"the shipped body+donor entry registers: " + ", ".join(good.last_errors))
+
+	var off_licence := base.duplicate(true)
+	(off_licence["headDonor"] as Dictionary)["licenseSpdx"] = "Proprietary"
+	var r1 := CharForgeRegistry.new()
+	_check(not r1.register_body("humanoid", off_licence),
+			"a donor with an off-allow-list licence rejects the whole entry")
+
+	var uncredited := base.duplicate(true)
+	(uncredited["headDonor"] as Dictionary)["attribution"] = ""
+	var r2 := CharForgeRegistry.new()
+	_check(not r2.register_body("humanoid", uncredited),
+			"an uncredited donor rejects the whole entry")
+
+	var undated := base.duplicate(true)
+	(undated["headDonor"] as Dictionary)["retrievedAt"] = "2026-99-99"
+	var r3 := CharForgeRegistry.new()
+	_check(not r3.register_body("humanoid", undated),
+			"a donor with an impossible retrievedAt rejects the whole entry")

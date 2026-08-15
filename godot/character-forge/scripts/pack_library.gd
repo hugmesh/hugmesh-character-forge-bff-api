@@ -209,6 +209,11 @@ static func basis_entry(e: Dictionary) -> Dictionary:
 		"jawBone": "",
 		"wholeAvatar": String(e.get("mount", "")) == "avatar",
 		"hiddenMeshes": _string_array(e.get("hiddenMeshes", [])),
+		# A SECOND vendored model whose head is split off by bone weight at mount
+		# time and grafted onto this body (scripts/mesh_surgery.gd). Copied
+		# verbatim, licence fields included: CharForgeRegistry validates the donor
+		# as strictly as the body, so an under-credited donor rejects the entry.
+		"headDonor": e.get("headDonor", {}) if e.get("headDonor", {}) is Dictionary else {},
 		"packId": String(e.get("packId", "")),
 		"modelId": String(e.get("modelId", "")),
 		"key": String(e.get("key", "")),

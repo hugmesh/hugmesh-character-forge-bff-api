@@ -20,6 +20,16 @@
  * usage: node build-lanes.mjs
  */
 import { readFileSync, writeFileSync } from 'node:fs';
+import { headTriangles } from './glb-head-tris.mjs';
+
+/**
+ * Joint-name globs that define "the head" on a donor rig. MUST stay identical
+ * to CharForgeMeshSurgery.DEFAULT_HEAD_JOINTS in
+ * godot/character-forge/scripts/mesh_surgery.gd — tests/run_tests.gd asserts the
+ * two produce the same triangle count for every shipped donor, so a change here
+ * that is not mirrored there fails the Godot suite by name.
+ */
+const HEAD_JOINT_PATTERNS = ['Head', 'Ear*', 'Horn*', 'Antler*', 'Jaw*'];
 
 /**
  * `--check` regenerates BOTH outputs in memory and diffs them against what is
@@ -218,6 +228,67 @@ for (const lane of lanesSrc.lanes) {
     }
     const policy = policies[entry.packId] || { policy: 'preserve' };
 
+    // A HEAD DONOR: a second vendored model whose head is split off by bone
+    // weight at mount time (mesh_surgery.gd) and grafted onto this body's head
+    // bone. Only meaningful on the `body` mount, where a head is grafted at all.
+    //
+    // The donor is a SEPARATE third-party asset appearing in the same avatar, so
+    // its licence/attribution travel with it rather than being folded into the
+    // body's, and its triangles are added to the entry's budget — an avatar that
+    // reports only the body's cost under-states what the GPU draws.
+    let headDonor = null;
+    if (entry.headDonor) {
+      const d = entry.headDonor;
+      const dm = manifests.get(d.packId);
+      const dModel = dm?.models.find((m) => m.id === d.modelId);
+      if (!dm) {
+        fail(`${where}: headDonor names unknown packId '${d.packId}'`);
+      } else if (!dModel) {
+        fail(`${where}: headDonor pack ${d.packId} has no model '${d.modelId}'`);
+      } else if (entry.mount !== 'body') {
+        fail(`${where}: headDonor only applies to the 'body' mount, not '${entry.mount}'`);
+      } else {
+        const dPolicy = policies[d.packId] || { policy: 'preserve' };
+        const patterns = d.headJoints ?? HEAD_JOINT_PATTERNS;
+        const glb = `godot/character-forge/assets/packs/${d.packId}/${dModel.file}`;
+        let measured = null;
+        try {
+          measured = headTriangles(resolve(REPO, glb), patterns, 0.5);
+        } catch (err) {
+          fail(`${where}: headDonor '${d.modelId}' cannot be split — ${err.message}`);
+        }
+        if (measured) {
+          headDonor = {
+            packId: d.packId,
+            modelId: d.modelId,
+            displayName: dModel.displayName ?? d.modelId,
+            glb: `res://assets/packs/${d.packId}/${dModel.file}`,
+            headJoints: patterns,
+            keepSeam: d.keepSeam !== false,
+            // MEASURED off the committed bytes by the same rule the engine
+            // applies, and asserted equal to the engine's own extraction by
+            // tests/run_tests.gd. Never estimated, never the whole quadruped.
+            tris: measured.triangles,
+            pureTris: measured.pureTriangles,
+            seamTris: measured.seamTriangles,
+            vertices: measured.vertices,
+            joints: measured.joints,
+            slots: dPolicy.policy === 'map' ? dPolicy.slots : {},
+            preserveMaterials: dPolicy.policy !== 'map',
+            licenseSpdx: dModel.licenseSpdx,
+            attribution: dModel.attribution,
+            sourceUrl: dModel.sourceUrl,
+            retrievedAt: dModel.retrievedAt,
+          };
+          tris += measured.triangles;
+          // The donor GLB is downloaded whole even though only its head is used:
+          // the split happens after the file is in memory, so the byte cost the
+          // selector shows has to include all of it.
+          bytes += dModel.bytes;
+        }
+      }
+    }
+
     entries.push({
       key: entry.key,
       displayName: entry.displayName,
@@ -251,6 +322,9 @@ for (const lane of lanesSrc.lanes) {
       // Engine-only (scripts/pack_mount.gd) — deliberately NOT in the frontend
       // catalog: the selector shows what a model IS, not how it is assembled.
       hiddenMeshes: Array.isArray(hidden) ? [...hidden] : [],
+      // Engine-only: the frontend gets only the summary fields below, because
+      // the selector shows what a model IS, not how it is assembled.
+      ...(headDonor ? { headDonor } : {}),
       licenseSpdx: model.licenseSpdx,
       licenseUrl: index.packs.find((p) => p.packId === entry.packId).licenseUrl,
       attributionRequired: manifest.attributionRequired,
@@ -349,6 +423,23 @@ export interface PackCatalogEntry {
   readonly bytes: number;
   /** False for single-atlas packs — per-region colours do not apply to them. */
   readonly recolorable: boolean;
+  /**
+   * A SECOND vendored model whose head is split off by bone weight at mount
+   * time and grafted onto this body. Null for every ordinary entry.
+   *
+   * Present in the catalogue because the donor is a separate third-party asset
+   * on screen at the same time: a credits view that named only the body would
+   * under-report it. Its \`tris\` here is the head's MEASURED contribution and
+   * is already included in the entry's own \`tris\` total.
+   */
+  readonly headDonor: {
+    readonly modelId: string;
+    readonly displayName: string;
+    readonly tris: number;
+    readonly licenseSpdx: string;
+    readonly attribution: string;
+    readonly sourceUrl: string;
+  } | null;
   readonly licenseSpdx: string;
   readonly licenseUrl: string | null;
   readonly attributionRequired: boolean;
@@ -393,6 +484,16 @@ export const PACK_CATALOG: readonly PackCatalogLane[] = ${JSON.stringify(
       joints: e.joints,
       bytes: e.bytes,
       recolorable: e.recolorable,
+      headDonor: e.headDonor
+        ? {
+          modelId: e.headDonor.modelId,
+          displayName: e.headDonor.displayName,
+          tris: e.headDonor.tris,
+          licenseSpdx: e.headDonor.licenseSpdx,
+          attribution: e.headDonor.attribution,
+          sourceUrl: e.headDonor.sourceUrl,
+        }
+        : null,
       licenseSpdx: e.licenseSpdx,
       licenseUrl: e.licenseUrl,
       attributionRequired: e.attributionRequired,

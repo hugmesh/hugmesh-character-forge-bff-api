@@ -74,6 +74,9 @@ var _swapped := 0
 var _hidden := 0
 var _merged := 0
 var _height_scale := 1.0
+## Provenance + measurements for a runtime-split donor head ({} when the mount
+## carries the procedural head, which is the common case).
+var _donor: Dictionary = {}
 
 
 func _init(target: CharacterAssembler = null) -> void:
@@ -268,6 +271,7 @@ func clear() -> void:
 	_hidden = 0
 	_merged = 0
 	_height_scale = 1.0
+	_donor = {}
 	current_key = ""
 	if assembler != null:
 		var rig := assembler.rig_ref("rig")
@@ -441,6 +445,11 @@ func mount_report() -> Dictionary:
 		"attribution": String(_entry.get("attribution", "")),
 		"sourceUrl": String(_entry.get("sourceUrl", "")),
 		"imported": bool(_entry.get("imported", false)),
+		# {} unless a real animal head was split off a CC0 quadruped and grafted
+		# on. Carries that donor's OWN licence/attribution: it is a second
+		# third-party asset in the same avatar, and a credits screen that named
+		# only the body would under-report what is on screen.
+		"headDonor": _donor.duplicate(true),
 		"error": last_error,
 	}
 
@@ -457,9 +466,12 @@ func _mount_avatar(root: Node3D) -> void:
 
 
 func _mount_body(root: Node3D) -> void:
-	# The loaded rig becomes the body; the procedural head is grafted onto its
-	# head bone FROM CODE (never authored into the GLB — imported attachment
-	# nodes create phantom bones).
+	# The loaded rig becomes the body; a head is grafted onto its head bone FROM
+	# CODE (never authored into the GLB — imported attachment nodes create
+	# phantom bones). Which head depends on the entry:
+	#   no headDonor   the PROCEDURAL head (ears/horns/muzzle from the assembler)
+	#   headDonor      a real animal head, split out of a CC0 quadruped by bone
+	#                  weight at runtime (CharForgeMeshSurgery)
 	var rig := assembler.rig_ref("rig")
 	var head := assembler.rig_ref("head")
 	var skeleton := CharForgeGlbLoader.find_skeleton(root)
@@ -471,6 +483,18 @@ func _mount_body(root: Node3D) -> void:
 				% String(_entry.get("key", ""))
 		_mount_avatar(root)
 		return
+
+	# A donor head REPLACES the procedural one. Every failure below degrades to
+	# the procedural head — a body wearing our own beast head is a worse result
+	# than the wolf's, and a far better one than a decapitated body.
+	var donor: Variant = _entry.get("headDonor", null)
+	if donor is Dictionary and not String((donor as Dictionary).get("glb", "")).is_empty():
+		if _graft_donor_head(skeleton, bone, donor as Dictionary):
+			if rig != null:
+				rig.visible = false
+			head.visible = false
+			return
+
 	var attachment := CharForgeGlbLoader.attach_part(skeleton, bone, head)
 	if attachment == null:
 		last_error = "head graft failed on bone " + bone
@@ -484,6 +508,96 @@ func _mount_body(root: Node3D) -> void:
 	if rig != null:
 		rig.visible = false
 	head.visible = true
+
+
+## Splits a CC0 quadruped's head off by bone weight and attaches it to the
+## target rig's head bone. Returns false (and leaves last_error set) when
+## anything is missing, so the caller can fall back to the procedural head.
+##
+## RETIRES lanes.json's "NOT POSSIBLE AT RUNTIME" verdict on this graft. What
+## the verdict got right: the donors really are one skinned mesh with no head
+## NODE to attach. What it missed: the per-vertex bone weights that identify the
+## head are already in the surface arrays, so the split is arithmetic, not DCC
+## work. See scripts/mesh_surgery.gd for the measurements.
+func _graft_donor_head(skeleton: Skeleton3D, bone: String, donor: Dictionary) -> bool:
+	var donor_scene := instantiate_asset(String(donor.get("glb", "")))
+	if donor_scene == null:
+		last_error = "head donor %s could not be instantiated — kept the procedural head" \
+				% String(donor.get("glb", ""))
+		push_warning("CharForgeMount: " + last_error)
+		return false
+
+	var patterns := PackedStringArray(CharForgeMeshSurgery.DEFAULT_HEAD_JOINTS)
+	var raw_joints: Variant = donor.get("headJoints", null)
+	if raw_joints is Array and not (raw_joints as Array).is_empty():
+		patterns = PackedStringArray()
+		for pattern in raw_joints:
+			patterns.append(String(pattern))
+	var report: Dictionary = CharForgeMeshSurgery.extract_head(
+			donor_scene, skeleton, patterns,
+			CharForgeMeshSurgery.DEFAULT_THRESHOLD,
+			bool(donor.get("keepSeam", true)))
+	donor_scene.free()
+	if report.get("node", null) == null:
+		last_error = "head donor %s: %s — kept the procedural head" \
+				% [String(donor.get("modelId", "")), String(report.get("error", "?"))]
+		push_warning("CharForgeMount: " + last_error)
+		return false
+
+	var instance: MeshInstance3D = report.node
+	# SIZE comes from the head the assembler already built, so a donor head
+	# arrives the same size as the procedural one it replaces and the turntable
+	# camera does not have to know which is on. Measured, not tabulated.
+	var donor_height := CharForgeMeshSurgery.mesh_height(instance.mesh)
+	var target_height := measure_height(assembler.rig_ref("head"))
+	var fit := height_scale(donor_height, target_height)
+	# ...then undo the skeleton's own fit-to-height, exactly as the procedural
+	# graft does — the attachment rides a rig that was already scaled.
+	if _height_scale > 0.0001:
+		fit /= _height_scale
+
+	var attachment := CharForgeGlbLoader.attach_part(skeleton, bone, instance)
+	if attachment == null:
+		instance.free()
+		last_error = "head donor could not attach to bone " + bone
+		push_warning("CharForgeMount: " + last_error)
+		return false
+	attachment.name = HEAD_GRAFT_NAME
+
+	# The extracted vertices are in the TARGET RIG's frame (mesh_surgery aligned
+	# them). A BoneAttachment3D hands its child the BONE's frame, so undo the
+	# bone's rest rotation or the head inherits whatever tilt the neck has.
+	var bone_index := skeleton.find_bone(bone)
+	var rest_basis := Basis.IDENTITY
+	if bone_index >= 0:
+		rest_basis = skeleton.get_bone_global_rest(bone_index).basis.orthonormalized().inverse()
+	instance.transform = Transform3D(rest_basis.scaled(Vector3.ONE * fit), Vector3.ZERO)
+
+	# The donor pack has its own slot map (it is a different vendor from the
+	# body), so the head recolours on the house palette independently.
+	if not bool(donor.get("preserveMaterials", false)) and assembler.materials != null:
+		var slots: Variant = donor.get("slots", {})
+		var slot_map := CharForgeGlbLoader.normalize_slot_map(
+				{"slots": slots if slots is Dictionary else {}})
+		_swapped += CharForgeGlbLoader.swap_materials(instance, assembler.materials, slot_map)
+
+	_donor = {
+		"key": String(donor.get("modelId", "")),
+		"displayName": String(donor.get("displayName", "")),
+		"packId": String(donor.get("packId", "")),
+		"triangles": int(report.get("triangles", 0)),
+		"vertices": int(report.get("vertices", 0)),
+		"seamTriangles": int(report.get("seamTriangles", 0)),
+		"joints": Array(report.get("joints", PackedStringArray())),
+		"alignedTo": String(report.get("alignedTo", "")),
+		"lateralPairs": int(report.get("lateralPairs", 0)),
+		"heightScale": fit,
+		"licenseSpdx": String(donor.get("licenseSpdx", "")),
+		"attribution": String(donor.get("attribution", "")),
+		"sourceUrl": String(donor.get("sourceUrl", "")),
+		"retrievedAt": String(donor.get("retrievedAt", "")),
+	}
+	return true
 
 
 func _bind_lip_sync(root: Node3D, entry: Dictionary) -> void:

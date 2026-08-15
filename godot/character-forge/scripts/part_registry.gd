@@ -265,6 +265,52 @@ func _register(target: Dictionary, key: String, entry: Dictionary, allowed_keys:
 	for label in ["packId", "modelId", "key", "displayName", "lane"]:
 		clean[label] = String(entry.get(label, ""))
 
+	# HEAD DONOR — a SECOND vendored model whose head is split off by bone weight
+	# at mount time and grafted onto this body's head bone (scripts/mesh_surgery.gd).
+	# It is a separate third-party asset, so it carries its own licence fields and
+	# is held to the same allow-list: an avatar that puts two vendors' geometry on
+	# screen has to be able to credit both. A malformed donor REJECTS the whole
+	# entry rather than silently mounting a bare body.
+	var donor_raw: Variant = entry.get("headDonor", null)
+	if donor_raw is Dictionary and not (donor_raw as Dictionary).is_empty():
+		var donor: Dictionary = donor_raw
+		var donor_glb := String(donor.get("glb", ""))
+		if not donor_glb.begins_with("res://") or not donor_glb.ends_with(".glb"):
+			last_errors.append("headDonor.glb must be a res:// .glb path")
+		var donor_license := String(donor.get("licenseSpdx", ""))
+		if not (donor_license in ALLOWED_LICENSES):
+			last_errors.append("headDonor.licenseSpdx '%s' is not on the allow-list %s"
+					% [donor_license, str(ALLOWED_LICENSES)])
+		for field in ["attribution", "sourceUrl"]:
+			if String(donor.get(field, "")).strip_edges().is_empty():
+				last_errors.append("headDonor.%s is required" % field)
+		if not _is_iso_date(String(donor.get("retrievedAt", ""))):
+			last_errors.append("headDonor.retrievedAt must be an ISO yyyy-mm-dd date")
+		var donor_slots := {}
+		var donor_slots_raw: Variant = donor.get("slots", {})
+		if donor_slots_raw is Dictionary:
+			for slot_name in (donor_slots_raw as Dictionary).keys():
+				var donor_region := String((donor_slots_raw as Dictionary)[slot_name])
+				if donor_region in Char3DConfig.ALL_MATERIAL_REGIONS:
+					donor_slots[String(slot_name).to_lower()] = donor_region
+				else:
+					last_errors.append("headDonor slot '%s' maps to unknown region '%s'"
+							% [slot_name, donor_region])
+		clean["headDonor"] = {
+			"glb": donor_glb,
+			"packId": String(donor.get("packId", "")),
+			"modelId": String(donor.get("modelId", "")),
+			"displayName": String(donor.get("displayName", "")),
+			"licenseSpdx": donor_license,
+			"attribution": String(donor.get("attribution", "")),
+			"sourceUrl": String(donor.get("sourceUrl", "")),
+			"retrievedAt": String(donor.get("retrievedAt", "")),
+			"slots": donor_slots,
+			"preserveMaterials": bool(donor.get("preserveMaterials", false)),
+			"keepSeam": bool(donor.get("keepSeam", true)),
+			"headJoints": donor.get("headJoints", []),
+		}
+
 	# --- provenance (license discipline, enforced) ---------------------------
 	var license := String(entry.get("licenseSpdx", ""))
 	if not (license in ALLOWED_LICENSES):

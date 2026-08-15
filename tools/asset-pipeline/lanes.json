@@ -2,13 +2,11 @@
   "schema": "3d-pack-lanes",
   "schemaVersion": 1,
   "notes": "Hand-authored mapping from the vendored packs (sources.json / pack.json) onto the assembler-v2 basis registry: which style lane a model belongs to, which head family / body archetype it stands in for, how it mounts onto the rig, and how each of its glTF material slots maps onto the 11 palette regions. build-lanes.mjs validates every reference against the committed pack.json manifests and emits assets/packs/lanes.json (read by scripts/pack_library.gd) plus the frontend's generated catalog, so the engine, the UI and this file can never drift.",
-
   "mounts": {
     "avatar": "The GLB/VRM IS the avatar: the whole procedural rig is hidden and the mesh replaces it. Registered on the HEAD basis so exactly one mesh_basis_required signal fires per rebuild.",
     "body": "Mesh body + PROCEDURAL head: the loaded rig replaces the procedural body, and the procedural head (with its ears/horns/muzzle) is re-parented onto the rig's head bone from code via BoneAttachment3D. Registered on the BODY basis.",
     "procedural": "No mesh at all — the parametric assembler builds everything. The default, and the primary for the kemono lane."
   },
-
   "materialPolicy": {
     "quaternius-base-v1": {
       "policy": "map",
@@ -176,18 +174,18 @@
       "reason": "One textured material on a 576-tri quadruped; it is the runtime-loader reference asset, not a player avatar."
     }
   },
-
   "unlaned": {
     "quaternius-animals-v1": "Vendored as HEAD/TAIL DONOR geometry for the kemono graft, which the blocked[] entry below proves is not possible at runtime: every quadruped is one skinned mesh with no separable head node. They are quadrupeds, not avatars, so they are deliberately not offered as playable characters either. Kept because they remain the donor set the moment a Blender-equipped pipeline exists.",
     "khronos-fox-v1": "The canonical quadruped skinning/animation reference asset for the runtime GLB loader tests (576 tris, mixed CC0 mesh / CC-BY-4.0 rig). A test fixture, never a player avatar."
   },
-
   "lanes": [
     {
       "id": "anime",
       "displayName": "Anime",
       "summary": "VRoid CC0 base bodies + the CC-BY Godette mascot. VRM: standardised humanoid rig, A/I/U/E/O visemes and in-file licence metadata.",
-      "proceduralFamilies": ["humanoid"],
+      "proceduralFamilies": [
+        "humanoid"
+      ],
       "entries": [
         {
           "key": "anime-vroid-a",
@@ -231,7 +229,9 @@
       "id": "jrpg",
       "displayName": "JRPG",
       "summary": "Quaternius Universal Base Characters + Modular Fantasy Outfits (recolourable flat-colour slots) and the KayKit Adventurers chibi line (atlas-textured, recolour unavailable).",
-      "proceduralFamilies": ["humanoid"],
+      "proceduralFamilies": [
+        "humanoid"
+      ],
       "entries": [
         {
           "key": "jrpg-ubc-b",
@@ -430,10 +430,34 @@
       "displayName": "Kemono / Furry",
       "summary": "PROCEDURAL FIRST. legal-inventory.md is blunt: 'There is NO production-grade CC0 rigged+animated anthro biped pack anywhere', so the kemono.md numeric style rules drive the parametric assembler for all 27 beast families. Two mesh options exist on top: a mesh BODY under a procedural beast head, and the three chibi bipeds inside Ultimate Monsters.",
       "proceduralFamilies": [
-        "canid", "felid", "avian", "reptile", "dragon", "dino", "kobold", "gryphon",
-        "equine", "cervine", "bovine", "caprine", "suid", "hyena", "lapine", "rodent",
-        "macropod", "moth", "insect", "bat", "ursine", "mustelid", "procyonid",
-        "amphibian", "aquatic", "slime", "robot", "synth"
+        "canid",
+        "felid",
+        "avian",
+        "reptile",
+        "dragon",
+        "dino",
+        "kobold",
+        "gryphon",
+        "equine",
+        "cervine",
+        "bovine",
+        "caprine",
+        "suid",
+        "hyena",
+        "lapine",
+        "rodent",
+        "macropod",
+        "moth",
+        "insect",
+        "bat",
+        "ursine",
+        "mustelid",
+        "procyonid",
+        "amphibian",
+        "aquatic",
+        "slime",
+        "robot",
+        "synth"
       ],
       "entries": [
         {
@@ -495,6 +519,102 @@
           "style": "toon",
           "partMixable": true,
           "notes": "5,016 tris / 43 joints, inside budget."
+        },
+        {
+          "key": "kemono-wolf-head",
+          "displayName": "Wolf head + mesh body (A base)",
+          "packId": "quaternius-base-v1",
+          "modelId": "ubc_superhero_a",
+          "family": "canid",
+          "archetype": "humanoid",
+          "mount": "body",
+          "style": "toon",
+          "partMixable": true,
+          "headDonor": {
+            "packId": "quaternius-animals-v1",
+            "modelId": "wolf"
+          },
+          "notes": "Real animal head on a CC0 humanoid body. The head is SPLIT OUT of the quadruped donor by bone weight at runtime (scripts/mesh_surgery.gd) and attached to the body's head bone with a BoneAttachment3D, so no Blender step and no re-rigging is involved. lanes.json listed this as NOT POSSIBLE AT RUNTIME until the per-vertex weights were actually read: the donors have no head NODE, but they do carry the weights that identify one. The ears ride the head as one piece (they were ear-bone driven on the donor) — the mount report says so rather than hiding it."
+        },
+        {
+          "key": "kemono-fox-head",
+          "displayName": "Fox head + mesh body (A base)",
+          "packId": "quaternius-base-v1",
+          "modelId": "ubc_superhero_a",
+          "family": "canid",
+          "archetype": "humanoid",
+          "mount": "body",
+          "style": "toon",
+          "partMixable": true,
+          "headDonor": {
+            "packId": "quaternius-animals-v1",
+            "modelId": "fox"
+          },
+          "notes": "Real animal head on a CC0 humanoid body. The head is SPLIT OUT of the quadruped donor by bone weight at runtime (scripts/mesh_surgery.gd) and attached to the body's head bone with a BoneAttachment3D, so no Blender step and no re-rigging is involved. lanes.json listed this as NOT POSSIBLE AT RUNTIME until the per-vertex weights were actually read: the donors have no head NODE, but they do carry the weights that identify one. The ears ride the head as one piece (they were ear-bone driven on the donor) — the mount report says so rather than hiding it."
+        },
+        {
+          "key": "kemono-husky-head",
+          "displayName": "Husky head + mesh body (B base)",
+          "packId": "quaternius-base-v1",
+          "modelId": "ubc_superhero_b",
+          "family": "canid",
+          "archetype": "humanoid",
+          "mount": "body",
+          "style": "toon",
+          "partMixable": true,
+          "headDonor": {
+            "packId": "quaternius-animals-v1",
+            "modelId": "husky"
+          },
+          "notes": "Real animal head on a CC0 humanoid body. The head is SPLIT OUT of the quadruped donor by bone weight at runtime (scripts/mesh_surgery.gd) and attached to the body's head bone with a BoneAttachment3D, so no Blender step and no re-rigging is involved. lanes.json listed this as NOT POSSIBLE AT RUNTIME until the per-vertex weights were actually read: the donors have no head NODE, but they do carry the weights that identify one. The ears ride the head as one piece (they were ear-bone driven on the donor) — the mount report says so rather than hiding it."
+        },
+        {
+          "key": "kemono-shiba-inu-head",
+          "displayName": "Shiba Inu head + mesh body (B base)",
+          "packId": "quaternius-base-v1",
+          "modelId": "ubc_superhero_b",
+          "family": "canid",
+          "archetype": "humanoid",
+          "mount": "body",
+          "style": "toon",
+          "partMixable": true,
+          "headDonor": {
+            "packId": "quaternius-animals-v1",
+            "modelId": "shiba_inu"
+          },
+          "notes": "Real animal head on a CC0 humanoid body. The head is SPLIT OUT of the quadruped donor by bone weight at runtime (scripts/mesh_surgery.gd) and attached to the body's head bone with a BoneAttachment3D, so no Blender step and no re-rigging is involved. lanes.json listed this as NOT POSSIBLE AT RUNTIME until the per-vertex weights were actually read: the donors have no head NODE, but they do carry the weights that identify one. The ears ride the head as one piece (they were ear-bone driven on the donor) — the mount report says so rather than hiding it."
+        },
+        {
+          "key": "kemono-deer-head",
+          "displayName": "Deer head + mesh body (A base)",
+          "packId": "quaternius-base-v1",
+          "modelId": "ubc_superhero_a",
+          "family": "cervine",
+          "archetype": "humanoid",
+          "mount": "body",
+          "style": "toon",
+          "partMixable": true,
+          "headDonor": {
+            "packId": "quaternius-animals-v1",
+            "modelId": "deer"
+          },
+          "notes": "Real animal head on a CC0 humanoid body. The head is SPLIT OUT of the quadruped donor by bone weight at runtime (scripts/mesh_surgery.gd) and attached to the body's head bone with a BoneAttachment3D, so no Blender step and no re-rigging is involved. lanes.json listed this as NOT POSSIBLE AT RUNTIME until the per-vertex weights were actually read: the donors have no head NODE, but they do carry the weights that identify one. The ears ride the head as one piece (they were ear-bone driven on the donor) — the mount report says so rather than hiding it."
+        },
+        {
+          "key": "kemono-horse-head",
+          "displayName": "Horse head + mesh body (B base)",
+          "packId": "quaternius-base-v1",
+          "modelId": "ubc_superhero_b",
+          "family": "equine",
+          "archetype": "humanoid",
+          "mount": "body",
+          "style": "toon",
+          "partMixable": true,
+          "headDonor": {
+            "packId": "quaternius-animals-v1",
+            "modelId": "horse"
+          },
+          "notes": "Real animal head on a CC0 humanoid body. The head is SPLIT OUT of the quadruped donor by bone weight at runtime (scripts/mesh_surgery.gd) and attached to the body's head bone with a BoneAttachment3D, so no Blender step and no re-rigging is involved. lanes.json listed this as NOT POSSIBLE AT RUNTIME until the per-vertex weights were actually read: the donors have no head NODE, but they do carry the weights that identify one. The ears ride the head as one piece (they were ear-bone driven on the donor) — the mount report says so rather than hiding it."
         }
       ]
     },
@@ -502,7 +622,14 @@
       "id": "monsters",
       "displayName": "Monsters",
       "summary": "Quaternius Ultimate Monsters (CC0, animated) plus the KayKit undead. SRD-safe creatures only — no WotC Product Identity is modelled or shipped.",
-      "proceduralFamilies": ["dragon", "slime", "robot", "synth", "insect", "moth"],
+      "proceduralFamilies": [
+        "dragon",
+        "slime",
+        "robot",
+        "synth",
+        "insect",
+        "moth"
+      ],
       "entries": [
         {
           "key": "monster-dragon",
@@ -690,7 +817,9 @@
       "id": "import",
       "displayName": "Import",
       "summary": "Bring your own VRM/GLB. Imported bytes are read in the browser and handed straight to the embedded engine — they are NEVER uploaded to the BFF. The 100Avatars corpus below is the shipped VRM ingest reference; free bases are LINKED, never bundled.",
-      "proceduralFamilies": ["humanoid"],
+      "proceduralFamilies": [
+        "humanoid"
+      ],
       "entries": [
         {
           "key": "filler-jimmy",
@@ -791,16 +920,7 @@
       ]
     }
   ],
-
   "blocked": [
-    {
-      "id": "quaternius-animal-head-graft",
-      "wanted": "Graft a CC0 Quaternius animal head (Fox/Wolf/Husky/Shiba) onto the Universal Base Characters humanoid rig via BoneAttachment3D, per legal-inventory.md's hybrid recommendation.",
-      "verdict": "NOT POSSIBLE AT RUNTIME — measured, not assumed.",
-      "evidence": "Every quadruped in quaternius-animals-v1 is ONE skinned mesh with no separable head node: wolf.glb contains exactly one mesh ('Wolf', 4 primitives) bound to a single 51-joint skin, and its head geometry is skin-weighted to the 'Head' joint rather than living in its own node. BoneAttachment3D attaches whole NODES, so there is nothing to attach; isolating the head means splitting the mesh by bone weight, which is offline mesh surgery.",
-      "blocker": "Blender (or an equivalent weight-aware mesh splitter) is not installed in this environment, and gltf-transform has no split-by-skin-weight operation.",
-      "shippedInstead": "The 'body' mount: the CC0 mesh body carries a fully PROCEDURAL beast head (kemono-ubc-body-hard/soft entries above), plus the three Ultimate Monsters chibi bipeds as complete meshes. The species silhouette rides on the procedural ears/horns/muzzle, which technique.md notes is where species identity actually lives."
-    },
     {
       "id": "kaykit-atlas-recolor",
       "wanted": "Per-region recolour on the KayKit Adventurers/Skeletons and 100Avatars lines.",

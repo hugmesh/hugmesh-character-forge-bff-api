@@ -118,6 +118,24 @@
   color: var(--hug-warn, #d08a3c);
 }
 
+// A grafted donor head is a second vendor's asset in the same avatar; its
+// credit sits under the body's rather than replacing it.
+.mount-note.donor {
+  margin-top: 0.15rem;
+  padding-left: 0.55rem;
+  border-left: 2px solid var(--hug-border, #3a3a52);
+
+  code {
+    font-size: 0.72rem;
+    opacity: 0.85;
+  }
+
+  .credit {
+    display: block;
+    opacity: 0.8;
+  }
+}
+
 .import-slot {
   display: flex;
   flex-direction: column;
