@@ -8,6 +8,14 @@
   border-radius: 8px;
   overflow: hidden;
   background: var(--hug-bg-1, #12121e);
+  // A FLOOR, not a layout: the canvas in flow sizes this box itself. It exists
+  // because the failure mode when something takes the canvas OUT of flow is
+  // silent — this box collapses to the 2px of its own borders, `overflow:
+  // hidden` clips the (perfectly good) render away, and the panel reads as
+  // "the 3D preview never loaded" with no error anywhere. That shipped once,
+  // from canvasResizePolicy: 2 stamping `position: absolute` on the canvas.
+  // With a floor the picture may be letterboxed, but it can never disappear.
+  min-height: 12rem;
 }
 
 .engine-canvas {

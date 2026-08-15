@@ -265,4 +265,42 @@ describe('EngineBridgeService (packs + BYO import)', () => {
     svc.registerBridge(fake);
     expect((svc.listPacks() as Record<string, unknown>)['available']).toBeTrue();
   });
+
+  /**
+   * THE INVISIBLE-PREVIEW REGRESSION. canvasResizePolicy 2 means "adapt the
+   * canvas to the whole browser window" (the web glue's own words) — the
+   * full-page-game setting. Passing it for an EMBEDDED panel made Godot stamp
+   * `position: absolute; width: 1280px; height: 720px` on the canvas, which took
+   * it out of flow; .engine-host then collapsed to the 2px of its own borders
+   * and, being `overflow: hidden`, clipped the render away completely.
+   *
+   * Nothing threw. The engine booted, WebGL2 initialised and the bridge
+   * registered — measured live: canvas box 1280x504 inside a 616x2 parent — so
+   * the only symptom was "the 3D preview doesn't load". This asserts the policy
+   * that keeps the canvas in flow, because there is no error to assert on.
+   */
+  it('boots the engine with canvasResizePolicy 0 — the canvas must stay IN FLOW', async () => {
+    const svc = makeService();
+    const canvas = document.createElement('canvas');
+    let seen: Record<string, unknown> | null = null;
+    class FakeEngine {
+      constructor(cfg: Record<string, unknown>) { seen = cfg; }
+      startGame(): Promise<void> { return Promise.resolve(); }
+    }
+    (window as unknown as Record<string, unknown>)['Engine'] = FakeEngine;
+    // injectScript would fetch the real bundle; stub it to the boot path only.
+    spyOn(svc as unknown as { injectScript(s: string): Promise<void> }, 'injectScript')
+      .and.resolveTo(undefined);
+    await svc.load(canvas);
+
+    expect(seen).not.toBeNull();
+    expect(seen!['canvasResizePolicy'])
+      .withContext('policy 2 = "match the whole browser window" — it hides an embedded canvas')
+      .toBe(0);
+    // Policy 0 hands the drawing buffer to us, so it must actually be sized —
+    // an untouched canvas is 300x150 and the preview renders at a sixth scale.
+    expect(canvas.width).toBeGreaterThan(0);
+    expect(canvas.height).toBeGreaterThan(0);
+    expect(canvas.id).toBe('cf-engine-canvas');
+  });
 });

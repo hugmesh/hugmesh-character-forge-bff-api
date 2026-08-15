@@ -104,6 +104,10 @@ const BRIDGE_POLL_INTERVAL_MS = 250;
 const BRIDGE_POLL_TIMEOUT_MS = 60_000;
 /** How long an importModel may take before the UI stops waiting on it. */
 const IMPORT_TIMEOUT_MS = 30_000;
+/** Drawing-buffer ceiling per side — see {@link EngineBridgeService.sizeCanvas}. */
+const MAX_BUFFER_PX = 2048;
+/** Buffer side used when the canvas is measured before layout (box still 0). */
+const FALLBACK_CANVAS_PX = 512;
 
 function safeJson(text: unknown): Record<string, unknown> | null {
   if (typeof text !== 'string') {
@@ -160,6 +164,7 @@ export class EngineBridgeService {
   private readonly queue: ForgeBridgeMessage[] = [];
   private configListener: ((json: string) => void) | null = null;
   private pollHandle: ReturnType<typeof setInterval> | null = null;
+  private resizeObserver: ResizeObserver | null = null;
   private importResolve: ((report: PackMountReport) => void) | null = null;
 
   constructor(private readonly zone: NgZone) {}
@@ -214,11 +219,33 @@ export class EngineBridgeService {
       if (!engineCtor) {
         throw new Error('engine script loaded but no Engine global');
       }
+      // The drawing buffer is OURS to size, because the policy below tells Godot
+      // not to touch it. Done before startGame so the first frame is already the
+      // right shape rather than a 300x150 default that pops on the first resize.
+      this.sizeCanvas(canvas);
+      this.observeCanvasSize(canvas);
       // Threads OFF (DESIGN §0 web preset) — no COOP/COEP needed in the host.
       const engine = new engineCtor({
         executable: `${ENGINE_BASE}${ENGINE_EXECUTABLE}`,
         canvas,
-        canvasResizePolicy: 2,
+        // POLICY 0 — "Godot won't do any resizing" (the web glue's own wording;
+        // it is the setting for a canvas whose size the page controls).
+        //
+        // It was 2, which is "adapt the canvas size to match the WHOLE BROWSER
+        // WINDOW" — the full-page-game setting. On an embedded preview panel
+        // that is not merely wrong-sized, it is invisible: Godot stamps
+        //     position: absolute; top: 0; left: 0; width: 1280px; height: 720px
+        // onto the canvas, which takes it OUT OF FLOW, so .engine-host collapses
+        // to the 2px of its own top+bottom border — and because .engine-host is
+        // `overflow: hidden`, the (correctly rendered) canvas is then clipped
+        // away entirely. Measured in the browser, not inferred: the canvas box
+        // was 1280x504 while its parent was 616x2.
+        //
+        // That is the whole of "the WebGL window doesn't load": the engine boots
+        // fine, WebGL2 is fine, the bridge registers, and the picture is clipped
+        // to a 2-pixel strip. There is no error anywhere, which is why it read
+        // as a load failure rather than a layout one.
+        canvasResizePolicy: 0,
         focusCanvas: false,
         args: [],
       });
@@ -424,6 +451,53 @@ export class EngineBridgeService {
       clearInterval(this.pollHandle);
       this.pollHandle = null;
     }
+  }
+
+  /**
+   * Match the canvas DRAWING BUFFER to the box CSS gave it.
+   *
+   * With `canvasResizePolicy: 0` Godot never touches width/height, and an
+   * unsized canvas defaults to 300x150 — so the preview would render at a
+   * sixth of its box and be stretched back up, looking like a blurry
+   * screenshot of itself. The CSS box is the source of truth (`width: 100%`
+   * + `aspect-ratio: 1 / 1`); this only mirrors it into the buffer.
+   *
+   * devicePixelRatio is applied so the render is crisp on a HiDPI screen, but
+   * CAPPED at 2 and at MAX_BUFFER_PX: this is a single-threaded WASM renderer
+   * and a 4x buffer on a large monitor costs fill rate the preview does not
+   * need. Writing the same value again would reset the GL surface and flicker,
+   * so both dimensions are compared first.
+   */
+  private sizeCanvas(canvas: HTMLCanvasElement): void {
+    const rect = canvas.getBoundingClientRect();
+    // Before layout (or while hidden) the box can be 0 — fall back rather than
+    // creating a zero-sized GL surface, which some drivers refuse outright.
+    const cssW = rect.width || canvas.clientWidth || FALLBACK_CANVAS_PX;
+    const cssH = rect.height || canvas.clientHeight || FALLBACK_CANVAS_PX;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = Math.max(1, Math.min(MAX_BUFFER_PX, Math.round(cssW * dpr)));
+    const h = Math.max(1, Math.min(MAX_BUFFER_PX, Math.round(cssH * dpr)));
+    if (canvas.width !== w || canvas.height !== h) {
+      canvas.width = w;
+      canvas.height = h;
+    }
+  }
+
+  /**
+   * Keep the buffer in step with the box for the rest of the session (panel
+   * reflow, window resize, zoom). Outside Angular's zone: a ResizeObserver that
+   * fires inside it would run change detection on every animation frame of a
+   * drag-resize. Ignored where ResizeObserver is absent — the initial sizing
+   * has already happened, so the preview still renders, just fixed.
+   */
+  private observeCanvasSize(canvas: HTMLCanvasElement): void {
+    if (typeof ResizeObserver === 'undefined' || this.resizeObserver) {
+      return;
+    }
+    this.zone.runOutsideAngular(() => {
+      this.resizeObserver = new ResizeObserver(() => this.sizeCanvas(canvas));
+      this.resizeObserver.observe(canvas);
+    });
   }
 
   private injectScript(src: string): Promise<void> {
