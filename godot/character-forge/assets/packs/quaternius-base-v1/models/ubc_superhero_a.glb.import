@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://dwoc1w61jinf1"
-path="res://.godot/imported/female_peasant_body.glb-796f6f94283f2514657075fea65849cc.scn"
+uid="uid://dsf8i6ruo822q"
+path="res://.godot/imported/ubc_superhero_a.glb-614a39a6fe7781b48eb3756048c05c00.scn"
 
 [deps]
 
-source_file="res://assets/packs/quaternius-outfits-v1/models/female_peasant_body.glb"
-dest_files=["res://.godot/imported/female_peasant_body.glb-796f6f94283f2514657075fea65849cc.scn"]
+source_file="res://assets/packs/quaternius-base-v1/models/ubc_superhero_a.glb"
+dest_files=["res://.godot/imported/ubc_superhero_a.glb-614a39a6fe7781b48eb3756048c05c00.scn"]
 
 [params]
 

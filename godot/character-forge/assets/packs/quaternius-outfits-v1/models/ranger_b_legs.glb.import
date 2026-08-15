@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://cbruyafxqnld4"
-path="res://.godot/imported/eyebrows_female.glb-10af72f20dea40015d4e7800d1d07df1.scn"
+uid="uid://dyanftoe7oy0l"
+path="res://.godot/imported/ranger_b_legs.glb-783214f1ac9ec7f1dad219cdbbe9ab76.scn"
 
 [deps]
 
-source_file="res://assets/packs/quaternius-base-v1/models/eyebrows_female.glb"
-dest_files=["res://.godot/imported/eyebrows_female.glb-10af72f20dea40015d4e7800d1d07df1.scn"]
+source_file="res://assets/packs/quaternius-outfits-v1/models/ranger_b_legs.glb"
+dest_files=["res://.godot/imported/ranger_b_legs.glb-783214f1ac9ec7f1dad219cdbbe9ab76.scn"]
 
 [params]
 

@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://qlf2oy0qnx1"
-path="res://.godot/imported/hair_buzzedfemale.glb-691f0426f2539815070508e5ab68f53a.scn"
+uid="uid://8mf22j52no1f"
+path="res://.godot/imported/peasant_b_arms.glb-a20efad34e2b22fa485d9afef3cd4ae5.scn"
 
 [deps]
 
-source_file="res://assets/packs/quaternius-base-v1/models/hair_buzzedfemale.glb"
-dest_files=["res://.godot/imported/hair_buzzedfemale.glb-691f0426f2539815070508e5ab68f53a.scn"]
+source_file="res://assets/packs/quaternius-outfits-v1/models/peasant_b_arms.glb"
+dest_files=["res://.godot/imported/peasant_b_arms.glb-a20efad34e2b22fa485d9afef3cd4ae5.scn"]
 
 [params]
 

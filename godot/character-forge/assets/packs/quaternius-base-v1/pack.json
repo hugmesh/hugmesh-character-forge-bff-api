@@ -22,9 +22,9 @@
   },
   "models": [
     {
-      "id": "eyebrows_female",
-      "displayName": "Eyebrows Female",
-      "file": "models/eyebrows_female.glb",
+      "id": "eyebrows_alt",
+      "displayName": "Eyebrows Alt",
+      "file": "models/eyebrows_alt.glb",
       "kind": "part",
       "style": "jrpg",
       "rig": "humanoid",
@@ -150,9 +150,9 @@
       "flags": []
     },
     {
-      "id": "hair_buzzed",
-      "displayName": "Hair Buzzed",
-      "file": "models/hair_buzzed.glb",
+      "id": "hair_buzzed_alt",
+      "displayName": "Hair Buzzed Alt",
+      "file": "models/hair_buzzed_alt.glb",
       "kind": "part",
       "style": "jrpg",
       "rig": "humanoid",
@@ -163,7 +163,7 @@
       "trisBeforeDecimation": null,
       "vendorReportedTris": null,
       "vertices": 466,
-      "bytes": 139204,
+      "bytes": 139732,
       "joints": 65,
       "hasJawBone": false,
       "jawBones": [],
@@ -182,9 +182,9 @@
       "flags": []
     },
     {
-      "id": "hair_buzzedfemale",
-      "displayName": "Hair Buzzedfemale",
-      "file": "models/hair_buzzedfemale.glb",
+      "id": "hair_buzzed",
+      "displayName": "Hair Buzzed",
+      "file": "models/hair_buzzed.glb",
       "kind": "part",
       "style": "jrpg",
       "rig": "humanoid",
@@ -195,7 +195,7 @@
       "trisBeforeDecimation": null,
       "vendorReportedTris": null,
       "vertices": 466,
-      "bytes": 139732,
+      "bytes": 139204,
       "joints": 65,
       "hasJawBone": false,
       "jawBones": [],
@@ -322,9 +322,9 @@
       "flags": []
     },
     {
-      "id": "ubc_superhero_female",
-      "displayName": "Ubc Superhero Female",
-      "file": "models/ubc_superhero_female.glb",
+      "id": "ubc_superhero_a",
+      "displayName": "Ubc Superhero A",
+      "file": "models/ubc_superhero_a.glb",
       "kind": "character",
       "style": "jrpg",
       "rig": "humanoid",
@@ -358,9 +358,9 @@
       ]
     },
     {
-      "id": "ubc_superhero_male",
-      "displayName": "Ubc Superhero Male",
-      "file": "models/ubc_superhero_male.glb",
+      "id": "ubc_superhero_b",
+      "displayName": "Ubc Superhero B",
+      "file": "models/ubc_superhero_b.glb",
       "kind": "character",
       "style": "jrpg",
       "rig": "humanoid",

@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://ctxrx50vbwi13"
-path="res://.godot/imported/male_peasant_legs.glb-7de5ad48a6a1e1cd34c724f0051059ed.scn"
+uid="uid://qlf2oy0qnx1"
+path="res://.godot/imported/hair_buzzed_alt.glb-ce67157ada72a63f982ec4b34ba6403c.scn"
 
 [deps]
 
-source_file="res://assets/packs/quaternius-outfits-v1/models/male_peasant_legs.glb"
-dest_files=["res://.godot/imported/male_peasant_legs.glb-7de5ad48a6a1e1cd34c724f0051059ed.scn"]
+source_file="res://assets/packs/quaternius-base-v1/models/hair_buzzed_alt.glb"
+dest_files=["res://.godot/imported/hair_buzzed_alt.glb-ce67157ada72a63f982ec4b34ba6403c.scn"]
 
 [params]
 

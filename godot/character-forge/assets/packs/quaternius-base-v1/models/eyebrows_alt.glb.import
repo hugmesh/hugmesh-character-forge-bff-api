@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://8mf22j52no1f"
-path="res://.godot/imported/male_peasant_arms.glb-77d840807eca38905261285361143d6c.scn"
+uid="uid://cbruyafxqnld4"
+path="res://.godot/imported/eyebrows_alt.glb-5e53034a594bb8b0057ceac9de387c33.scn"
 
 [deps]
 
-source_file="res://assets/packs/quaternius-outfits-v1/models/male_peasant_arms.glb"
-dest_files=["res://.godot/imported/male_peasant_arms.glb-77d840807eca38905261285361143d6c.scn"]
+source_file="res://assets/packs/quaternius-base-v1/models/eyebrows_alt.glb"
+dest_files=["res://.godot/imported/eyebrows_alt.glb-5e53034a594bb8b0057ceac9de387c33.scn"]
 
 [params]
 

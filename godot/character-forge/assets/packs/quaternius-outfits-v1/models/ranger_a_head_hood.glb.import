@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://dsf8i6ruo822q"
-path="res://.godot/imported/ubc_superhero_female.glb-2756dfd2560a24a2700c386645f5ba2a.scn"
+uid="uid://b788yxcaubbwd"
+path="res://.godot/imported/ranger_a_head_hood.glb-84ff858f259644163deeb45d60356f9e.scn"
 
 [deps]
 
-source_file="res://assets/packs/quaternius-base-v1/models/ubc_superhero_female.glb"
-dest_files=["res://.godot/imported/ubc_superhero_female.glb-2756dfd2560a24a2700c386645f5ba2a.scn"]
+source_file="res://assets/packs/quaternius-outfits-v1/models/ranger_a_head_hood.glb"
+dest_files=["res://.godot/imported/ranger_a_head_hood.glb-84ff858f259644163deeb45d60356f9e.scn"]
 
 [params]
 

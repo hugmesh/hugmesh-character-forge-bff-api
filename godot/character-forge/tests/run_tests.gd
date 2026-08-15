@@ -2381,7 +2381,7 @@ func _test_pack_registry_routing() -> void:
 	_check(registry.resolve_body("felid").basis == CharForgeRegistry.BASIS_PROCEDURAL,
 			"an avatar-mount entry does not also claim the body basis")
 
-	var body := CharForgePacks.registry_for("kemono-ubc-body-male")
+	var body := CharForgePacks.registry_for("kemono-ubc-body-b")
 	_check(body.resolve_body("humanoid").basis == CharForgeRegistry.BASIS_MESH,
 			"a body-mount entry registers on the BODY archetype")
 	_check(body.resolve_head("humanoid").basis == CharForgeRegistry.BASIS_PROCEDURAL,
@@ -2564,7 +2564,7 @@ func _test_pack_mount_body_graft() -> void:
 
 	var mount := CharForgeMount.new(host)
 	get_root().add_child(mount)
-	var entry := CharForgePacks.basis_entry(CharForgePacks.entry("kemono-ubc-body-male"))
+	var entry := CharForgePacks.basis_entry(CharForgePacks.entry("kemono-ubc-body-b"))
 	_check(not bool(entry.wholeAvatar), "a body mount is not a whole avatar")
 	var root := mount.mount("body", entry)
 	_check(root != null, "the CC0 body mounts")
@@ -2789,7 +2789,7 @@ func _test_studio_pack_controls() -> void:
 func _test_pack_mount_composed_outfit() -> void:
 	# The Quaternius modular outfits: four separate GLBs skinned to the SAME
 	# 65-bone Universal Base rig, assembled at runtime with no Blender step.
-	var entry := CharForgePacks.entry("jrpg-outfit-peasant-male")
+	var entry := CharForgePacks.entry("jrpg-outfit-peasant-b")
 	_check(not entry.is_empty(), "the peasant outfit set is in the catalogue")
 	if entry.is_empty():
 		return

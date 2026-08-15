@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://b1wcew4qof7p0"
-path="res://.godot/imported/female_peasant_arms.glb-68a4687056bb741c3f645fcea2245b00.scn"
+uid="uid://dfcscqvfnuotj"
+path="res://.godot/imported/peasant_b_body.glb-8579fecc9ceebb81b45b0291a1ce5064.scn"
 
 [deps]
 
-source_file="res://assets/packs/quaternius-outfits-v1/models/female_peasant_arms.glb"
-dest_files=["res://.godot/imported/female_peasant_arms.glb-68a4687056bb741c3f645fcea2245b00.scn"]
+source_file="res://assets/packs/quaternius-outfits-v1/models/peasant_b_body.glb"
+dest_files=["res://.godot/imported/peasant_b_body.glb-8579fecc9ceebb81b45b0291a1ce5064.scn"]
 
 [params]
 

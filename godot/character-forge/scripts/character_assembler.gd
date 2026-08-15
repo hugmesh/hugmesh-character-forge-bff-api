@@ -478,7 +478,7 @@ func _build_body(rig: Node3D, family: String) -> void:
 	# SHAPE AXES (Char3DConfig body.curve / body.top). Deliberately not mesh
 	# morphs: a scoping pass found ZERO body morph targets across all 75
 	# vendored models (the 11 that have any are .vrm and all FACIAL —
-	# base_female.vrm carries 56, every one of them on "Face.baked", while
+	# base_a.vrm carries 56, every one of them on "Face.baked", while
 	# "Body.baked" has none), so a morph slider would need asset authoring. The
 	# procedural assembler is the one route that always exists, and it already
 	# scales its primitives.

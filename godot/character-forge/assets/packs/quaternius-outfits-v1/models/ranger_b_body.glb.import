@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://dpcedfgs0mx7q"
-path="res://.godot/imported/male_peasant_feet.glb-36f54c44272c7463bccfad91a35f0bbf.scn"
+uid="uid://rrufe8t610o6"
+path="res://.godot/imported/ranger_b_body.glb-8fa150bf572193187377e69093bb49b4.scn"
 
 [deps]
 
-source_file="res://assets/packs/quaternius-outfits-v1/models/male_peasant_feet.glb"
-dest_files=["res://.godot/imported/male_peasant_feet.glb-36f54c44272c7463bccfad91a35f0bbf.scn"]
+source_file="res://assets/packs/quaternius-outfits-v1/models/ranger_b_body.glb"
+dest_files=["res://.godot/imported/ranger_b_body.glb-8fa150bf572193187377e69093bb49b4.scn"]
 
 [params]
 

@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://cji0k16sqkxg6"
-path="res://.godot/imported/female_ranger_acc_pauldrons.glb-a3b3ee845c4bd99ac97c43b6acbe8431.scn"
+uid="uid://b1wcew4qof7p0"
+path="res://.godot/imported/peasant_a_arms.glb-eaa8fc00cc61c657af614e0761b342b1.scn"
 
 [deps]
 
-source_file="res://assets/packs/quaternius-outfits-v1/models/female_ranger_acc_pauldrons.glb"
-dest_files=["res://.godot/imported/female_ranger_acc_pauldrons.glb-a3b3ee845c4bd99ac97c43b6acbe8431.scn"]
+source_file="res://assets/packs/quaternius-outfits-v1/models/peasant_a_arms.glb"
+dest_files=["res://.godot/imported/peasant_a_arms.glb-eaa8fc00cc61c657af614e0761b342b1.scn"]
 
 [params]
 

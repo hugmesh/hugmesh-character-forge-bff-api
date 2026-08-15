@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://b788yxcaubbwd"
-path="res://.godot/imported/female_ranger_head_hood.glb-fe5dbf333c00aa969360e4b3f1a132d1.scn"
+uid="uid://djmar11bfflye"
+path="res://.godot/imported/ranger_b_head_hood.glb-d587ae394a77b65561be18052fb16d73.scn"
 
 [deps]
 
-source_file="res://assets/packs/quaternius-outfits-v1/models/female_ranger_head_hood.glb"
-dest_files=["res://.godot/imported/female_ranger_head_hood.glb-fe5dbf333c00aa969360e4b3f1a132d1.scn"]
+source_file="res://assets/packs/quaternius-outfits-v1/models/ranger_b_head_hood.glb"
+dest_files=["res://.godot/imported/ranger_b_head_hood.glb-d587ae394a77b65561be18052fb16d73.scn"]
 
 [params]
 

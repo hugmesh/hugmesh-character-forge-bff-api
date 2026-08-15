@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://c360huwuvlml1"
-path="res://.godot/imported/male_ranger_acc_pauldron.glb-7ce0cdae0eefe501111ec2f314e6bc70.scn"
+uid="uid://b0fwc0sxlwk3t"
+path="res://.godot/imported/ranger_b_arms.glb-47a9338830ae469944530443713886ec.scn"
 
 [deps]
 
-source_file="res://assets/packs/quaternius-outfits-v1/models/male_ranger_acc_pauldron.glb"
-dest_files=["res://.godot/imported/male_ranger_acc_pauldron.glb-7ce0cdae0eefe501111ec2f314e6bc70.scn"]
+source_file="res://assets/packs/quaternius-outfits-v1/models/ranger_b_arms.glb"
+dest_files=["res://.godot/imported/ranger_b_arms.glb-47a9338830ae469944530443713886ec.scn"]
 
 [params]
 

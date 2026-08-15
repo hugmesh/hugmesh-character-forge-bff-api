@@ -22,9 +22,9 @@
   },
   "models": [
     {
-      "id": "base_female",
-      "displayName": "Base Female",
-      "file": "models/base_female.vrm",
+      "id": "base_a",
+      "displayName": "Base A",
+      "file": "models/base_a.vrm",
       "kind": "character",
       "style": "anime",
       "rig": "humanoid",
@@ -89,9 +89,9 @@
       ]
     },
     {
-      "id": "base_male",
-      "displayName": "Base Male",
-      "file": "models/base_male.vrm",
+      "id": "base_b",
+      "displayName": "Base B",
+      "file": "models/base_b.vrm",
       "kind": "character",
       "style": "anime",
       "rig": "humanoid",

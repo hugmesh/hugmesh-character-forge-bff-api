@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://b41xoppsexp88"
-path="res://.godot/imported/ubc_superhero_male.glb-a855bc9cd9d35442c840ff6a063a972e.scn"
+path="res://.godot/imported/ubc_superhero_b.glb-ad71e115110c0679d8e160c60f410451.scn"
 
 [deps]
 
-source_file="res://assets/packs/quaternius-base-v1/models/ubc_superhero_male.glb"
-dest_files=["res://.godot/imported/ubc_superhero_male.glb-a855bc9cd9d35442c840ff6a063a972e.scn"]
+source_file="res://assets/packs/quaternius-base-v1/models/ubc_superhero_b.glb"
+dest_files=["res://.godot/imported/ubc_superhero_b.glb-ad71e115110c0679d8e160c60f410451.scn"]
 
 [params]
 
