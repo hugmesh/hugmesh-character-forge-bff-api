@@ -11,7 +11,7 @@
   "downloadUrl": "https://quaternius.itch.io/universal-base-characters (free 'Standard' upload)",
   "retrievedAt": "2026-07-29",
   "licenseQuote": "License:\nCC0 1.0 Universal (CC0 1.0)\nPublic Domain Dedication\nhttps://creativecommons.org/publicdomain/zero/1.0/  — quoted from License_Standard.txt / License.txt inside the downloaded Standard zips",
-  "notes": "Free 'Standard' tier ships 2 of the 6 base bodies (Superhero Female/Male) + 8 hairstyles; the remaining bases are paywalled in the Source tier. Hairstyles taken from the 'Rigged to Head Bone' variant so they bind to the UBC head bone. The animation library ships as a rigged mesh + 43 clips; we keep the clips only (mesh-less shared AnimationLibrary, technique.md canonical-rig rule).",
+  "notes": "Free 'Standard' tier ships 2 of the 6 base bodies (Superhero Female/Male, upstream's own product names) + 8 hairstyles; the remaining bases are paywalled in the Source tier. Hairstyles taken from the 'Rigged to Head Bone' variant so they bind to the UBC head bone. The animation library ships as a rigged mesh + 43 clips; we keep the clips only (mesh-less shared AnimationLibrary, technique.md canonical-rig rule).",
   "style": "jrpg",
   "rig": "humanoid",
   "visemes": false,

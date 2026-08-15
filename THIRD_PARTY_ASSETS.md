@@ -85,7 +85,7 @@ in-file licence terms. Nothing imported is uploaded, stored or redistributed.
   > CC0 1.0 Universal (CC0 1.0)
   > Public Domain Dedication
   > https://creativecommons.org/publicdomain/zero/1.0/  — quoted from License_Standard.txt / License.txt inside the downloaded Standard zips
-- **Notes:** Free 'Standard' tier ships 2 of the 6 base bodies (Superhero Female/Male) + 8 hairstyles; the remaining bases are paywalled in the Source tier. Hairstyles taken from the 'Rigged to Head Bone' variant so they bind to the UBC head bone. The animation library ships as a rigged mesh + 43 clips; we keep the clips only (mesh-less shared AnimationLibrary, technique.md canonical-rig rule).
+- **Notes:** Free 'Standard' tier ships 2 of the 6 base bodies (Superhero Female/Male, upstream's own product names) + 8 hairstyles; the remaining bases are paywalled in the Source tier. Hairstyles taken from the 'Rigged to Head Bone' variant so they bind to the UBC head bone. The animation library ships as a rigged mesh + 43 clips; we keep the clips only (mesh-less shared AnimationLibrary, technique.md canonical-rig rule).
 
 ### Quaternius — Modular Character Outfits: Fantasy
 - **License:** CC0-1.0 · **Author:** Quaternius (Tomás Laulhé) — https://quaternius.com

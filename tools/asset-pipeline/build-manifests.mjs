@@ -27,8 +27,24 @@ const rows = readFileSync(auditPath, 'utf8')
   .filter(Boolean)
   .map((l) => JSON.parse(l));
 
-const polySelPath = resolve(HERE, '.work/poly-selection.json');
-const polySel = existsSync(polySelPath) ? JSON.parse(readFileSync(polySelPath, 'utf8')) : [];
+// What poly.pizza reported for a model AT RETRIEVAL TIME (its page URL and its
+// own triangle count). That is PROVENANCE, not a derived number — it cannot be
+// recomputed from the bytes, because it records what a third party claimed.
+//
+// It used to be read only from .work/, which is .gitignored ("vendor downloads +
+// intermediate conversions"). So on any tree that had not just run the full
+// fetch pipeline — i.e. every fresh clone and every CI runner — this resolved to
+// [] and `node build-manifests.mjs` SILENTLY rewrote 22 models' sourceUrl back to
+// the generic pack page and their vendorReportedTris to null. Regenerating the
+// manifests destroyed provenance, and nothing failed while it happened.
+//
+// The committed copy beside this script is therefore the source of truth, with
+// .work/ preferred only when a real fetch run has just produced a fresher one.
+const polySelPath = [
+  resolve(HERE, '.work/poly-selection.json'),
+  resolve(HERE, 'poly-selection.json'),
+].find((p) => existsSync(p));
+const polySel = polySelPath ? JSON.parse(readFileSync(polySelPath, 'utf8')) : [];
 const polyByFile = new Map(polySel.map((m) => [`${m.title.replace(/ /g, '_').toLowerCase()}.glb`, m]));
 
 // Written by build.sh's decimation loop: { "<pack>/<file>": {before, after} } for
