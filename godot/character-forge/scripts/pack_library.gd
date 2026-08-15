@@ -191,7 +191,17 @@ static func attributions() -> Array:
 ## without them, CharForgeRegistry rejects it and the family stays procedural.
 static func basis_entry(e: Dictionary) -> Dictionary:
 	var slots_raw: Variant = e.get("slots", {})
-	var recolorable := bool(e.get("recolorable", false))
+	# HOW this entry recolours, which is NOT the same question as WHETHER it
+	# does. Three policies, and the middle one is why this cannot be derived
+	# from `recolorable`:
+	#   map       named material slots -> rebind every surface to a house material
+	#   atlas     one baked atlas, no slots -> KEEP the vendor material as the
+	#             shading source and tint per mesh node through it. Recolourable,
+	#             yet it must preserve materials — deriving preserveMaterials from
+	#             `recolorable` sent these down the slot-swap path and flattened
+	#             all 15 of the Knight's surfaces to one colour.
+	#   preserve  keep the vendor material and give up recolouring.
+	var policy := String(e.get("materialPolicy", "preserve"))
 	return {
 		"basis": CharForgeRegistry.BASIS_MESH,
 		"glb": String(e.get("glb", "")),
@@ -204,11 +214,15 @@ static func basis_entry(e: Dictionary) -> Dictionary:
 		# region-recoloured — binding one atlas material to a flat house colour
 		# paints the whole character one colour. materialPolicy "preserve" in the
 		# catalogue becomes preserveMaterials here.
-		"preserveMaterials": not recolorable,
+		"preserveMaterials": policy != "map",
 		"visemes": bool(e.get("visemes", false)),
 		"jawBone": "",
 		"wholeAvatar": String(e.get("mount", "")) == "avatar",
 		"hiddenMeshes": _string_array(e.get("hiddenMeshes", [])),
+		# {meshNodeName: paletteRegion} for a single-atlas character. Resolved in
+		# the asset pipeline so the mapping is reviewable in the catalogue rather
+		# than guessed from node names at runtime.
+		"atlasRegions": e.get("atlasRegions", {}) if e.get("atlasRegions", {}) is Dictionary else {},
 		# A SECOND vendored model whose head is split off by bone weight at mount
 		# time and grafted onto this body (scripts/mesh_surgery.gd). Copied
 		# verbatim, licence fields included: CharForgeRegistry validates the donor

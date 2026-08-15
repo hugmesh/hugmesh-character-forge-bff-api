@@ -147,10 +147,20 @@
     @if (mounted.mounted) {
       <p class="mount-note" data-testid="cf-pack-report">
         <strong>{{ mounted.displayName }}</strong>
-        — recolour: {{ mounted.recolorable ? 'yes' : 'no (baked atlas)' }};
+        — recolour: {{ recolourNote(mounted) }};
         lip-sync: {{ mounted.lipSyncChannels.length ? mounted.lipSyncChannels.join(', ') : 'none' }}@if (mounted.meshesHidden) {, {{ mounted.meshesHidden }} props hidden}.
         @if (mounted.error) { <span class="warn">{{ mounted.error }}</span> }
       </p>
+      @if (mounted.atlasSkipped?.length) {
+        <!-- Parts that mix two materials in one mesh node. Any single region
+             colour would be wrong for most of their surface, so they keep the
+             vendor's — said out loud rather than left looking like a bug. -->
+        <p class="mount-note" data-testid="cf-pack-atlas-skipped">
+          Kept vendor colours ({{ mounted.atlasSkipped!.length }} mixed
+          part{{ mounted.atlasSkipped!.length === 1 ? '' : 's' }}):
+          {{ mounted.atlasSkipped!.join(', ') }}
+        </p>
+      }
       @if (mounted.headDonor; as donor) {
         <!-- A grafted head is a SECOND vendor's geometry in the same avatar.
              Its licence and attribution are its own, so they are shown next to

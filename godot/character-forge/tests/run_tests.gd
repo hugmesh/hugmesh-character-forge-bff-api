@@ -96,6 +96,10 @@ func _run_all() -> void:
 	_test_bridge_pack_surface()
 	_test_studio_pack_controls()
 
+	# ── single-atlas per-region recolour (the retired 'preserve' verdict) ────
+	_test_atlas_recolour_reaches_every_single_atlas_model()
+	_test_atlas_recolour_rides_the_shared_palette()
+
 	# ── runtime bone-weight mesh surgery (the retired "NOT POSSIBLE" verdict) ─
 	_test_mesh_surgery_matches_the_pipeline_count()
 	_test_mesh_surgery_lands_the_face_forward()
@@ -2442,7 +2446,7 @@ func _test_pack_catalogue_loads() -> void:
 		_check(String(e.style) in Char3DConfig.STYLES, "'%s' names a real style" % key)
 		if bool(e.recolorable):
 			recolorable += 1
-	_check(recolorable == 31, "31 entries are region-recolourable, got %d" % recolorable)
+	_check(recolorable == 40, "40 entries are region-recolourable, got %d" % recolorable)
 
 	# The VRoid meshes must never become mixable parts (pixiv's guideline bars
 	# any app that generates or outputs models from recombined VRoid meshes).
@@ -2677,20 +2681,56 @@ func _test_pack_mount_preserves_atlas_materials() -> void:
 	var report := mount.mount_report()
 	_check(int(report.surfacesRebound) == 0,
 			"a preserved-material entry rebinds NOTHING (got %d)" % report.surfacesRebound)
-	_check(not report.recolorable, "the report says the knight cannot be recoloured")
+	# THIS USED TO ASSERT THE KNIGHT COULD NOT BE RECOLOURED. He can now: the
+	# vendor material is still preserved (it is the SHADING source), and the hue
+	# comes from a house region per mesh node — see materialPolicy 'atlas'.
+	_check(report.recolorable,
+			"the knight recolours per mesh node even though his material is preserved")
+	_check(int(report.atlasRegionsBound) > 0,
+			"mesh nodes were bound to palette regions through the atlas (got %d)"
+					% int(report.atlasRegionsBound))
 	_check(int(report.meshesHidden) == 7,
 			"the knight's 7 weapons/shields are hidden (got %d)" % report.meshesHidden)
 
-	# The vendor atlas material survived — a house material here would have
-	# painted the whole knight one flat colour.
-	var kept := 0
+	# The vendor atlas is still what supplies the shading: every bound node's
+	# material must SAMPLE it, not replace it with a flat colour — that is
+	# exactly the failure the whole mechanism exists to avoid.
+	var sampling := 0
+	var recoloured := 0
 	for node in CharForgeMount._walk(root):
-		if node is MeshInstance3D and (node as MeshInstance3D).visible:
-			var mi := node as MeshInstance3D
-			for i in range(mi.mesh.get_surface_count()):
-				if mi.get_surface_override_material(i) == null:
-					kept += 1
-	_check(kept == 8, "all 8 visible knight surfaces kept the vendor atlas (got %d)" % kept)
+		if not (node is MeshInstance3D) or not (node as MeshInstance3D).visible:
+			continue
+		var mi := node as MeshInstance3D
+		for i in range(mi.mesh.get_surface_count()):
+			var override := mi.get_surface_override_material(i)
+			if override == null:
+				continue
+			recoloured += 1
+			var shader_mat := override as ShaderMaterial
+			if shader_mat == null:
+				continue
+			if shader_mat.get_shader_parameter("atlas_tex") != null \
+					and float(shader_mat.get_shader_parameter("atlas_strength")) > 0.0:
+				sampling += 1
+	_check(recoloured > 0 and sampling == recoloured,
+			"every recoloured surface still samples the vendor atlas (%d of %d)"
+					% [sampling, recoloured])
+
+	# COVERAGE IS REPORTED, not assumed. A node that mixes two materials is left
+	# on vendor colours on purpose, and the report has to say which.
+	var regions: Array = report.atlasRegions
+	_check(regions.size() == int(report.atlasRegionsBound),
+			"the report lists every node it recoloured")
+	for row in regions:
+		_check(float((row as Dictionary).get("coverage", 0.0))
+						>= CharForgeGlbLoader.MIN_ATLAS_COVERAGE,
+				"'%s' cleared the coverage bar it was bound on"
+						% String((row as Dictionary).get("node", "")))
+		_check(String((row as Dictionary).get("region", "")) in Char3DConfig.ALL_MATERIAL_REGIONS,
+				"'%s' was bound to a real palette region"
+						% String((row as Dictionary).get("node", "")))
+	_check(mount.last_error.is_empty(),
+			"no knight mesh node was left unmapped by the catalogue: " + mount.last_error)
 
 	get_root().remove_child(mount)
 	mount.free()
@@ -3336,3 +3376,108 @@ func _test_registry_holds_a_donor_to_the_same_licence_bar() -> void:
 	var r3 := CharForgeRegistry.new()
 	_check(not r3.register_body("humanoid", undated),
 			"a donor with an impossible retrievedAt rejects the whole entry")
+
+
+# ── single-atlas per-region recolour ─────────────────────────────────────────
+#
+# lanes.json recorded "per-region recolour on the KayKit Adventurers/Skeletons
+# and 100Avatars lines" as NOT SHIPPED, because each character renders from one
+# baked atlas and binding that to a flat house colour paints the whole character
+# one colour. True — and it does not follow that nothing can be done, because
+# the vendor splits every character into SEMANTIC MESH NODES and each node's
+# texels are a luminance ramp of one hue.
+
+const ATLAS_KEYS := [
+	"jrpg-knight", "jrpg-barbarian", "jrpg-mage", "jrpg-rogue", "jrpg-rogue-hooded",
+	"monster-skeleton-warrior", "monster-skeleton-mage", "monster-skeleton-rogue",
+	"monster-skeleton-minion",
+]
+
+func _test_atlas_recolour_reaches_every_single_atlas_model() -> void:
+	for key in ATLAS_KEYS:
+		var host := CharacterAssembler.new()
+		get_root().add_child(host)
+		host.apply_config(Char3DConfig.defaults())
+		var mount := CharForgeMount.new(host)
+		get_root().add_child(mount)
+		var entry := CharForgePacks.basis_entry(CharForgePacks.entry(String(key)))
+		_check(bool(entry.preserveMaterials),
+				"%s still PRESERVES its vendor material — it is the shading source" % key)
+		var root := mount.mount("head", entry)
+		_check(root != null, "%s mounts" % key)
+		if root == null:
+			get_root().remove_child(mount)
+			mount.free()
+			get_root().remove_child(host)
+			host.free()
+			continue
+
+		var report := mount.mount_report()
+		_check(int(report.atlasRegionsBound) > 0,
+				"%s recolours at least one part (got %d)" % [key, int(report.atlasRegionsBound)])
+		_check(report.recolorable, "%s reports itself recolourable" % key)
+		_check(int(report.surfacesRebound) == 0,
+				"%s rebound no surface to a FLAT house material (got %d) — that is the "
+						% [key, int(report.surfacesRebound)]
+						+ "failure mode this whole mechanism exists to avoid")
+		# Every mesh node the model has must be ACCOUNTED FOR: recoloured, or
+		# deliberately skipped with its measured coverage. Silence would mean the
+		# catalogue had forgotten a part.
+		_check(mount.last_error.is_empty(),
+				"%s: every mesh node is named by the catalogue: %s" % [key, mount.last_error])
+		for row in (report.atlasRegions as Array):
+			var record: Dictionary = row
+			_check(String(record.get("region", "")) in Char3DConfig.ALL_MATERIAL_REGIONS,
+					"%s/%s bound to a real palette region" % [key, record.get("node", "")])
+			# A node bound off the ATLAS had to clear the coverage bar; one bound
+			# off a FLAT vendor material (the skeletons' glowing eye sockets) has
+			# no atlas to measure and recolours completely.
+			if String(record.get("source", "")) == "atlas":
+				_check(float(record.get("coverage", 0.0)) >= CharForgeGlbLoader.MIN_ATLAS_COVERAGE,
+						"%s/%s cleared the coverage bar" % [key, record.get("node", "")])
+		for skipped in (report.atlasSkipped as Array):
+			_check(String(skipped).contains("%"),
+					"%s: a skipped part says how mixed it measured (%s)" % [key, skipped])
+
+		get_root().remove_child(mount)
+		mount.free()
+		get_root().remove_child(host)
+		host.free()
+
+
+## Recolouring must stay a 64-pixel palette rewrite. Routing the atlas tint
+## through the house materials — rather than baking a recoloured texture — is
+## what keeps that true: the region colour rides in the SHARED palette image, so
+## changing it touches no material and rebuilds no texture, on a single-atlas
+## character exactly as on a procedural one.
+func _test_atlas_recolour_rides_the_shared_palette() -> void:
+	var mats := CharForgeMaterials.for_config(Char3DConfig.defaults())
+	var image := Image.create_empty(4, 4, false, Image.FORMAT_RGBA8)
+	image.fill(Color(0.4, 0.2, 0.1))
+	var atlas := ImageTexture.create_from_image(image)
+
+	var mat := mats.atlas_region("skin", atlas, 0.42, 0.1)
+	_check(mat.get_shader_parameter("atlas_tex") == atlas,
+			"the atlas material samples the VENDOR texture")
+	_check(float(mat.get_shader_parameter("atlas_strength")) > 0.0,
+			"the atlas path is switched on for this material")
+	_check(absf(float(mat.get_shader_parameter("atlas_reference_luma")) - 0.42) < 0.0001,
+			"the measured reference luminance reached the shader")
+	_check(mat.get_shader_parameter("palette_tex") == mats.palette_texture,
+			"an atlas material shares the ONE palette texture with every other region")
+
+	# Every OTHER material must be unaffected: atlas_strength defaults to 0, so
+	# the procedural avatar and the slot-mapped GLBs take the same code path they
+	# always did.
+	var plain := mats.region("fur")
+	_check(float(plain.get_shader_parameter("atlas_strength")) == 0.0,
+			"an ordinary house material leaves the atlas branch inert")
+
+	var before := mats.palette_texture
+	var cfg := Char3DConfig.defaults()
+	cfg.materials.skin = "#ff0000"
+	mats.recolor(cfg)
+	_check(mats.palette_texture == before,
+			"recolour rewrote the shared palette IN PLACE — no material was touched")
+	_check(mat.get_shader_parameter("palette_tex") == before,
+			"the atlas material still points at that same palette after a recolour")

@@ -109,6 +109,37 @@ func variant(region_name: String, opts: Dictionary) -> ShaderMaterial:
 	return mat
 
 
+## A material that keeps a VENDOR ATLAS as its shading source but takes its hue
+## from a palette region.
+##
+## This is what makes the single-atlas packs (KayKit Adventurers/Skeletons)
+## region-recolourable at all. They render from one baked atlas rather than from
+## named material slots, so the usual swap — bind the surface to a flat house
+## colour — would paint the entire character one colour. That is why they
+## shipped with recolour switched off.
+##
+## They are palette-indexed art, though: every body part's texels are a
+## luminance ramp of ONE hue. So the part keeps its own shading and only the hue
+## is replaced, per MESH NODE (the vendor names them: Knight_Head, Knight_Cape,
+## Knight_Body...). `reference_luma` is the luminance of that node's dominant
+## atlas colour, measured at mount time, so the region colour lands on the
+## part's base tone instead of darkening the whole character.
+##
+## Recolouring stays free: the colour rides in the shared palette texture like
+## every other region, so recolor() updates these materials too without touching
+## one of them.
+func atlas_region(region_name: String, atlas: Texture2D,
+		reference_luma: float = 0.5, dominant_hue: float = 0.0) -> ShaderMaterial:
+	var mat := _make(region_name, false)
+	mat.set_shader_parameter("atlas_tex", atlas)
+	mat.set_shader_parameter("atlas_strength", 1.0)
+	mat.set_shader_parameter("atlas_reference_luma", clampf(reference_luma, 0.001, 1.0))
+	mat.set_shader_parameter("atlas_hue", clampf(dominant_hue, 0.0, 1.0))
+	mat.set_shader_parameter("atlas_hue_tolerance", CharForgeGlbLoader.HUE_TOLERANCE)
+	mat.resource_name = "charforge_atlas_" + region_name
+	return mat
+
+
 ## A flat colour that is NOT a palette region (sclera white, blush pink, ...).
 ## The palette sampler's hint_default_white makes an unassigned palette texture
 ## read as white, so albedo_tint alone carries the colour.

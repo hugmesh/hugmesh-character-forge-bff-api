@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { EngineBridgeService } from '../services/engine-bridge.service';
+import { EngineBridgeService, PackMountReport } from '../services/engine-bridge.service';
 import { ForgeStateService } from '../services/forge-state.service';
 import {
   PACK_BLOCKED,
@@ -94,6 +94,23 @@ export class PackSelectorComponent {
       .slice(0, 2)
       .map(w => w[0]?.toUpperCase() ?? '')
       .join('');
+  }
+
+  /**
+   * How much of a mounted model actually recolours.
+   *
+   * "yes"/"no" was accurate while a single-atlas character could not recolour
+   * at all. Those characters now recolour PER MESH NODE through their atlas,
+   * and how many nodes clear the measurement varies by model (the Knight: 13 of
+   * 15; the Mage: 4 of 12, because his robe and face share one mesh node). A
+   * bare "yes" would over-claim that, so the count is shown instead.
+   */
+  recolourNote(report: PackMountReport): string {
+    if (!report.recolorable) return 'no (baked atlas)';
+    const bound = report.atlasRegionsBound ?? 0;
+    if (!bound) return 'yes';
+    const skipped = report.atlasSkipped?.length ?? 0;
+    return `yes, ${bound} of ${bound + skipped} parts`;
   }
 
   /** Human-readable cost, so a 166-joint VRoid base is not a surprise in VR. */

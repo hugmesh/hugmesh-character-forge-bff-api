@@ -73,6 +73,13 @@ var _channels: Array = []
 var _swapped := 0
 var _hidden := 0
 var _merged := 0
+## Mesh nodes bound to a house region through the vendor atlas (single-atlas
+## packs). 0 for every ordinary entry.
+var _atlas_bound := 0
+## Per-node record of what recoloured, and the parts deliberately left on vendor
+## colours because no single region colour would be right for them.
+var _atlas_nodes: Array = []
+var _atlas_skipped: Array = []
 var _height_scale := 1.0
 ## Provenance + measurements for a runtime-split donor head ({} when the mount
 ## carries the procedural head, which is the common case).
@@ -270,6 +277,9 @@ func clear() -> void:
 	_swapped = 0
 	_hidden = 0
 	_merged = 0
+	_atlas_bound = 0
+	_atlas_nodes = []
+	_atlas_skipped = []
 	_height_scale = 1.0
 	_donor = {}
 	current_key = ""
@@ -332,6 +342,28 @@ func mount(kind: String, entry: Dictionary) -> Node3D:
 			# Anything the slot map missed but MToon owns still has to leave the
 			# unverified WebGL2 shader behind.
 			_swapped += CharForgeVrmIngest.swap_mtoon(root, assembler.materials, slot_map)
+	elif assembler.materials != null:
+		# SINGLE-ATLAS CHARACTERS. The vendor material is preserved as the
+		# SHADING source and a house region colour supplies the hue, per mesh
+		# node — see CharForgeGlbLoader.bind_atlas_regions. Entries with no
+		# atlasRegions map keep their vendor colours exactly as before.
+		var node_regions: Variant = entry.get("atlasRegions", {})
+		if node_regions is Dictionary and not (node_regions as Dictionary).is_empty():
+			var atlas := CharForgeGlbLoader.bind_atlas_regions(
+					root, assembler.materials, node_regions)
+			_atlas_bound = int(atlas.bound)
+			_atlas_nodes = atlas.nodes.duplicate(true)
+			# SKIPPED is not an error: those nodes mix two materials, and the
+			# measured answer is that no single region colour is right for them
+			# (CharForgeGlbLoader.atlas_profile). They are reported so the UI can
+			# say how much of the character recolours.
+			_atlas_skipped = atlas.skipped.duplicate()
+			if not atlas.unmapped.is_empty():
+				# UNMAPPED *is* a gap: the catalogue named no region for a node
+				# that exists, so it would recolour inconsistently with the rest.
+				last_error = "atlas recolour: the catalogue names no region for %s" \
+						% ", ".join(PackedStringArray(atlas.unmapped))
+				push_warning("CharForgeMount: " + last_error)
 
 	if kind == "body":
 		_mount_body(root)
@@ -434,8 +466,14 @@ func mount_report() -> Dictionary:
 		"displayName": String(_entry.get("displayName", "")),
 		"lane": String(_entry.get("lane", "")),
 		"mounted": _root != null and is_instance_valid(_root),
-		"recolorable": not bool(_entry.get("preserveMaterials", true)),
+		# A single-atlas character IS recolourable once its mesh nodes are bound
+		# to regions through the atlas, even though its vendor material was
+		# preserved — so the honest answer is not simply "not preserveMaterials".
+		"recolorable": not bool(_entry.get("preserveMaterials", true)) or _atlas_bound > 0,
 		"surfacesRebound": _swapped,
+		"atlasRegionsBound": _atlas_bound,
+		"atlasRegions": _atlas_nodes.duplicate(true),
+		"atlasSkipped": _atlas_skipped.duplicate(),
 		"meshesHidden": _hidden,
 		"piecesMerged": _merged,
 		"heightScale": _height_scale,

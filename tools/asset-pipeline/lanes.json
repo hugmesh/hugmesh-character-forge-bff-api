@@ -158,12 +158,144 @@
       }
     },
     "kaykit-adventurers-v1": {
-      "policy": "preserve",
-      "reason": "SINGLE 1024x1024 gradient atlas per character (legal-inventory.md: 'recolor requires atlas palette-swap, not material slots'). Swapping the atlas material for a flat house material would collapse the whole character to one colour, so the vendor material is KEPT and per-region recolour is unavailable for this pack. The fix is the atlas palette-swap shader — technique.md's option A conversion is a re-UV job and Blender is not available here."
+      "policy": "atlas",
+      "reason": "SINGLE 1024-class baked atlas per character and NO named material slots, so swap_materials() cannot reach it: binding that one material to a flat house colour paints the whole character one colour. That is why this pack shipped with recolour switched off, recorded as a capability gap whose fix 'needs the atlas cell layout, an art task'. It is not an art task. The atlas is PALETTE-INDEXED (measured: PNG colortype 3, 198-256 entries) and the vendor splits every character into SEMANTIC MESH NODES, so each node's texels are a luminance ramp of one hue - the Knight's head is a 16-entry flesh ramp, its cape a 13-entry red one. The region colour therefore replaces the HUE per node while the atlas keeps supplying the SHADING, with no new texture and no re-UVing. The engine measures each node's dominant hue and how much of the node it covers, and recolours only texels near that hue - a node that mixes two materials (the Mage's 'Head' node is 36% single-hue because it carries the hood AND the face) keeps its vendor colours rather than being painted one wrong colour. mount_report().atlasRegions says exactly what recoloured.",
+      "nodeRegions": [
+        {
+          "match": "*_Head_Hooded",
+          "region": "skin"
+        },
+        {
+          "match": "*_Head",
+          "region": "skin"
+        },
+        {
+          "match": "*_Skull",
+          "region": "skin"
+        },
+        {
+          "match": "*_Jaw",
+          "region": "skin"
+        },
+        {
+          "match": "*_Eyes",
+          "region": "iris"
+        },
+        {
+          "match": "*_Cape",
+          "region": "accent"
+        },
+        {
+          "match": "*_Cloak",
+          "region": "accent"
+        },
+        {
+          "match": "*_Hood",
+          "region": "accent"
+        },
+        {
+          "match": "*_Hat",
+          "region": "accent"
+        },
+        {
+          "match": "*_Helmet",
+          "region": "accent"
+        },
+        {
+          "match": "*_Body",
+          "region": "fur"
+        },
+        {
+          "match": "*_ArmLeft",
+          "region": "fur"
+        },
+        {
+          "match": "*_ArmRight",
+          "region": "fur"
+        },
+        {
+          "match": "*_LegLeft",
+          "region": "fur"
+        },
+        {
+          "match": "*_LegRight",
+          "region": "fur"
+        },
+        {
+          "match": "*",
+          "region": "detail"
+        }
+      ]
     },
     "kaykit-skeletons-v1": {
-      "policy": "preserve",
-      "reason": "Same single-atlas texturing as the Adventurers pack, plus an emissive 'Glow' slot for the eye sockets."
+      "policy": "atlas",
+      "reason": "Same single-atlas texturing and the same semantic mesh-node split as the Adventurers pack, so the same per-node recolour applies. The skeletons additionally separate Skull/Jaw/Eyes as their own nodes, which is why the bone tone and the socket glow recolour independently.",
+      "nodeRegions": [
+        {
+          "match": "*_Head_Hooded",
+          "region": "skin"
+        },
+        {
+          "match": "*_Head",
+          "region": "skin"
+        },
+        {
+          "match": "*_Skull",
+          "region": "skin"
+        },
+        {
+          "match": "*_Jaw",
+          "region": "skin"
+        },
+        {
+          "match": "*_Eyes",
+          "region": "iris"
+        },
+        {
+          "match": "*_Cape",
+          "region": "accent"
+        },
+        {
+          "match": "*_Cloak",
+          "region": "accent"
+        },
+        {
+          "match": "*_Hood",
+          "region": "accent"
+        },
+        {
+          "match": "*_Hat",
+          "region": "accent"
+        },
+        {
+          "match": "*_Helmet",
+          "region": "accent"
+        },
+        {
+          "match": "*_Body",
+          "region": "fur"
+        },
+        {
+          "match": "*_ArmLeft",
+          "region": "fur"
+        },
+        {
+          "match": "*_ArmRight",
+          "region": "fur"
+        },
+        {
+          "match": "*_LegLeft",
+          "region": "fur"
+        },
+        {
+          "match": "*_LegRight",
+          "region": "fur"
+        },
+        {
+          "match": "*",
+          "region": "detail"
+        }
+      ]
     },
     "polygonalmind-100avatars-v1": {
       "policy": "preserve",
@@ -922,12 +1054,12 @@
   ],
   "blocked": [
     {
-      "id": "kaykit-atlas-recolor",
-      "wanted": "Per-region recolour on the KayKit Adventurers/Skeletons and 100Avatars lines.",
-      "verdict": "NOT SHIPPED — materialPolicy 'preserve'.",
-      "evidence": "Each of those characters renders from ONE material backed by a single baked atlas, so binding it to a flat house material would paint the entire character one colour.",
-      "blocker": "The fix is either an atlas palette-swap shader (needs the atlas cell layout, an art task) or re-UVing onto the palette strip (a Blender job).",
-      "shippedInstead": "The vendor material is preserved and the UI marks these entries 'fixed colours'."
+      "id": "polygonalmind-100avatars-atlas-recolor",
+      "wanted": "Per-region recolour on the 100Avatars line.",
+      "verdict": "NOT SHIPPED - no semantic split exists to recolour along.",
+      "evidence": "The KayKit half of this gap is CLOSED: those characters recolour per mesh node through their atlas (materialPolicy 'atlas'). The 100Avatars line is genuinely different and the difference is measured: each avatar is ONE mesh node ('mesh_char_003') with ONE material, so there is no per-part boundary to assign a region to - the whole avatar would take a single colour, which is the exact failure the KayKit fix exists to avoid. The textures are 256x256 and mostly palette-indexed (PNG colortype 3), but one shipped avatar (100avatars_010_froggy) is a JPEG and so is not even index-separable.",
+      "blocker": "Recolouring these would need a per-texel region map baked offline (an index->region LUT plus a shipped index texture), and there is no semantic source to derive the assignment from - no node names, no material names, nothing but pixels.",
+      "shippedInstead": "The vendor material is preserved and the UI marks these entries 'fixed colours'. They are the BYO-VRM importer's reference corpus rather than player avatars, so this costs the character editor nothing."
     },
     {
       "id": "oga-base-rigged-stylized-humanoid-yw",

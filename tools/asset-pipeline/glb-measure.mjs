@@ -1,5 +1,9 @@
 /**
- * glb-head-tris.mjs — count the triangles a bone-weight head split will yield.
+ * glb-measure.mjs — measurements taken directly off committed GLB bytes.
+ *
+ * Two exports, both feeding tools/asset-pipeline/build-lanes.mjs:
+ *   headTriangles()  how many triangles a bone-weight head split will yield
+ *   meshNodeNames()  the glTF NODE names that carry a mesh
  *
  * WHY A THIRD IMPLEMENTATION EXISTS, AND WHY IT IS SAFE
  * The split itself happens at runtime in GDScript (godot/character-forge/scripts/
@@ -136,4 +140,21 @@ export function headTriangles(path, patterns, threshold = 0.5) {
     joints,
     surfacesDropped,
   };
+}
+
+
+/**
+ * The glTF NODE names that carry a mesh, in file order.
+ *
+ * Used to check that a single-atlas pack's node->region table covers every part
+ * of every model it claims. Those characters recolour PER MESH NODE (the vendor
+ * names them Knight_Head, Knight_Cape, ...), so a node the table forgets is a
+ * part that silently keeps its vendor colour while the rest of the character
+ * recolours — which reads as a rendering bug, not as a missing table row.
+ *
+ * Reads the JSON chunk only: no image decode, no accessor walk.
+ */
+export function meshNodeNames(path) {
+  const { json } = readGlb(path);
+  return (json.nodes ?? []).filter((n) => n.mesh !== undefined).map((n) => n.name ?? '');
 }

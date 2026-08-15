@@ -52,9 +52,19 @@ describe('PackSelectorComponent (style tabs + BYO import)', () => {
     const knight = el.querySelector('[data-testid="cf-pack-jrpg-knight"]')!;
     expect(knight).not.toBeNull();
     expect(knight.textContent).toContain('CC0-1.0');
-    // KayKit is one baked atlas — the card has to SAY the colours are fixed
-    // rather than silently ignoring the palette.
-    expect(knight.textContent).toContain('fixed colours');
+    // The Knight USED TO carry a "fixed colours" flag: one baked atlas, no
+    // per-region recolour. He recolours now — per mesh node, through that same
+    // atlas — so the flag has to be gone, and the catalogue has to agree.
+    expect(knight.textContent).not.toContain('fixed colours');
+    expect(PACK_ENTRIES.find((e) => e.key === 'jrpg-knight')!.recolorable)
+      .withContext('the single-atlas Knight is region-recolourable')
+      .toBeTrue();
+
+    // The 100Avatars line genuinely still cannot: one mesh node, one material,
+    // nothing to assign a region along. It must keep saying so.
+    expect(PACK_ENTRIES.find((e) => e.key === 'filler-jimmy')!.recolorable)
+      .withContext('100Avatars has no per-part boundary to recolour along')
+      .toBeFalse();
 
     const ubc = el.querySelector('[data-testid="cf-pack-jrpg-ubc-b"]')!;
     expect(ubc.textContent).not.toContain('fixed colours');
@@ -237,6 +247,28 @@ describe('PackSelectorComponent (style tabs + BYO import)', () => {
     expect(note.textContent).toContain('no (baked atlas)');
     expect(note.textContent).toContain('strip');
     expect(note.textContent).toContain('7 props hidden');
+  });
+
+  it('says how much of a single-atlas character actually recoloured', () => {
+    // "recolour: yes" would over-claim. These characters recolour per mesh
+    // node, and how many nodes clear the measurement varies per model — the
+    // Mage's robe and face share one node, so his cannot all recolour.
+    engine.mountReport.set({
+      key: 'jrpg-knight', kind: 'head', displayName: 'Knight (KayKit)', lane: 'jrpg',
+      mounted: true, recolorable: true, surfacesRebound: 0, meshesHidden: 7,
+      heightScale: 1.2, lipSyncChannels: ['strip'], visemes: false,
+      licenseSpdx: 'CC0-1.0', attribution: 'Kay Lousberg', sourceUrl: 'https://kaylousberg.com',
+      imported: false, error: '',
+      atlasRegionsBound: 13,
+      atlasRegions: [{ node: 'Knight_Cape', region: 'accent', coverage: 1, source: 'atlas' }],
+      atlasSkipped: ['2H_Sword (57% single-hue)', 'Round_Shield (57% single-hue)'],
+    });
+    const el: HTMLElement = render().nativeElement;
+    expect(el.querySelector('[data-testid="cf-pack-report"]')!.textContent)
+      .toContain('yes, 13 of 15 parts');
+    // The parts left alone are named, not silently different.
+    expect(el.querySelector('[data-testid="cf-pack-atlas-skipped"]')!.textContent)
+      .toContain('2H_Sword');
   });
 
   it('credits a grafted donor head separately from the body it rides', () => {

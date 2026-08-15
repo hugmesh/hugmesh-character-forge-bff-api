@@ -56,6 +56,16 @@ export interface PackMountReport {
   sourceUrl: string;
   imported: boolean;
   /**
+   * Single-atlas characters (the KayKit lines) recolour PER MESH NODE through
+   * their baked atlas rather than by rebinding material slots. These say how
+   * much of the character that actually reached: `atlasRegions` is what
+   * recoloured, `atlasSkipped` the parts deliberately left on vendor colours
+   * because they mix two materials and no single region colour would be right.
+   */
+  atlasRegionsBound?: number;
+  atlasRegions?: { node: string; region: string; coverage: number; source: string }[];
+  atlasSkipped?: string[];
+  /**
    * Set when a SECOND vendored model's head was split off by bone weight and
    * grafted onto this body. It carries its own licence because it is a separate
    * third-party asset visible in the same avatar — crediting only the body

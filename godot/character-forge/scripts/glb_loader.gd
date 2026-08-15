@@ -44,6 +44,17 @@ const MAX_BYTES := 24 * 1024 * 1024
 ## Nodes visited per frame during the chunked fixup walk.
 const CHUNK_NODES := 48
 
+## Hue radius (0..1, so 0.083 is 30 degrees) treated as "the same material" when
+## profiling a mesh node against a baked atlas.
+const HUE_TOLERANCE := 0.083
+
+## A mesh node whose dominant hue covers less than this much of its atlas
+## footprint is left on its VENDOR colours. Measured across the shipped KayKit
+## models, coverage is bimodal — coherent parts sit at 75-100% and genuinely
+## mixed ones at 18-53% — so this threshold separates them with room on both
+## sides rather than splitting a cluster.
+const MIN_ATLAS_COVERAGE := 0.60
+
 ## Fallback palette regions by common material-name substring, tried only when
 ## the registry slot map has no exact answer. Keeps a well-meaning but
 ## non-conforming GLB from rendering as flat white.
@@ -156,6 +167,173 @@ static func _swap_node_materials(node: Node, mats: CharForgeMaterials,
 		mi.set_surface_override_material(i, mats.region(region))
 		swapped += 1
 	return swapped
+
+
+## The single baked atlas a vendor material renders from, or null.
+static func atlas_texture_of(mi: MeshInstance3D) -> Texture2D:
+	if mi == null or mi.mesh == null:
+		return null
+	for i in range(mi.mesh.get_surface_count()):
+		var material := mi.mesh.surface_get_material(i)
+		if material is BaseMaterial3D:
+			var tex := (material as BaseMaterial3D).albedo_texture
+			if tex != null:
+				return tex
+	return null
+
+
+## How much of a mesh node's atlas footprint is ONE coherent material.
+##
+## Returns {"luma": float, "hue": float, "coverage": float, "samples": int}:
+##   luma      luminance of the dominant colour — the tone the region colour is
+##             mapped onto, so a recoloured part keeps its brightness
+##   hue       the dominant hue (0..1), the centre of the recoloured band
+##   coverage  the share of the node's texels within HUE_TOLERANCE of it
+##
+## COVERAGE IS THE HONEST BIT. A vendor mesh node is not always one material:
+## measured on the shipped models, coverage runs from 100% (the Knight's cape,
+## every skeleton jaw) down to 18% (the Barbarian's legs, which are trousers
+## plus a bone trim). A node below MIN_ATLAS_COVERAGE is NOT recoloured at all,
+## because any single region colour for it would be wrong for most of its
+## surface — and a part left alone reads as a design choice, while a part
+## painted the wrong colour reads as a bug.
+##
+## Sampling is by VERTEX UV, so the cost is proportional to the model (a few
+## thousand reads for a KayKit character), paid once per mount.
+static func atlas_profile(mi: MeshInstance3D, atlas: Texture2D) -> Dictionary:
+	var blank := {"luma": 0.5, "hue": 0.0, "coverage": 0.0, "samples": 0}
+	if mi == null or mi.mesh == null or atlas == null:
+		return blank
+	var image := atlas.get_image()
+	if image == null:
+		return blank
+	if image.is_compressed():
+		# get_pixel() cannot read a VRAM-compressed image; decompressing a COPY
+		# is a mount-time cost paid once, never per frame, and never mutates the
+		# texture the vendor material still points at.
+		image = image.duplicate()
+		if image.decompress() != OK:
+			return blank
+	var width := image.get_width()
+	var height := image.get_height()
+	if width <= 0 or height <= 0:
+		return blank
+
+	var colors: Array = []
+	var tally := {}
+	for s in range(mi.mesh.get_surface_count()):
+		var arrays: Array = mi.mesh.surface_get_arrays(s)
+		if arrays.size() <= Mesh.ARRAY_TEX_UV or arrays[Mesh.ARRAY_TEX_UV] == null:
+			continue
+		for uv in (arrays[Mesh.ARRAY_TEX_UV] as PackedVector2Array):
+			var x := clampi(int(uv.x * float(width)), 0, width - 1)
+			var y := clampi(int(uv.y * float(height)), 0, height - 1)
+			var c := image.get_pixel(x, y)
+			colors.append(c)
+			var key := c.to_rgba32()
+			tally[key] = int(tally.get(key, 0)) + 1
+	if colors.is_empty():
+		return blank
+
+	# The DOMINANT colour, not the mean: a part's texels are a shading ramp plus
+	# outliers (an eye white, a metal stud), and a mean is dragged off the base
+	# tone by exactly those.
+	var best_key := 0
+	var best_count := -1
+	for key in tally:
+		if int(tally[key]) > best_count:
+			best_count = int(tally[key])
+			best_key = int(key)
+	var dominant := Color(Color.hex(best_key))
+	var hue := dominant.h
+	var covered := 0
+	for c in colors:
+		var color: Color = c
+		if color.s < 0.02:
+			# Achromatic texels follow the region rather than counting against it.
+			covered += 1
+			continue
+		var dist: float = absf(color.h - hue)
+		dist = minf(dist, 1.0 - dist)
+		if dist <= HUE_TOLERANCE:
+			covered += 1
+	return {
+		"luma": maxf(0.2126 * dominant.r + 0.7152 * dominant.g + 0.0722 * dominant.b, 0.001),
+		"hue": hue,
+		"coverage": float(covered) / float(colors.size()),
+		"samples": colors.size(),
+	}
+
+
+## FIXUP (b2): PER-REGION RECOLOUR OF A SINGLE-ATLAS CHARACTER.
+##
+## The KayKit lines render from ONE baked atlas with no named material slots, so
+## swap_materials() cannot help them: binding that one material to a flat house
+## colour paints the entire character one colour. They therefore shipped with
+## recolour switched OFF, recorded in lanes.json as a capability gap whose fix
+## "needs the atlas cell layout, an art task".
+##
+## It is not an art task. The vendor splits each character into SEMANTIC MESH
+## NODES (Knight_Head, Knight_Cape, Knight_Body...) and each node's texels are a
+## luminance ramp of one hue — measured: the Knight's head uses a 16-entry flesh
+## ramp, its cape a 13-entry red one. So the region colour can replace the hue
+## per node while the atlas keeps supplying the shading, with no new texture and
+## no re-UVing.
+##
+## `node_regions` is {meshNodeName: paletteRegion}, resolved in the asset
+## pipeline so the mapping is reviewable in the catalogue rather than guessed
+## from names at runtime. Returns {bound: int, unmapped: Array} — a node the
+## catalogue does not name is REPORTED, never silently left at its vendor colour
+## while the rest of the character recolours.
+static func bind_atlas_regions(root: Node, mats: CharForgeMaterials,
+		node_regions: Dictionary) -> Dictionary:
+	var bound := 0
+	var unmapped: Array = []
+	var skipped: Array = []
+	var nodes: Array = []
+	if root == null or mats == null or node_regions.is_empty():
+		return {"bound": 0, "unmapped": unmapped, "skipped": skipped, "nodes": nodes}
+	for node in _walk(root):
+		if not (node is MeshInstance3D):
+			continue
+		var mi := node as MeshInstance3D
+		if mi.mesh == null:
+			continue
+		var region := String(node_regions.get(String(mi.name), ""))
+		if region.is_empty():
+			unmapped.append(String(mi.name))
+			continue
+		var atlas := atlas_texture_of(mi)
+		if atlas == null:
+			# A node with no albedo TEXTURE is not an atlas node at all — it is a
+			# flat or emissive vendor material (the skeletons' glowing eye
+			# sockets). The "one baked atlas cannot be recoloured" objection does
+			# not apply to it: a flat vendor colour maps straight onto a flat
+			# house region colour, so it gets the ordinary house material and
+			# recolours completely.
+			for i in range(mi.mesh.get_surface_count()):
+				mi.set_surface_override_material(i, mats.region(region))
+			bound += 1
+			nodes.append({"node": String(mi.name), "region": region,
+					"coverage": 1.0, "source": "flat"})
+			continue
+		var profile := atlas_profile(mi, atlas)
+		if float(profile.coverage) < MIN_ATLAS_COVERAGE:
+			# Deliberately left on vendor colours — see atlas_profile().
+			skipped.append("%s (%d%% single-hue)"
+					% [mi.name, int(round(float(profile.coverage) * 100.0))])
+			continue
+		var material := mats.atlas_region(region, atlas, float(profile.luma), float(profile.hue))
+		for i in range(mi.mesh.get_surface_count()):
+			mi.set_surface_override_material(i, material)
+		bound += 1
+		nodes.append({
+			"node": String(mi.name),
+			"region": region,
+			"coverage": float(profile.coverage),
+			"source": "atlas",
+		})
+	return {"bound": bound, "unmapped": unmapped, "skipped": skipped, "nodes": nodes}
 
 
 ## FIXUP (c): attach a procedural part to a bone FROM CODE. Attachments

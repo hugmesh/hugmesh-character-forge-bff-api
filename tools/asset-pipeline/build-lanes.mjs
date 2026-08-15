@@ -20,7 +20,7 @@
  * usage: node build-lanes.mjs
  */
 import { readFileSync, writeFileSync } from 'node:fs';
-import { headTriangles } from './glb-head-tris.mjs';
+import { headTriangles, meshNodeNames } from './glb-measure.mjs';
 
 /**
  * Joint-name globs that define "the head" on a donor rig. MUST stay identical
@@ -110,6 +110,17 @@ for (const p of index.packs) {
 // lanes happen to reference: an unmapped slot silently falls back to the fur
 // region at load time, which is exactly the kind of quiet wrongness that only
 // shows up as a miscoloured avatar in VR.
+/** Glob (`*`/`?`) match of a mesh node name against an ordered rule list. */
+const matchRegion = (rules, name) => {
+  for (const rule of rules) {
+    const re = new RegExp(
+      `^${String(rule.match).replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.')}$`,
+    );
+    if (re.test(name)) return rule.region;
+  }
+  return null;
+};
+
 const policies = {};
 for (const [packId, policy] of Object.entries(lanesSrc.materialPolicy)) {
   const manifest = manifests.get(packId);
@@ -117,8 +128,8 @@ for (const [packId, policy] of Object.entries(lanesSrc.materialPolicy)) {
     fail(`materialPolicy names unknown pack '${packId}'`);
     continue;
   }
-  if (!['map', 'preserve'].includes(policy.policy)) {
-    fail(`${packId}: policy must be 'map' or 'preserve', got '${policy.policy}'`);
+  if (!['map', 'preserve', 'atlas'].includes(policy.policy)) {
+    fail(`${packId}: policy must be 'map', 'atlas' or 'preserve', got '${policy.policy}'`);
   }
   if (!policy.reason || policy.reason.length < 20) {
     fail(`${packId}: a material policy needs a real reason`);
@@ -139,7 +150,42 @@ for (const [packId, policy] of Object.entries(lanesSrc.materialPolicy)) {
       if (!present.has(slot)) fail(`${packId}: slot map names '${slot}', which the pack does not have`);
     }
   } else if (Object.keys(slots).length) {
-    fail(`${packId}: a 'preserve' policy must not carry a slot map`);
+    fail(`${packId}: a '${policy.policy}' policy must not carry a slot map`);
+  }
+
+  // ATLAS policy: the character has no named material slots to map, so it
+  // recolours per MESH NODE instead. The table is globs here and is RESOLVED to
+  // concrete node names per model below, so the generated catalogue shows the
+  // real mapping rather than a pattern the engine would have to re-derive.
+  if (policy.policy === 'atlas') {
+    const rules = policy.nodeRegions || [];
+    if (!Array.isArray(rules) || !rules.length) {
+      fail(`${packId}: an 'atlas' policy needs a nodeRegions rule list`);
+    }
+    for (const rule of Array.isArray(rules) ? rules : []) {
+      if (!REGIONS.includes(rule.region)) {
+        fail(`${packId}: nodeRegions rule '${rule.match}' names unknown region '${rule.region}'`);
+      }
+    }
+    // Every mesh node of every model must match a rule. A forgotten node is a
+    // part that keeps its vendor colour while the rest of the character
+    // recolours, which looks like a bug rather than a decision.
+    for (const model of manifest.models) {
+      if (model.kind !== 'character') continue;
+      const glb = resolve(PACKS, packId, model.file);
+      let names = [];
+      try { names = meshNodeNames(glb); } catch (err) {
+        fail(`${packId}/${model.id}: cannot read mesh node names — ${err.message}`);
+        continue;
+      }
+      for (const name of names) {
+        if (!matchRegion(rules, name)) {
+          fail(`${packId}/${model.id}: mesh node '${name}' matches no nodeRegions rule`);
+        }
+      }
+    }
+  } else if (policy.nodeRegions) {
+    fail(`${packId}: nodeRegions only applies to an 'atlas' policy`);
   }
   for (const slot of Object.keys(policy.unverifiedSlots || {})) {
     if (!(slot in slots)) fail(`${packId}: unverifiedSlots names '${slot}', which is not in the slot map`);
@@ -227,6 +273,24 @@ for (const lane of lanesSrc.lanes) {
       fail(`${where}: model '${entry.modelId}' is a ${model.kind}, not a character`);
     }
     const policy = policies[entry.packId] || { policy: 'preserve' };
+
+    // Resolve the pack's node->region GLOBS against THIS model's actual mesh
+    // node names, so the catalogue carries the concrete mapping.
+    const atlasRegions = {};
+    if (policy.policy === 'atlas') {
+      const glb = resolve(PACKS, entry.packId, model.file);
+      try {
+        for (const name of meshNodeNames(glb)) {
+          const region = matchRegion(policy.nodeRegions || [], name);
+          if (region) atlasRegions[name] = region;
+        }
+      } catch (err) {
+        fail(`${where}: cannot resolve atlas regions — ${err.message}`);
+      }
+      if (!Object.keys(atlasRegions).length) {
+        fail(`${where}: an 'atlas' pack resolved no node regions`);
+      }
+    }
 
     // A HEAD DONOR: a second vendored model whose head is split off by bone
     // weight at mount time (mesh_surgery.gd) and grafted onto this body's head
@@ -316,9 +380,13 @@ for (const lane of lanesSrc.lanes) {
       tris,
       joints: model.joints,
       bytes,
-      recolorable: policy.policy === 'map',
+      // A single-atlas character IS recolourable — per mesh node, through the
+      // atlas — even though its vendor material is preserved as the shading
+      // source. See lanes.json materialPolicy '<pack>'.policy === 'atlas'.
+      recolorable: policy.policy === 'map' || policy.policy === 'atlas',
       materialPolicy: policy.policy,
       slots: policy.policy === 'map' ? policy.slots : {},
+      atlasRegions,
       // Engine-only (scripts/pack_mount.gd) — deliberately NOT in the frontend
       // catalog: the selector shows what a model IS, not how it is assembled.
       hiddenMeshes: Array.isArray(hidden) ? [...hidden] : [],

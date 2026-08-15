@@ -37,6 +37,41 @@ uniform sampler2D palette_tex : source_color, filter_nearest, repeat_disable, hi
 uniform vec2 palette_cell = vec2(-1.0, -1.0);
 uniform vec4 albedo_tint : source_color = vec4(1.0, 1.0, 1.0, 1.0);
 
+// ── VENDOR-ATLAS RECOLOUR ────────────────────────────────────────────────────
+// Some vendored characters (the KayKit lines) render from ONE baked atlas
+// rather than from named material slots, so binding them to a flat house colour
+// would paint the whole character one colour — which is why they shipped with
+// recolour switched off entirely.
+//
+// They are, however, palette-indexed art: each body part's texels are a
+// LUMINANCE RAMP of a single hue (measured: the Knight's head is a 16-entry
+// flesh ramp, its cape a 13-entry red one). So the region colour can replace
+// the HUE while the atlas keeps supplying the SHADING — which is what these
+// three uniforms do, per mesh node.
+//
+// atlas_strength 0.0 (the default) makes this branch inert, so every procedural
+// avatar and every slot-mapped GLB compiles and renders exactly as before. The
+// branch is uniform-constant across a draw, so it does not diverge.
+uniform sampler2D atlas_tex : source_color, hint_default_white;
+uniform float atlas_strength : hint_range(0.0, 1.0) = 0.0;
+// Luminance of THIS node's dominant atlas colour, measured at mount time by
+// sampling the atlas along the node's own UVs. Dividing by it makes the region
+// colour land exactly on the part's base tone, with highlights above and
+// shadows below — rather than darkening every recoloured character.
+uniform float atlas_reference_luma : hint_range(0.001, 1.0) = 0.5;
+// The node's dominant HUE (0..1), and how far from it a texel may sit and still
+// be recoloured.
+//
+// WHY THIS IS HUE-SELECTIVE RATHER THAN WHOLESALE. A mesh node is not always
+// one material: measured on the shipped models, the Mage's "Head" node is 36%
+// its dominant colour because it carries the hood AND the face. Tinting the
+// whole node would turn the face the colour of the hood. Recolouring only the
+// texels near the node's dominant hue leaves the others exactly as the vendor
+// drew them, so a mixed node degrades to "part of it recolours" instead of to
+// "it is wrong".
+uniform float atlas_hue : hint_range(0.0, 1.0) = 0.0;
+uniform float atlas_hue_tolerance : hint_range(0.001, 0.5) = 0.083;
+
 // Ramp: number of band boundaries in the half-Lambert ramp. 1 => 2 bands,
 // 2 => 3 bands (the supported stylistic range; toon=1, anime=2).
 uniform float band_cuts : hint_range(1.0, 3.0, 1.0) = 1.0;
@@ -64,6 +99,35 @@ uniform float alpha_mul : hint_range(0.0, 1.0) = 1.0;
 void fragment() {
 	vec2 uv = (palette_cell.x >= 0.0) ? palette_cell : UV;
 	vec4 albedo = texture(palette_tex, uv) * albedo_tint;
+	if (atlas_strength > 0.0) {
+		// Keep the vendor atlas's shading ramp, take the hue from the palette.
+		vec3 vendor = texture(atlas_tex, UV).rgb;
+		float luma = dot(vendor, vec3(0.2126, 0.7152, 0.0722));
+		float ratio = luma / max(atlas_reference_luma, 0.001);
+		vec3 tinted = clamp(albedo.rgb * ratio, vec3(0.0), vec3(1.0));
+		// How far this texel's hue is from the node's dominant one (wrapped).
+		float mx = max(vendor.r, max(vendor.g, vendor.b));
+		float mn = min(vendor.r, min(vendor.g, vendor.b));
+		float chroma = mx - mn;
+		float hue;
+		if (mx == vendor.r) {
+			hue = mod((vendor.g - vendor.b) / max(chroma, 0.0001), 6.0);
+		} else if (mx == vendor.g) {
+			hue = (vendor.b - vendor.r) / max(chroma, 0.0001) + 2.0;
+		} else {
+			hue = (vendor.r - vendor.g) / max(chroma, 0.0001) + 4.0;
+		}
+		hue = hue / 6.0;
+		float dist = abs(hue - atlas_hue);
+		dist = min(dist, 1.0 - dist);
+		// An achromatic texel (a white highlight, a black line) has no reliable
+		// hue, so it follows the region rather than being left behind as a
+		// stripe of the vendor's palette.
+		float selected = chroma < 0.02
+				? 1.0
+				: 1.0 - smoothstep(atlas_hue_tolerance, atlas_hue_tolerance * 1.6, dist);
+		albedo.rgb = mix(vendor, tinted, selected * atlas_strength);
+	}
 	ALBEDO = albedo.rgb;
 #ifdef HOUSE_TOON_TRANSPARENT
 	ALPHA = clamp(albedo.a * alpha_mul, 0.0, 1.0);

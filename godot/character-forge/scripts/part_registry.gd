@@ -239,6 +239,22 @@ func _register(target: Dictionary, key: String, entry: Dictionary, allowed_keys:
 	var preserve := bool(entry.get("preserveMaterials", false))
 	clean["preserveMaterials"] = preserve
 
+	# ATLAS REGIONS — how a single-atlas character recolours: {meshNodeName:
+	# region}. Such an entry legitimately has NO slot map (there are no named
+	# material slots to map) and legitimately preserves its vendor material,
+	# which is the atlas the recolour reads its shading from.
+	var atlas_regions := {}
+	var atlas_raw: Variant = entry.get("atlasRegions", {})
+	if atlas_raw is Dictionary:
+		for node_name in (atlas_raw as Dictionary).keys():
+			var atlas_region := String((atlas_raw as Dictionary)[node_name])
+			if atlas_region in Char3DConfig.ALL_MATERIAL_REGIONS:
+				atlas_regions[String(node_name)] = atlas_region
+			else:
+				last_errors.append("atlasRegions['%s'] names unknown region '%s'"
+						% [node_name, atlas_region])
+	clean["atlasRegions"] = atlas_regions
+
 	var slots_raw: Variant = entry.get("slots", DEFAULT_SLOT_MAP)
 	var slots := {}
 	if slots_raw is Dictionary:
@@ -250,7 +266,7 @@ func _register(target: Dictionary, key: String, entry: Dictionary, allowed_keys:
 			slots[String(slot_name).to_lower()] = region
 	else:
 		last_errors.append("slots must be a Dictionary of materialName -> region")
-	if slots.is_empty() and not preserve:
+	if slots.is_empty() and not preserve and atlas_regions.is_empty():
 		last_errors.append("slots map is empty — a mesh basis must declare its regions")
 	clean["slots"] = slots
 
