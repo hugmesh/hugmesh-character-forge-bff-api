@@ -1,5 +1,10 @@
 import { NgZone } from '@angular/core';
-import { CharForgeBridge, EngineBridgeService, base64FromBytes } from './engine-bridge.service';
+import {
+  CharForgeBridge,
+  ENGINE_BASE,
+  EngineBridgeService,
+  base64FromBytes,
+} from './engine-bridge.service';
 
 /** Recording fake of the Godot-side CharForge singleton. */
 class FakeCharForge implements CharForgeBridge {
@@ -136,10 +141,15 @@ describe('EngineBridgeService (CharForge bridge)', () => {
     spyOn(window, 'fetch').and.resolveTo(new Response('nope', { status: 404 }));
     await expectAsync(svc.probe()).toBeResolvedTo(false);
     expect(svc.status()).toBe('absent');
-    expect(window.fetch).toHaveBeenCalledWith('assets/game/index.js', {
+    // ABSOLUTE, anchored on this remote's own module chunk — never the bare
+    // 'assets/game/index.js', which resolves against the SHELL document when
+    // federated and 404s at the shell root. See ./assets-base.
+    expect(window.fetch).toHaveBeenCalledWith(`${ENGINE_BASE}index.js`, {
       method: 'HEAD',
       cache: 'no-cache',
     });
+    expect(ENGINE_BASE).not.toBe('assets/game/');
+    expect(ENGINE_BASE).toMatch(/^[a-z][a-z0-9+.-]*:\/\//i);
   });
 
   it('probe(): present bundle → status loading', async () => {

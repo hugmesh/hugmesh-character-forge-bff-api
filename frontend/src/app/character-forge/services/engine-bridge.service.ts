@@ -1,5 +1,6 @@
 import { Injectable, NgZone, signal } from '@angular/core';
 import { EXPRESSIONS, ForgeExpression } from '../models/char3d-config';
+import { resolveAssetsBase } from './assets-base';
 
 /**
  * The JS surface the Godot game registers on `window` via its JavaScriptBridge
@@ -77,8 +78,22 @@ export type ForgeBridgeMessage =
   | { v: 1; t: 'randomize'; seed: number }
   | { v: 1; t: 'setPack'; key: string };
 
-/** Where the Godot web export is baked (same-origin remote asset, DESIGN §4). */
-export const ENGINE_BASE = 'assets/game/';
+/**
+ * Where the Godot web export is baked, as an ABSOLUTE URL anchored on THIS
+ * remote's own module chunk (DESIGN §4).
+ *
+ * It was the bare relative string `'assets/game/'` until it was measured under
+ * the host shell: a relative asset URL resolves against the DOCUMENT, which when
+ * federated is the SHELL at `/character-forge` (no trailing slash), so every
+ * engine asset was requested from the shell root and 404'd. probe() then
+ * reported the bundle absent and the page rendered the "engine bundle not
+ * present" panel — the 3D preview simply missing, with no error to find. See
+ * ./assets-base for the full derivation, including why fixing the `<script src>`
+ * alone would NOT have been enough (the Engine's locateFile override routes the
+ * .pck/.wasm/.side.wasm and both audio worklets through `executable`, never
+ * through the script's directory).
+ */
+export const ENGINE_BASE = resolveAssetsBase('assets/game/');
 /** Export basename — `index.{js,pck,wasm,side.wasm}` (games-repo convention). */
 export const ENGINE_EXECUTABLE = 'index';
 
