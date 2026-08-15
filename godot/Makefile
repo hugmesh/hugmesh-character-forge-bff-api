@@ -50,9 +50,28 @@ export-web:
 	fi; \
 	TPL="$(TEMPLATE_ROOT)/$$VERSION"; \
 	if [ ! -f "$$TPL/web_nothreads_release.zip" ] && [ ! -f "$$TPL/web_release.zip" ]; then \
-		echo "export-web SKIPPED: no Web export templates under $$TPL"; \
-		echo "  (threads are OFF for this preset — web_nothreads_release.zip is the one needed;"; \
-		echo "   install matching templates or let the orchestrator export)"; exit 0; \
+		for CAND in "$$(echo $$VERSION | sed -E 's/^([0-9]+\.[0-9]+)\.[0-9]+\.stable$$/\1.stable.gentoo/')" \
+		            "$$(echo $$VERSION | sed -E 's/^([0-9]+\.[0-9]+)\.[0-9]+\.stable$$/\1.stable/')"; do \
+			if [ -f "$(TEMPLATE_ROOT)/$$CAND/web_nothreads_release.zip" ]; then \
+				echo "export-web: DISTRO PACKAGING SKEW — not a missing dependency."; \
+				echo "  The engine reports $$VERSION but the packaged Web templates are $$CAND."; \
+				echo "  Godot resolves the template path from its OWN version string, so the"; \
+				echo "  Makefile cannot redirect it — the directory has to exist. Run:"; \
+				echo "    ln -sfn $(TEMPLATE_ROOT)/$$CAND $(TEMPLATE_ROOT)/$$VERSION"; \
+				echo "  then re-run. NOTE this builds against a DIFFERENT patch release than the"; \
+				echo "  engine: treat the result as a verification artifact and confirm the"; \
+				echo "  version policy before shipping the bundle."; \
+				break; \
+			fi; \
+		done; \
+	fi; \
+	if [ ! -f "$$TPL/web_nothreads_release.zip" ] && [ ! -f "$$TPL/web_release.zip" ]; then \
+		echo "export-web: no Web templates under $$TPL"; \
+		echo "  installed template sets: $$(ls $(TEMPLATE_ROOT) 2>/dev/null | tr '\n' ' ')"; \
+		echo "  (threads are OFF for this preset — web_nothreads_release.zip is the one needed)"; \
+		echo "  ENGINE NOT REBUILT: the shipped bundle still contains the PREVIOUS engine,"; \
+		echo "  so any change to godot/character-forge/scripts is INERT in the running app."; \
+		exit 1; \
 	fi; \
 	echo "Exporting $(PRESET) with Godot $$VERSION ..."; \
 	mkdir -p $(BUNDLE_DIR); \
