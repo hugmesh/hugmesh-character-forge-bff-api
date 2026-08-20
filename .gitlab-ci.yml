@@ -22,7 +22,7 @@
 # `pentest:sca` / `pentest:dast` jobs below `extends:` those — the same shape as
 # every other Java service repo.
 include:
-  - project: 'HugMesh/hugmesh-generator'
+  - project: 'hugmesh/hugmesh-generator'
     ref: main
     file: '/tests/pentest/ci/pentest-stage.gitlab-ci.yml'
 
