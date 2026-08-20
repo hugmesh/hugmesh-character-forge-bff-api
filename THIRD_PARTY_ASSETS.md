@@ -33,6 +33,7 @@ refuses to load an asset that lacks them:
 | Lane build | `tools/asset-pipeline/build-lanes.mjs` | Fails the build when a lane names a pack, model, family or palette region that does not exist. |
 | Engine tests | `godot/character-forge/tests/run_tests.gd` | Asserts every catalogue entry passes the licence gate, that each `glb` path exists on disk, and that an NC licence is still refused. |
 | In-app credit | `frontend/src/app/character-forge/panels/pack-selector.component.html` | Shows the licence and credit on every model card — what discharges the CC-BY visibility requirement. |
+| In-app credit (VN packs) | `frontend/src/app/character-forge/panels/credits.component.html` | Quotes the pack-level `attribution` of every vendored VN manifest verbatim — the SRD 5.1 notice srd-taxonomy-v1 carries. The strings are pinned to the server's own parse of those manifests by the shared contract fixture. |
 
 User-imported models never enter any of this: the importer reads the file in
 the browser, hands the bytes to the engine, and surfaces the file's OWN

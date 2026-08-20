@@ -1,0 +1,77 @@
+:host {
+  display: block;
+}
+
+.credits {
+  border: 1px solid var(--hug-border, #333);
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-top: 1rem;
+
+  h2 {
+    margin: 0 0 0.35rem;
+    font-size: 1rem;
+  }
+}
+
+.lede {
+  margin: 0 0 0.5rem;
+}
+
+.lede,
+.licence,
+.flag {
+  font-size: 0.78rem;
+  color: var(--hug-text-dim, #a0a0b8);
+}
+
+.packs {
+  list-style: none;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+
+  li {
+    display: flex;
+    align-items: baseline;
+    gap: 0.35rem;
+  }
+
+  .current strong {
+    color: var(--hug-accent, #7a5cff);
+  }
+}
+
+.flag {
+  border: 1px solid var(--hug-border, #444);
+  border-radius: 999px;
+  padding: 0 0.4rem;
+}
+
+// A licence notice has to stay readable, so it is NOT dimmed to footnote grey
+// like the surrounding metadata — it is the part a reader is meant to read.
+.attribution {
+  margin: 0 0 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-left: 3px solid var(--hug-accent, #7a5cff);
+  background: var(--hug-bg-1, #12121e);
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  .credit-text {
+    margin: 0;
+    font-size: 0.85rem;
+    line-height: 1.45;
+    overflow-wrap: anywhere;   // the SRD notice carries two bare URLs
+  }
+
+  footer {
+    margin-top: 0.35rem;
+    font-size: 0.78rem;
+    color: var(--hug-text-dim, #a0a0b8);
+  }
+}

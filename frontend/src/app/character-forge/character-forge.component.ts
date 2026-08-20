@@ -1,6 +1,7 @@
 import { Component, DestroyRef, effect, inject, signal } from '@angular/core';
 import { EngineCanvasComponent } from './panels/engine-canvas.component';
 import { ConfigEditorComponent } from './panels/config-editor.component';
+import { CreditsComponent } from './panels/credits.component';
 import { ImportVnComponent } from './panels/import-vn.component';
 import { PackSelectorComponent } from './panels/pack-selector.component';
 import { SavePanelComponent } from './panels/save-panel.component';
@@ -25,6 +26,9 @@ export const SET_CONFIG_DEBOUNCE_MS = 80;
  * and the engine stay in sync both ways over the CharForge bridge — editor
  * edits push `setConfig`, in-engine edits come back via `configChanged` (the
  * echo guard below keeps that from ping-ponging).
+ *
+ * The credits view closes the page: the CC-BY packs it maps from have to be
+ * credited to the user, not only in repo metadata (see CreditsComponent).
  */
 @Component({
   selector: 'snap-character-forge',
@@ -35,6 +39,7 @@ export const SET_CONFIG_DEBOUNCE_MS = 80;
     ConfigEditorComponent,
     ImportVnComponent,
     SavePanelComponent,
+    CreditsComponent,
   ],
   templateUrl: './character-forge.component.html',
   styleUrl: './character-forge.component.scss',

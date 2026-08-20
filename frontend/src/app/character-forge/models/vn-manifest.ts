@@ -94,11 +94,16 @@ export interface PartManifest {
   licenseSpdx?: string;
   /**
    * Verbatim attribution string required for any pack carrying SRD-sourced parts
-   * (see {@link PartDef.source}); enforced by `npm run validate:assets`
-   * (`tools/validate-assets.mjs`) and mirrored in ATTRIBUTION.txt.
-   * TODO: docs/CATALOG-DND-SRD.md also requires this string in an "in-app Credits
-   * view", which does not exist yet — this field is validated + kept in the repo's
-   * ATTRIBUTION.txt but never rendered to the end user in the running app.
+   * (see {@link PartDef.source}); enforced in the studio repo by
+   * `npm run validate:assets` (`tools/validate-assets.mjs`) and mirrored in its
+   * ATTRIBUTION.txt.
+   *
+   * docs/CATALOG-DND-SRD.md also requires the string in an "in-app Credits
+   * view". In THIS repo that view is `panels/credits.component.ts`, which renders
+   * it from the vendored `models/vn-pack-credits.ts` — the same block the BFF
+   * parses in `VnPackManifests.credits()`, pinned equal by the shared contract
+   * fixture. A manifest passed to `mapVnToChar3d` is a caller-supplied override
+   * for the mapping only; it is NOT what the credits view reads.
    */
   attribution?: string;
   canvas: { width: number; height: number };
