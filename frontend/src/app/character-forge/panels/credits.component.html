@@ -1,0 +1,30 @@
+<section class="credits" aria-labelledby="cf-credits-title" data-testid="cf-credits">
+  <h2 id="cf-credits-title">Credits &amp; attribution</h2>
+  <p class="lede">
+    The VN character packs this forge maps from. Their licences are listed for
+    all of them; the notices below are quoted verbatim because their licences
+    require it.
+  </p>
+
+  <ul class="packs" data-testid="cf-credits-packs">
+    @for (credit of credits; track credit.packId) {
+      <li [class.current]="sourcePackId() === credit.packId">
+        <strong>{{ credit.displayName }}</strong>
+        <span class="licence">{{ credit.licenseSpdx }}</span>
+        @if (sourcePackId() === credit.packId) {
+          <span class="flag" data-testid="cf-credits-current">your character</span>
+        }
+      </li>
+    }
+  </ul>
+
+  <!-- The attribution strings are rendered EXACTLY as the pack manifests carry
+       them. They are licence terms, not copy: no reflow, no truncation, no
+       "and others". -->
+  @for (credit of attributed; track credit.packId) {
+    <blockquote class="attribution" [attr.data-testid]="'cf-credits-' + credit.packId">
+      <p class="credit-text">{{ credit.attribution }}</p>
+      <footer>{{ credit.displayName }} · {{ credit.licenseSpdx }}</footer>
+    </blockquote>
+  }
+</section>

@@ -27,4 +27,11 @@ stale copy degrades gracefully rather than failing).
 
 License note: srd-taxonomy-v1 carries SRD 5.1 CC-BY-4.0 attribution inside its
 manifest (`licenseSpdx`/`attribution` fields) — preserved verbatim by the
-byte-faithful copy.
+byte-faithful copy. CC-BY discharges on what the END USER sees, so that string is
+also rendered in-app by the forge's credits view
+(`frontend/src/app/character-forge/panels/credits.component.html`, from the
+vendored `models/vn-pack-credits.ts`). `VnPackManifests.credits()` parses the
+same block here, and the shared contract fixture
+(`frontend/.../contract/server-contract.fixtures.json` -> `vnPackCredits`) pins
+the two copies equal — so a re-copy that changes a notice must update the
+vendored client copy too, or `ClientContractFixturesTest` fails.

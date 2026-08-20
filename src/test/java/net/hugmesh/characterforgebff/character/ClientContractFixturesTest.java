@@ -37,7 +37,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  *       {@link Char3DConfigValidator} constant, so the file cannot drift from the
  *       server (the karma spec then validates client output against it);</li>
  *   <li>every {@code acceptedDefinitions[].definition} — verbatim payloads the shipped
- *       clients POST — is ACCEPTED by the real validator.</li>
+ *       clients POST — is ACCEPTED by the real validator;</li>
+ *   <li>every {@code vnPackCredits} entry EQUALS what {@link VnPackManifests#credits()}
+ *       parses out of the vendored manifests, so the attribution the Angular remote's
+ *       in-app credits view renders is the manifest's own string, VERBATIM.</li>
  * </ol>
  */
 class ClientContractFixturesTest {
@@ -201,5 +204,60 @@ class ClientContractFixturesTest {
                             entry.get("label").textValue())
                     .isEqualTo(expected);
         }
+    }
+
+    // ── direction 4: the in-app credits cannot drift from the manifests ──
+
+    /**
+     * The SERVER half of the credits contract. {@code vn/packs/<packId>/pack.json}
+     * carries the pack-level {@code attribution}; the Angular remote ships a vendored
+     * copy ({@code models/vn-pack-credits.ts}) because the credits view must render
+     * signed-out and with no BFF reachable. Two vendored copies of one licence term is
+     * exactly the shape that rots quietly, so the fixture pins BOTH: this test against
+     * {@link VnPackManifests#credits()}, {@code server-contract.spec.ts} against
+     * {@code VN_PACK_CREDITS}.
+     */
+    @Test
+    void everyVnPackCreditEqualsTheVendoredManifest() {
+        JsonNode credits = fixtures.get("vnPackCredits");
+        assertThat(credits).as("fixture must carry the VN pack credit blocks").isNotEmpty();
+        List<VnPackManifests.VnPackCredit> parsed = new VnPackManifests().credits();
+        assertThat(credits.size()).as("one fixture entry per vendored pack")
+                .isEqualTo(parsed.size());
+        for (int i = 0; i < parsed.size(); i++) {
+            JsonNode entry = credits.get(i);
+            VnPackManifests.VnPackCredit credit = parsed.get(i);
+            assertThat(entry.get("packId").textValue()).isEqualTo(credit.packId());
+            assertThat(entry.get("displayName").textValue())
+                    .as("displayName for %s", credit.packId())
+                    .isEqualTo(credit.displayName());
+            assertThat(entry.get("licenseSpdx").textValue())
+                    .as("licenseSpdx for %s", credit.packId())
+                    .isEqualTo(credit.licenseSpdx());
+            String attribution = entry.get("attribution").textValue();   // null when JSON null
+            assertThat(attribution)
+                    .as("the attribution for %s must be VERBATIM", credit.packId())
+                    .isEqualTo(credit.attribution());
+        }
+    }
+
+    /**
+     * srd-taxonomy-v1 ships SRD 5.1 material under CC-BY-4.0, whose attribution is
+     * MANDATORY and must be shown to end users — not merely kept in repo metadata.
+     * A re-copy of the studio pack that drops or rewords the string fails HERE rather
+     * than shipping a credits view with nothing to credit.
+     */
+    @Test
+    void theSrdPackCarriesItsMandatoryAttribution() {
+        VnPackManifests.VnPackCredit srd = new VnPackManifests().credits().stream()
+                .filter(c -> "srd-taxonomy-v1".equals(c.packId()))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("srd-taxonomy-v1 must be vendored"));
+        assertThat(srd.licenseSpdx()).isEqualTo("CC-BY-4.0");
+        assertThat(srd.attribution())
+                .as("the SRD 5.1 attribution must reach the in-app credits view")
+                .contains("System Reference Document 5.1")
+                .contains("Wizards of the Coast")
+                .contains("https://creativecommons.org/licenses/by/4.0/legalcode");
     }
 }

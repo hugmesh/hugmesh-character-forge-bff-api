@@ -23,6 +23,7 @@ import {
 import { SNOUT_BY_FAMILY, mapVnToChar3d } from '../util/map-vn';
 import { randomChar3dConfig } from '../util/random-config';
 import { VnCharacter } from '../models/vn-character';
+import { VN_PACK_CREDITS } from '../models/vn-pack-credits';
 
 /**
  * The CLIENT half of the shared cross-language contract fixture
@@ -260,5 +261,33 @@ describe('client ⇄ server contract (shared fixture)', () => {
       } as unknown as VnCharacter;
       expect(mapVnToChar3d(nameless).name).toBe('Untitled');
     });
+  });
+
+  /**
+   * The CLIENT half of the credits contract. The credits view renders the
+   * VENDORED `VN_PACK_CREDITS` (it has to work signed-out/offline), while the
+   * BFF parses the same block out of `vn/packs/<packId>/pack.json` — two copies
+   * of a licence term, which is exactly what rots quietly. The fixture is
+   * pinned to the server's parse by `ClientContractFixturesTest`, so pinning
+   * the client to the fixture here makes the round trip closed: a re-copied
+   * pack that changes a notice fails on whichever side forgot it.
+   */
+  describe('the in-app credits equal the vendored pack manifests', () => {
+    it('carries one entry per pack, in the server\'s pack order', () => {
+      expect(VN_PACK_CREDITS.map(c => c.packId)).toEqual(fixtures.vnPackCredits.map(c => c.packId));
+      expect(VN_PACK_CREDITS.map(c => c.packId)).toEqual([...contract.packIds]);
+    });
+
+    for (const expected of fixtures.vnPackCredits) {
+      it(`credit: ${expected.packId}`, () => {
+        const credit = VN_PACK_CREDITS.find(c => c.packId === expected.packId);
+        expect(credit).withContext(`${expected.packId} must be credited`).toBeDefined();
+        expect(credit!.displayName).toBe(expected.displayName);
+        expect(credit!.licenseSpdx).toBe(expected.licenseSpdx);
+        // VERBATIM — a licence notice is not copy, so this is an equality and
+        // never a "contains".
+        expect(credit!.attribution).toBe(expected.attribution);
+      });
+    }
   });
 });

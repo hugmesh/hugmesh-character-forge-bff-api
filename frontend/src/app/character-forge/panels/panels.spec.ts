@@ -1,15 +1,19 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ConfigEditorComponent } from './config-editor.component';
+import { CreditsComponent } from './credits.component';
 import { EngineCanvasComponent } from './engine-canvas.component';
 import { ImportVnComponent } from './import-vn.component';
 import { ForgeStateService } from '../services/forge-state.service';
+import { VN_PACK_CREDITS } from '../models/vn-pack-credits';
 
 /**
  * Panel behaviours that carry the DESIGN §4 contract:
  * - the forge page must BOOT FINE without the Godot export and show the honest
  *   "engine bundle not present" panel (the export is baked later);
  * - import-from-VN accepts pasted/stashed VnCharacter JSON and maps it into
- *   the live config via the client-side mirror.
+ *   the live config via the client-side mirror;
+ * - the credits view actually SHOWS the attribution a CC-BY pack requires
+ *   (which is the whole point of it existing).
  */
 describe('EngineCanvasComponent (engine bundle not present)', () => {
   beforeEach(() => {
@@ -222,5 +226,62 @@ describe('ConfigEditorComponent (body shape axes)', () => {
       .toContain('no separate limbs');
     // The torso axes still apply, so they must stay enabled.
     expect(el.querySelector<HTMLInputElement>('[data-testid="cf-curve"]')!.disabled).toBeFalse();
+  });
+});
+
+/**
+ * The in-app credits view. CC-BY is discharged by what the END USER can see, so
+ * "the string is in the manifest / in ATTRIBUTION.txt / in the validator" is not
+ * a substitute for any of these assertions — this suite is the only place that
+ * checks the notice is on screen at all.
+ */
+describe('CreditsComponent (in-app credits)', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({ imports: [CreditsComponent] });
+  });
+
+  function credits(): HTMLElement {
+    const fixture = TestBed.createComponent(CreditsComponent);
+    fixture.detectChanges();
+    return fixture.nativeElement;
+  }
+
+  it('renders the SRD 5.1 notice VERBATIM, not a paraphrase', () => {
+    const srd = VN_PACK_CREDITS.find(c => c.packId === 'srd-taxonomy-v1')!;
+    expect(srd.attribution).withContext('the SRD pack must carry an attribution').not.toBeNull();
+    const el = credits();
+    const block = el.querySelector('[data-testid="cf-credits-srd-taxonomy-v1"]');
+    expect(block).withContext('the SRD notice must be on screen').not.toBeNull();
+    // Exact text, whitespace-normalised only for the template's own indentation:
+    // a truncated or reworded licence notice does not discharge CC-BY.
+    expect(block!.textContent!.replace(/\s+/g, ' ')).toContain(srd.attribution!);
+  });
+
+  it('names every shipped pack and its licence', () => {
+    const el = credits();
+    const rows = el.querySelectorAll('[data-testid="cf-credits-packs"] li');
+    expect(rows.length).toBe(VN_PACK_CREDITS.length);
+    const text = el.textContent!;
+    for (const credit of VN_PACK_CREDITS) {
+      expect(text).withContext(`${credit.packId} must be credited`).toContain(credit.displayName);
+      expect(text).toContain(credit.licenseSpdx);
+    }
+  });
+
+  it('marks the pack the live character was mapped from', () => {
+    const state = TestBed.inject(ForgeStateService);
+    state.applyConfig({
+      ...state.config(),
+      source: {
+        packId: 'srd-taxonomy-v1',
+        slots: { head: 'head_dragonborn_01' },
+        palette: {},
+        defaultExpression: 'neutral',
+      },
+    });
+    const el = credits();
+    expect(el.querySelector('[data-testid="cf-credits-current"]')).not.toBeNull();
+    expect(el.querySelector('li.current')!.textContent)
+      .toContain('Taxonomy + SRD Placeholders v1');
   });
 });

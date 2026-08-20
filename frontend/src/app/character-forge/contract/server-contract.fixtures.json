@@ -18,7 +18,14 @@
     "",
     "vnMapCases pin the DESIGN §2 mapping on both sides: VnMapService.map(vnCharacter)",
     "must equal canonical (Java), mapVnToChar3d(vnCharacter) must equal canonical (TS),",
-    "and canonical must be a validator fixed point."
+    "and canonical must be a validator fixed point.",
+    "",
+    "vnPackCredits are the pack-level credit blocks of the four vendored VN manifests",
+    "(src/main/resources/vn/packs/<packId>/pack.json), in Char3DConfigValidator.PACK_IDS",
+    "order. ClientContractFixturesTest asserts they equal VnPackManifests.credits(), and",
+    "server-contract.spec.ts asserts the Angular remote's vendored VN_PACK_CREDITS equals",
+    "them — so the SRD 5.1 attribution the in-app credits view renders is the same string",
+    "the manifests carry, VERBATIM, and a re-copied pack cannot silently change it."
   ],
   "serverContract": {
     "hexPattern": "^#[0-9a-fA-F]{3,8}$",
@@ -726,6 +733,32 @@
         },
         "style": "toon"
       }
+    }
+  ],
+  "vnPackCredits": [
+    {
+      "packId": "menagerie-v1",
+      "displayName": "Menagerie — All Creatures",
+      "licenseSpdx": "CC-BY-SA-4.0",
+      "attribution": null
+    },
+    {
+      "packId": "anime-v1",
+      "displayName": "Anime & Kemonomimi",
+      "licenseSpdx": "CC-BY-SA-4.0",
+      "attribution": null
+    },
+    {
+      "packId": "base-anthro-v1",
+      "displayName": "Base Anthro v1",
+      "licenseSpdx": "CC-BY-SA-4.0",
+      "attribution": null
+    },
+    {
+      "packId": "srd-taxonomy-v1",
+      "displayName": "Taxonomy + SRD Placeholders v1",
+      "licenseSpdx": "CC-BY-4.0",
+      "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") by Wizards of the Coast LLC and available at https://dnd.wizards.com/resources/systems-reference-document. The SRD 5.1 is licensed under the Creative Commons Attribution 4.0 International License available at https://creativecommons.org/licenses/by/4.0/legalcode."
     }
   ]
 }
