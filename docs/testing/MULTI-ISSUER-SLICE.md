@@ -1,7 +1,7 @@
 # Multi-issuer security slice — as replicated in hugmesh-character-forge-bff-api
 
 This repo replicates the **reference multi-issuer security-slice pattern** first
-built for [`hugmesh-gateway`](https://github.com/hugmesh-net/hugmesh-gateway) (see
+built for [`hugmesh-gateway`](https://github.com/hugmesh/hugmesh-gateway) (see
 that repo's own `docs/testing/MULTI-ISSUER-SLICE.md`) and since rolled out across
 the whole BFF family, with `hugmesh-forum-bff-api` as the exemplar. The slice
 proves this WebFlux OAuth2 resource server correctly handles **per-brand
