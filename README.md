@@ -1,6 +1,6 @@
 # hugmesh-character-forge-bff-api
 
-The **3D character forge** for the [HugMesh](https://github.com/hugmesh-net) platform.
+The **3D character forge** for the [HugMesh](https://github.com/hugmesh) platform.
 It lets a user take an existing SVG visual-novel character (from the menagerie /
 anime / base-anthro / D&D-SRD card packs), map it onto a parameterized **3D
 character** (`Char3DConfig` v1), edit the result in a Godot-powered maker, and mark
@@ -22,7 +22,7 @@ because they share the `Char3DConfig` contract:
 R2DBC for runtime access and JDBC used *only* for Liquibase migrations. Casdoor
 JWT OAuth2 resource server, springdoc-openapi (WebFlux), Spring-Native-ready,
 Java 25, Spring Boot 4.0.7. The service is copy-adapted from
-[`hugmesh-forum-bff-api`](https://github.com/hugmesh-net/hugmesh-forum-bff-api),
+[`hugmesh-forum-bff-api`](https://github.com/hugmesh/hugmesh-forum-bff-api),
 the platform's canonical small-BFF scaffold.
 
 Maven artifact: `character-forge-bff` version `0.1.0` (package
@@ -61,13 +61,13 @@ flowchart LR
 This service is one piece of a larger platform. Repositories referenced
 throughout this README:
 
-- [`hugmesh-forum-bff-api`](https://github.com/hugmesh-net/hugmesh-forum-bff-api) —
+- [`hugmesh-forum-bff-api`](https://github.com/hugmesh/hugmesh-forum-bff-api) —
   the canonical small-BFF scaffold this repo was copy-adapted from.
-- [`hugmesh-gateway`](https://github.com/hugmesh-net/hugmesh-gateway) — the
+- [`hugmesh-gateway`](https://github.com/hugmesh/hugmesh-gateway) — the
   front-end gateway that routes `/bff/character-forge/**` here, and the origin of
   the multi-issuer security-slice test pattern reused in
   [`docs/testing/MULTI-ISSUER-SLICE.md`](docs/testing/MULTI-ISSUER-SLICE.md).
-- [`hugmesh-generator`](https://github.com/hugmesh-net/hugmesh-generator) — the
+- [`hugmesh-generator`](https://github.com/hugmesh/hugmesh-generator) — the
   platform's cluster/manifest generator; owns the authoritative deploy manifests
   for this service's optional-services slug (see [Deploy](#deploy)) and the
   shared pen-test harness `make pentest` delegates to.
@@ -329,7 +329,7 @@ registry token supplied as a BuildKit secret, never written into an image layer.
 [`deploy/`](deploy) holds the Kustomize manifests (deployment + service + HPA),
 and [`hugmesh-deploy.yaml`](hugmesh-deploy.yaml) is the per-repo catalog
 descriptor. The authoritative production manifests live in
-[`hugmesh-generator`](https://github.com/hugmesh-net/hugmesh-generator)'s
+[`hugmesh-generator`](https://github.com/hugmesh/hugmesh-generator)'s
 `character-forge` optional-services slug (disabled by default; enabled with
 `--with-character-forge`). The service deploys into the `hugmesh-backend`
 namespace on port 8080, with mTLS keystore support available via the
@@ -349,7 +349,7 @@ Issues and pull requests are welcome. Before opening a PR:
 3. If you touch `Char3DConfig`, update both the validator and its mirrors in
    `frontend/` and `godot/character-forge/` so the three stay in lock-step.
 
-For platform-wide contribution norms, see the [HugMesh](https://github.com/hugmesh-net)
+For platform-wide contribution norms, see the [HugMesh](https://github.com/hugmesh)
 organization profile and the `hugmesh-forum-bff-api` repository this service was
 scaffolded from.
 
