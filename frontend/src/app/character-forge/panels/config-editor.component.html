@@ -228,4 +228,60 @@
       </label>
     }
   </fieldset>
+
+  <fieldset class="rigging" data-testid="cf-rigging">
+    <legend>
+      Rigging
+      @if (rigAdjustedCount() > 0) {
+        <span class="badge" data-testid="cf-rig-count">{{ rigAdjustedCount() }} adjusted</span>
+      }
+    </legend>
+    <p class="hint">
+      Nudge one joint at a time. Every change shows in the engine as you drag; it is
+      saved with the character. <strong>Auto-adjust</strong> fits the face to the
+      head this family built — a starting point you can still nudge.
+    </p>
+    <div class="rig-actions">
+      <button type="button" data-testid="cf-rig-auto" (click)="autoAdjustRig()"
+              aria-describedby="cf-rig-auto-help">Auto-adjust</button>
+      <span id="cf-rig-auto-help" class="sr-only">
+        Fits eyes, brows, jaw and ears to the built head; you can still nudge each joint after.
+      </span>
+      <button type="button" data-testid="cf-rig-reset" (click)="resetRig()"
+              [attr.aria-disabled]="rigAdjustedCount() === 0 ? 'true' : null">Reset all</button>
+    </div>
+    <label class="row">
+      <span>Joint</span>
+      <select data-testid="cf-rig-joint" (change)="onRigJoint($event)" aria-label="Rig joint to adjust">
+        @for (j of rigJoints; track j) {
+          <option [value]="j" [selected]="j === rigJoint()">{{ j }}</option>
+        }
+      </select>
+    </label>
+    @for (axis of rigAxes; track axis; let i = $index) {
+      <label class="row">
+        <span>Offset {{ axis }}</span>
+        <input type="range" [min]="-rigOffsetMax" [max]="rigOffsetMax" step="0.005"
+               [attr.data-testid]="'cf-rig-offset-' + axis"
+               [value]="rigOffset(i === 0 ? 0 : i === 1 ? 1 : 2)"
+               (input)="onRigOffset(i === 0 ? 0 : i === 1 ? 1 : 2, $event)"
+               [attr.aria-label]="rigJoint() + ' offset ' + axis + ' (metres)'" />
+        <output>{{ rigOffset(i === 0 ? 0 : i === 1 ? 1 : 2) | number: '1.3-3' }}</output>
+      </label>
+    }
+    @for (axis of rigAxes; track axis; let i = $index) {
+      <label class="row">
+        <span>Scale {{ axis }}</span>
+        <input type="range" [min]="rigScaleMin" [max]="rigScaleMax" step="0.05"
+               [attr.data-testid]="'cf-rig-scale-' + axis"
+               [value]="rigScale(i === 0 ? 0 : i === 1 ? 1 : 2)"
+               (input)="onRigScale(i === 0 ? 0 : i === 1 ? 1 : 2, $event)"
+               [attr.aria-label]="rigJoint() + ' scale ' + axis" />
+        <output>{{ rigScale(i === 0 ? 0 : i === 1 ? 1 : 2) | number: '1.2-2' }}</output>
+      </label>
+    }
+    <button type="button" class="link" data-testid="cf-rig-reset-joint" (click)="resetRigJoint()">
+      Reset {{ rigJoint() }}
+    </button>
+  </fieldset>
 </div>

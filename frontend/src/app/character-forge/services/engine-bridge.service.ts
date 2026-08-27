@@ -16,6 +16,12 @@ export interface CharForgeBridge {
   setOpenness(value: number): void;
   randomize(seed: number): void;
   snapshot(width: number, height: number): string;
+  /** Replace the rig adjustments live (no rebuild); the engine echoes onConfigChanged. */
+  setRig?(json: string): void;
+  /** Fit the rig to the built head; the engine echoes the result via onConfigChanged. */
+  autoAdjustRig?(): void;
+  /** Turntable spin — a preview control, so it lives in the host like every other. */
+  setAutoRotate?(on: boolean): void;
   /** Mount a catalogue entry by key; '' returns to the procedural avatar. */
   setPack?(key: string): void;
   /**
@@ -114,7 +120,10 @@ export type ForgeBridgeMessage =
   | { v: 1; t: 'setExpression'; label: ForgeExpression }
   | { v: 1; t: 'setOpenness'; value: number }
   | { v: 1; t: 'randomize'; seed: number }
-  | { v: 1; t: 'setPack'; key: string };
+  | { v: 1; t: 'setPack'; key: string }
+  | { v: 1; t: 'setRig'; json: string }
+  | { v: 1; t: 'autoAdjustRig' }
+  | { v: 1; t: 'setAutoRotate'; on: boolean };
 
 /**
  * Where the Godot web export is baked, as an ABSOLUTE URL anchored on THIS
@@ -374,6 +383,20 @@ export class EngineBridgeService {
     this.send({ v: 1, t: 'setOpenness', value: clamped });
   }
 
+  /** Push only the rig — the engine re-poses without rebuilding, so a slider is live. */
+  setRig(rig: unknown): void {
+    this.send({ v: 1, t: 'setRig', json: JSON.stringify(rig ?? {}) });
+  }
+
+  /** Ask the engine to fit the rig to the head it built; the result comes back as a config change. */
+  autoAdjustRig(): void {
+    this.send({ v: 1, t: 'autoAdjustRig' });
+  }
+
+  setAutoRotate(on: boolean): void {
+    this.send({ v: 1, t: 'setAutoRotate', on: !!on });
+  }
+
   /** In-engine seeded randomize (same seed as the local mirror for parity). */
   randomize(seed: number): void {
     this.send({ v: 1, t: 'randomize', seed: seed >>> 0 });
@@ -501,6 +524,15 @@ export class EngineBridgeService {
         break;
       case 'setPack':
         bridge.setPack?.(msg.key);
+        break;
+      case 'setRig':
+        bridge.setRig?.(msg.json);
+        break;
+      case 'autoAdjustRig':
+        bridge.autoAdjustRig?.();
+        break;
+      case 'setAutoRotate':
+        bridge.setAutoRotate?.(msg.on);
         break;
     }
   }

@@ -149,7 +149,15 @@ public final class Char3DConfigValidator {
     private static final Pattern KEY = Pattern.compile(KEY_PATTERN);
 
     private static final Set<String> ROOT_KEYS = Set.of(
-            "schemaVersion", "name", "source", "body", "head", "parts", "materials", "style");
+            "schemaVersion", "name", "source", "body", "head", "parts", "materials", "style", "rig");
+    /** Rig joints a definition may nudge — the assembler's face/head anchors. */
+    public static final List<String> RIG_JOINTS = List.of(
+            "head", "jaw", "eye_l", "eye_r", "brow_l", "brow_r", "ear_l", "ear_r");
+    /** Offset clamp in metres of the joint's parent space (a head is ~0.5 m tall). */
+    public static final double RIG_OFFSET_MAX = 0.12;
+    public static final double RIG_SCALE_MIN = 0.5;
+    public static final double RIG_SCALE_MAX = 1.8;
+    private static final Set<String> RIG_ENTRY_KEYS = Set.of("offset", "scale");
     private static final Set<String> SOURCE_KEYS = Set.of(
             "packId", "slots", "palette", "defaultExpression");
     private static final Set<String> BODY_KEYS = Set.of(
@@ -217,7 +225,68 @@ public final class Char3DConfigValidator {
 
         // style — required enum.
         out.put("style", requireEnum(root.get("style"), STYLES, "definition.style"));
+        JsonNode rig = root.get("rig");
+        if (rig != null && !rig.isNull()) {
+            ObjectNode cleanRig = validateRig(rig);
+            if (!cleanRig.isEmpty()) {
+                out.set("rig", cleanRig);
+            }
+        }
 
+        return out;
+    }
+
+    /**
+     * The optional per-joint rig adjustments. SPARSE in canonical form: a joint
+     * survives only with a non-identity offset or scale, every number clamped;
+     * an unknown joint or entry key, or a non-numeric triple, rejects — the same
+     * rule as everywhere else (clamping is for range, never for type).
+     */
+    private static ObjectNode validateRig(JsonNode rig) {
+        if (!rig.isObject()) {
+            throw bad("definition.rig must be a JSON object");
+        }
+        rejectUnknownKeys(rig, Set.copyOf(RIG_JOINTS), "definition.rig");
+        ObjectNode out = MAPPER.createObjectNode();
+        for (String joint : RIG_JOINTS) {
+            JsonNode entry = rig.get(joint);
+            if (entry == null || entry.isNull()) {
+                continue;
+            }
+            if (!entry.isObject()) {
+                throw bad("definition.rig." + joint + " must be a JSON object");
+            }
+            rejectUnknownKeys(entry, RIG_ENTRY_KEYS, "definition.rig." + joint);
+            ObjectNode clean = MAPPER.createObjectNode();
+            double[] offset = triple(entry.get("offset"), -RIG_OFFSET_MAX, RIG_OFFSET_MAX, 0.0,
+                    "definition.rig." + joint + ".offset");
+            if (offset != null && (offset[0] != 0.0 || offset[1] != 0.0 || offset[2] != 0.0)) {
+                clean.set("offset", MAPPER.createArrayNode().add(offset[0]).add(offset[1]).add(offset[2]));
+            }
+            double[] scale = triple(entry.get("scale"), RIG_SCALE_MIN, RIG_SCALE_MAX, 1.0,
+                    "definition.rig." + joint + ".scale");
+            if (scale != null && (scale[0] != 1.0 || scale[1] != 1.0 || scale[2] != 1.0)) {
+                clean.set("scale", MAPPER.createArrayNode().add(scale[0]).add(scale[1]).add(scale[2]));
+            }
+            if (!clean.isEmpty()) {
+                out.set(joint, clean);
+            }
+        }
+        return out;
+    }
+
+    /** A 3-number array clamped per component; absent → null; anything else rejects. */
+    private static double[] triple(JsonNode node, double min, double max, double fallback, String path) {
+        if (node == null || node.isNull()) {
+            return null;
+        }
+        if (!node.isArray() || node.size() != 3) {
+            throw bad(path + " must be an array of 3 numbers");
+        }
+        double[] out = new double[3];
+        for (int i = 0; i < 3; i++) {
+            out[i] = clampedNumber(node.get(i), min, max, fallback, path + "[" + i + "]");
+        }
         return out;
     }
 

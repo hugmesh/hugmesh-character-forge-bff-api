@@ -1,4 +1,6 @@
-import { Component, computed, inject } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
+import { Component, computed, inject, signal } from '@angular/core';
+import { EngineBridgeService } from '../services/engine-bridge.service';
 import { ForgeStateService } from '../services/forge-state.service';
 import {
   AnyMaterialRegion,
@@ -16,6 +18,12 @@ import {
   MAX_STYLE_STRING_LENGTH,
   PART_SLOTS,
   PartSlot,
+  RIG_JOINTS,
+  RIG_OFFSET_MAX,
+  RIG_SCALE_MAX,
+  RIG_SCALE_MIN,
+  RigJoint,
+  Triple,
   effectiveRegionColor,
 } from '../models/char3d-config';
 import { PART_SLOT_IDS } from '../models/part-archetypes';
@@ -31,12 +39,76 @@ import { PART_SLOT_IDS } from '../models/part-archetypes';
 @Component({
   selector: 'snap-config-editor',
   standalone: true,
-  imports: [],
+  imports: [DecimalPipe],
   templateUrl: './config-editor.component.html',
   styleUrl: './config-editor.component.scss',
 })
 export class ConfigEditorComponent {
   protected readonly state = inject(ForgeStateService);
+  private readonly engine = inject(EngineBridgeService);
+
+  // ── Rigging: nudge one joint at a time, live in the engine ─────────────────
+  readonly rigJoints = RIG_JOINTS;
+  readonly rigOffsetMax = RIG_OFFSET_MAX;
+  readonly rigScaleMin = RIG_SCALE_MIN;
+  readonly rigScaleMax = RIG_SCALE_MAX;
+  readonly rigAxes = ['x', 'y', 'z'] as const;
+  /** The joint the six rig sliders currently edit. */
+  readonly rigJoint = signal<RigJoint>('jaw');
+  /** How many joints carry an adjustment — the panel's "adjusted" badge. */
+  readonly rigAdjustedCount = computed(() => Object.keys(this.state.config().rig ?? {}).length);
+
+  rigOffset(axis: 0 | 1 | 2): number {
+    return this.state.config().rig?.[this.rigJoint()]?.offset?.[axis] ?? 0;
+  }
+
+  rigScale(axis: 0 | 1 | 2): number {
+    return this.state.config().rig?.[this.rigJoint()]?.scale?.[axis] ?? 1;
+  }
+
+  onRigJoint(ev: Event): void {
+    const v = (ev.target as HTMLSelectElement).value;
+    if ((RIG_JOINTS as readonly string[]).includes(v)) {
+      this.rigJoint.set(v as RigJoint);
+    }
+  }
+
+  /**
+   * One slider moved: store it (clamped by the mirror) AND push just the rig to
+   * the engine, which re-poses without a rebuild — so the drag is live. The
+   * debounced full setConfig that follows is a no-op for the engine's geometry.
+   */
+  onRigOffset(axis: 0 | 1 | 2, ev: Event): void {
+    const offset = [this.rigOffset(0), this.rigOffset(1), this.rigOffset(2)] as Triple;
+    offset[axis] = Number((ev.target as HTMLInputElement).value);
+    this.commitRig({ offset, scale: [this.rigScale(0), this.rigScale(1), this.rigScale(2)] });
+  }
+
+  onRigScale(axis: 0 | 1 | 2, ev: Event): void {
+    const scale = [this.rigScale(0), this.rigScale(1), this.rigScale(2)] as Triple;
+    scale[axis] = Number((ev.target as HTMLInputElement).value);
+    this.commitRig({ offset: [this.rigOffset(0), this.rigOffset(1), this.rigOffset(2)], scale });
+  }
+
+  private commitRig(entry: { offset: Triple; scale: Triple }): void {
+    this.state.setRigJoint(this.rigJoint(), entry);
+    this.engine.setRig(this.state.config().rig ?? {});
+  }
+
+  /** Ask the engine to fit the rig to the head it built; it answers via onConfigChanged. */
+  autoAdjustRig(): void {
+    this.engine.autoAdjustRig();
+  }
+
+  resetRig(): void {
+    this.state.clearRig();
+    this.engine.setRig({});
+  }
+
+  resetRigJoint(): void {
+    this.state.setRigJoint(this.rigJoint(), {});
+    this.engine.setRig(this.state.config().rig ?? {});
+  }
 
   readonly families = HEAD_FAMILIES;
   readonly archetypes = BODY_ARCHETYPES;

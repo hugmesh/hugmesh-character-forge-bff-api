@@ -10,6 +10,9 @@ import {
   defaultChar3dConfig,
   definitionWithinCap,
   normalizeChar3dConfig,
+  Char3dRigEntry,
+  RigJoint,
+  normalizeRig,
 } from '../models/char3d-config';
 
 /**
@@ -46,6 +49,28 @@ export class ForgeStateService {
 
   setName(name: string): void {
     this.patch({ name });
+  }
+
+  /** The rig with one joint's offset/scale replaced; identity entries fall away. */
+  setRigJoint(joint: RigJoint, entry: Char3dRigEntry): void {
+    const rig = { ...(this._config().rig ?? {}), [joint]: entry };
+    this.setRig(rig);
+  }
+
+  /** Replace the whole rig (what the engine's auto-adjust hands back). */
+  setRig(rig: unknown): void {
+    const clean = normalizeRig(rig);
+    const next = { ...this._config() };
+    if (clean) {
+      next.rig = clean;
+    } else {
+      delete next.rig;
+    }
+    this._config.set(next);
+  }
+
+  clearRig(): void {
+    this.setRig(undefined);
   }
 
   setBodyArchetype(archetype: BodyArchetype): void {

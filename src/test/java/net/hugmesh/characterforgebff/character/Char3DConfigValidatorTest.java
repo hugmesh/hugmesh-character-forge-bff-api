@@ -550,4 +550,56 @@ class Char3DConfigValidatorTest {
                 .isInstanceOf(ApiException.class)
                 .hasMessageContaining("definition.head.family");
     }
+
+    @Nested
+    class Rig {
+        @Test
+        void rig_isOptional_andAbsentFromCanonicalWhenIdentity() {
+            ObjectNode def = minimal();
+            def.putObject("rig").putObject("jaw").putArray("offset").add(0).add(0).add(0);
+            ObjectNode out = Char3DConfigValidator.validate(def);
+            assertThat(out.has("rig")).as("an all-identity rig is dropped").isFalse();
+            assertThat(Char3DConfigValidator.validate(minimal()).has("rig")).isFalse();
+        }
+
+        @Test
+        void rig_clampsOffsetsAndScales_andKeepsOnlyRealJoints() {
+            ObjectNode def = minimal();
+            ObjectNode rig = def.putObject("rig");
+            ObjectNode eye = rig.putObject("eye_l");
+            eye.putArray("offset").add(0.5).add(-0.5).add(0.01);
+            eye.putArray("scale").add(3.0).add(0.1).add(1.0);
+            rig.putObject("brow_r").putArray("scale").add(1.0).add(1.0).add(1.0);
+            ObjectNode out = Char3DConfigValidator.validate(def);
+            assertThat(out.get("rig").fieldNames()).toIterable().containsExactly("eye_l");
+            JsonNode off = out.get("rig").get("eye_l").get("offset");
+            assertThat(off.get(0).doubleValue()).isEqualTo(Char3DConfigValidator.RIG_OFFSET_MAX);
+            assertThat(off.get(1).doubleValue()).isEqualTo(-Char3DConfigValidator.RIG_OFFSET_MAX);
+            assertThat(off.get(2).doubleValue()).isEqualTo(0.01);
+            JsonNode sc = out.get("rig").get("eye_l").get("scale");
+            assertThat(sc.get(0).doubleValue()).isEqualTo(Char3DConfigValidator.RIG_SCALE_MAX);
+            assertThat(sc.get(1).doubleValue()).isEqualTo(Char3DConfigValidator.RIG_SCALE_MIN);
+            // Idempotent: re-validating the canonical form changes nothing.
+            assertThat(Char3DConfigValidator.validate(out)).isEqualTo(out);
+        }
+
+        @Test
+        void rig_rejectsUnknownJoints_unknownEntryKeys_andWrongTypes() {
+            ObjectNode a = minimal();
+            a.putObject("rig").putObject("nose").putArray("offset").add(0.01).add(0).add(0);
+            assertThat(reject(a).getMessage()).contains("nose");
+            ObjectNode b = minimal();
+            b.putObject("rig").putObject("jaw").put("twist", 1.0);
+            assertThat(reject(b).getMessage()).contains("twist");
+            ObjectNode c = minimal();
+            c.putObject("rig").putObject("jaw").putArray("offset").add("x").add(0).add(0);
+            assertThat(reject(c).getMessage()).contains("definition.rig.jaw.offset");
+            ObjectNode d = minimal();
+            d.putObject("rig").putObject("jaw").putArray("offset").add(0).add(0);
+            assertThat(reject(d).getMessage()).contains("array of 3 numbers");
+            ObjectNode e = minimal();
+            e.putObject("rig").put("jaw", "garbage");
+            assertThat(reject(e).getMessage()).contains("definition.rig.jaw");
+        }
+    }
 }

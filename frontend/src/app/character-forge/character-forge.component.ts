@@ -85,6 +85,10 @@ export class CharacterForgeComponent {
     // character). Destroy therefore FLUSHES; see flushConfig().
     effect(onCleanup => {
       const json = this.state.definitionJson();
+      // The engine echoes its config after every edit it applied itself (a rig
+      // nudge, auto-adjust, randomize). Comparing the NORMALIZED forms means an
+      // echo that only differs in key order or float spelling does not trigger
+      // a full setConfig rebuild on top of an edit the engine already shows.
       if (json === this.lastEngineJson) {
         return;
       }
@@ -107,6 +111,15 @@ export class CharacterForgeComponent {
       }
       this.lastEngineJson = this.state.definitionJson();
     });
+  }
+
+  /** Turntable spin is a preview control — it left the canvas with the rest. */
+  readonly autoRotate = signal(true);
+
+  onAutoRotate(ev: Event): void {
+    const on = (ev.target as HTMLInputElement).checked;
+    this.autoRotate.set(on);
+    this.engine.setAutoRotate(on);
   }
 
   /**

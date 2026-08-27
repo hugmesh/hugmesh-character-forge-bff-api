@@ -14,7 +14,7 @@ because they share the `Char3DConfig` contract:
 /                          Spring WebFlux BFF (this README's main subject): pom.xml,
                            src/, Dockerfile, settings.xml, mvnw, CI, deploy/,
                            hugmesh-deploy.yaml
-/godot/character-forge/    Godot 4 project — the 3D character maker game (see below)
+/godot/                    A pointer: the Godot 4 maker moved to hugmesh-games/games/character-forge
 /frontend/                 Angular native-federation remote `character-forge` (see below)
 ```
 
@@ -208,19 +208,23 @@ require a real Postgres (jsonb, the partial index, and `gen_random_uuid()` all
 need it), hence the Testcontainers-backed `PostgresTestSupport` /
 `PostgresSliceTestConfig` pair.
 
-## godot/character-forge — the 3D maker (Godot 4)
+## The 3D maker (Godot 4) — now in hugmesh-games
 
-The Godot project is developed independently of the BFF; the two share only the
-`Char3DConfig` contract. `character_assembler.gd` is the **canonical** procedural
-rig assembler — other consumers (such as the XR chat room) vendor a
-provenance-headed copy rather than reimplementing it. A `JavaScriptBridge`
-singleton, `CharForge`, exposes `setConfig` / `setExpression` / `setOpenness` /
-`randomize` / `snapshot` / `listPacks` / `setPack` / `importModel` to the host
-page. `register/` carries the manifest and SQL used to publish the maker into
-`hugmesh.games` as a standard WASM game (`game_slug='character-forge'`). See
-[`godot/character-forge/README.md`](godot/character-forge/README.md) and the
-Makefile's `export-web` target (which skips with a clear message when Godot's
-export templates aren't installed).
+The Godot project lives in **hugmesh-games** as `games/character-forge/`, an
+ordinary game of that repo: editable in the Godot editor, exported by `make
+build-godot`, publishable through the standard upload lane. The two repos share
+only the `Char3DConfig` contract (v1 — now with an optional, sparse `rig`
+object of per-joint offset/scale adjustments; see `Char3DConfigValidator`).
+`character_assembler.gd` there is the **canonical** procedural rig assembler.
+
+The engine is a render surface. It has **no in-canvas UI**: the `CharForge`
+`JavaScriptBridge` singleton exposes `setConfig` / `setExpression` /
+`setOpenness` / `setRig` / `autoAdjustRig` / `setAutoRotate` / `randomize` /
+`snapshot` / `listPacks` / `setPack` / `importModel` to the host page, and the
+Angular remote under `frontend/` owns every control — parts, proportions,
+materials, the per-joint rigging panel with its auto-fit, expression and mouth
+preview, turntable spin. `games/character-forge/register/` carries the manifest
+and SQL that publish the maker into `hugmesh.games` (`game_slug='character-forge'`).
 
 ### Character styles — procedural first, 42 vendored models on top
 
@@ -347,7 +351,7 @@ Issues and pull requests are welcome. Before opening a PR:
    admin/moderation surface, and PRs that add one without discussion will need
    a design conversation first.
 3. If you touch `Char3DConfig`, update both the validator and its mirrors in
-   `frontend/` and `godot/character-forge/` so the three stay in lock-step.
+   `frontend/` and hugmesh-games' `games/character-forge/` so the three stay in lock-step.
 
 For platform-wide contribution norms, see the [HugMesh](https://github.com/hugmesh)
 organization profile and the `hugmesh-forum-bff-api` repository this service was

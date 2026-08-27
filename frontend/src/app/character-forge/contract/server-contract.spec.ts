@@ -19,6 +19,10 @@ import {
   SOURCE_PACK_IDS,
   defaultChar3dConfig,
   normalizeChar3dConfig,
+  RIG_JOINTS,
+  RIG_OFFSET_MAX,
+  RIG_SCALE_MAX,
+  RIG_SCALE_MIN,
 } from '../models/char3d-config';
 import { SNOUT_BY_FAMILY, mapVnToChar3d } from '../util/map-vn';
 import { randomChar3dConfig } from '../util/random-config';
@@ -125,6 +129,12 @@ describe('client ⇄ server contract (shared fixture)', () => {
       expect([...SOURCE_PACK_IDS] as string[]).toEqual(contract.packIds);
       expect([...PART_SLOTS] as string[]).toEqual(contract.partKeys);
       expect([...MATERIAL_REGIONS] as string[]).toEqual(contract.materialKeys);
+      expect([...RIG_JOINTS] as string[]).toEqual(contract.rigJoints);
+    });
+    it('rig clamps', () => {
+      expect(RIG_OFFSET_MAX).toBe(contract.rigOffsetMax);
+      expect(RIG_SCALE_MIN).toBe(contract.rigScaleMin);
+      expect(RIG_SCALE_MAX).toBe(contract.rigScaleMax);
     });
 
     it('the unset-region palette (three copies: here, the validator, the Godot maker)', () => {

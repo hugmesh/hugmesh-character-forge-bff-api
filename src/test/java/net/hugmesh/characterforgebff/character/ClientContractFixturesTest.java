@@ -97,6 +97,10 @@ class ClientContractFixturesTest {
         assertThat(texts(c.get("families")))
                 .containsExactlyElementsOf(Char3DConfigValidator.FAMILIES);
         assertThat(texts(c.get("styles"))).containsExactlyElementsOf(Char3DConfigValidator.STYLES);
+        assertThat(texts(c.get("rigJoints"))).containsExactlyElementsOf(Char3DConfigValidator.RIG_JOINTS);
+        assertThat(c.get("rigOffsetMax").doubleValue()).isEqualTo(Char3DConfigValidator.RIG_OFFSET_MAX);
+        assertThat(c.get("rigScaleMin").doubleValue()).isEqualTo(Char3DConfigValidator.RIG_SCALE_MIN);
+        assertThat(c.get("rigScaleMax").doubleValue()).isEqualTo(Char3DConfigValidator.RIG_SCALE_MAX);
         assertThat(texts(c.get("expressions")))
                 .containsExactlyElementsOf(Char3DConfigValidator.EXPRESSIONS);
         assertThat(texts(c.get("packIds")))
