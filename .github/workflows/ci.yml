@@ -38,7 +38,8 @@
 #        * the official Godot 4.7-stable linux editor binary for the headless GDScript
 #          suite; put it on PATH as `godot` or set the GODOT_BIN repo variable.
 #          (Export TEMPLATES are NOT needed — `make -C godot test` never exports.)
-#   4. Branch protection on `main`: require "build", "frontend" and "godot" to pass.
+#   4. Branch protection on `main`: require "build" and "frontend" to pass. The former
+#      "godot" job left with the Godot project — its suite now runs in hugmesh-games.
 # ─────────────────────────────────────────────────────────────────────────────
 name: CI
 
@@ -133,38 +134,3 @@ jobs:
       - name: Catalogue parity (engine lanes.json == frontend catalogue == source)
         working-directory: ${{ github.workspace }}
         run: node tools/asset-pipeline/build-lanes.mjs --check
-
-  godot:
-    name: godot (character maker — headless GDScript suite)
-    runs-on: [self-hosted, hugmesh-x86]
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Resolve the Godot binary
-        env:
-          GODOT_BIN: ${{ vars.GODOT_BIN }}
-        run: |
-          set -euo pipefail
-          BIN="${GODOT_BIN:-}"
-          if [ -z "$BIN" ] && command -v godot >/dev/null 2>&1; then
-            BIN="$(command -v godot)"
-          fi
-          if [ -z "$BIN" ] || [ ! -x "$BIN" ]; then
-            echo "::error::No Godot binary. The godot/ lane carries 300+ real assertions"
-            echo "::error::(config clamping, 29-family rig distinctness, expression/jaw math,"
-            echo "::error::seeded-randomizer determinism, scene smoke) and this job will NOT"
-            echo "::error::pass without running them. Install the official Godot 4.7-stable"
-            echo "::error::linux editor binary on the runner as 'godot', or set the GODOT_BIN"
-            echo "::error::repo variable. Export templates are NOT required."
-            exit 1
-          fi
-          echo "GODOT=$BIN" >> "$GITHUB_ENV"
-          "$BIN" --version
-
-      # --import registers the class_name scripts + imports resources; without it the
-      # suite cannot even resolve Char3DConfig / CharacterAssembler.
-      - name: Import pass
-        run: make -C godot import GODOT="$GODOT"
-
-      - name: Headless behaviour tests
-        run: make -C godot test GODOT="$GODOT"

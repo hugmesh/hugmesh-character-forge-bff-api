@@ -4,6 +4,7 @@ import { CreditsComponent } from './credits.component';
 import { EngineCanvasComponent } from './engine-canvas.component';
 import { ImportVnComponent } from './import-vn.component';
 import { ForgeStateService } from '../services/forge-state.service';
+import { EngineBridgeService } from '../services/engine-bridge.service';
 import { VN_PACK_CREDITS } from '../models/vn-pack-credits';
 
 /**
@@ -283,5 +284,89 @@ describe('CreditsComponent (in-app credits)', () => {
     expect(el.querySelector('[data-testid="cf-credits-current"]')).not.toBeNull();
     expect(el.querySelector('li.current')!.textContent)
       .toContain('Taxonomy + SRD Placeholders v1');
+  });
+});
+
+/**
+ * The rigging panel: per-joint nudges that show LIVE in the engine (pushed as a
+ * rig-only message, no rebuild), persist on the config, and can be fitted by
+ * the engine's auto-adjust — the three things the user asked for by name.
+ */
+describe('ConfigEditorComponent (rigging)', () => {
+  let state: ForgeStateService;
+  let engine: jasmine.SpyObj<EngineBridgeService>;
+  beforeEach(() => {
+    engine = jasmine.createSpyObj<EngineBridgeService>('EngineBridgeService', ['setRig', 'autoAdjustRig']);
+    TestBed.configureTestingModule({
+      imports: [ConfigEditorComponent],
+      providers: [{ provide: EngineBridgeService, useValue: engine }],
+    });
+    state = TestBed.inject(ForgeStateService);
+    state.reset();
+  });
+  function editor(): { fixture: ComponentFixture<ConfigEditorComponent>; el: HTMLElement } {
+    const fixture = TestBed.createComponent(ConfigEditorComponent);
+    fixture.detectChanges();
+    return { fixture, el: fixture.nativeElement as HTMLElement };
+  }
+  const q = <T extends Element>(el: HTMLElement, id: string) => el.querySelector<T>(`[data-testid="${id}"]`);
+
+  it('offers every rig joint and six sliders bounded by the server clamps', () => {
+    const { el } = editor();
+    const joint = q<HTMLSelectElement>(el, 'cf-rig-joint')!;
+    expect(Array.from(joint.options).map((o) => o.value))
+      .toEqual(['head', 'jaw', 'eye_l', 'eye_r', 'brow_l', 'brow_r', 'ear_l', 'ear_r']);
+    for (const axis of ['x', 'y', 'z']) {
+      const off = q<HTMLInputElement>(el, `cf-rig-offset-${axis}`)!;
+      expect(off.type).toBe('range');
+      expect(Number(off.min)).toBe(-0.12);
+      expect(Number(off.max)).toBe(0.12);
+      const sc = q<HTMLInputElement>(el, `cf-rig-scale-${axis}`)!;
+      expect(Number(sc.min)).toBe(0.5);
+      expect(Number(sc.max)).toBe(1.8);
+      expect(off.getAttribute('aria-label')).toContain('jaw');
+    }
+    expect(q(el, 'cf-rig-count')).withContext('no badge before any adjustment').toBeNull();
+  });
+
+  it('a slider drag stores the joint on the config AND pushes the rig live to the engine', () => {
+    const { fixture, el } = editor();
+    const offY = q<HTMLInputElement>(el, 'cf-rig-offset-y')!;
+    offY.value = '-0.02';
+    offY.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(state.config().rig).toEqual({ jaw: { offset: [0, -0.02, 0] } });
+    expect(engine.setRig).toHaveBeenCalledWith({ jaw: { offset: [0, -0.02, 0] } });
+    expect(q(el, 'cf-rig-count')!.textContent).toContain('1 adjusted');
+    // switching joints edits THAT joint; the previous one keeps its nudge
+    const joint = q<HTMLSelectElement>(el, 'cf-rig-joint')!;
+    joint.value = 'eye_l';
+    joint.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    expect(q<HTMLInputElement>(el, 'cf-rig-offset-y')!.value).toBe('0');
+    const scY = q<HTMLInputElement>(el, 'cf-rig-scale-y')!;
+    scY.value = '1.5';
+    scY.dispatchEvent(new Event('input'));
+    expect(state.config().rig).toEqual({ jaw: { offset: [0, -0.02, 0] }, eye_l: { scale: [1, 1.5, 1] } });
+    expect(engine.setRig).toHaveBeenCalledTimes(2);
+  });
+
+  it('auto-adjust asks the engine (which answers through onConfigChanged), reset clears everything', () => {
+    const { el } = editor();
+    q<HTMLButtonElement>(el, 'cf-rig-auto')!.click();
+    expect(engine.autoAdjustRig).toHaveBeenCalledTimes(1);
+    state.setRig({ jaw: { offset: [0, -0.03, 0] } });
+    q<HTMLButtonElement>(el, 'cf-rig-reset')!.click();
+    expect('rig' in state.config()).toBeFalse();
+    expect(engine.setRig).toHaveBeenCalledWith({});
+  });
+
+  it('shows a rig the engine hands back (auto-adjust echo) in the sliders', () => {
+    const { fixture, el } = editor();
+    state.applyConfig({ ...state.config(), rig: { jaw: { offset: [0.01, -0.04, 0.02] } } });
+    fixture.detectChanges();
+    expect(q<HTMLInputElement>(el, 'cf-rig-offset-x')!.value).toBe('0.01');
+    expect(q<HTMLInputElement>(el, 'cf-rig-offset-y')!.value).toBe('-0.04');
+    expect(q<HTMLInputElement>(el, 'cf-rig-offset-z')!.value).toBe('0.02');
   });
 });

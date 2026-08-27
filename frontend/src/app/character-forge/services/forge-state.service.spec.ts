@@ -147,4 +147,25 @@ describe('ForgeStateService (config editor state)', () => {
     // Un-pinning one block leaves the others and the canonical seven alone.
     expect(svc.config().materials.fur).toBeDefined();
   });
+
+  describe('rig adjustments', () => {
+    it('setRigJoint stores a clamped, sparse rig and drops identity joints', () => {
+      svc.setRigJoint('eye_l', { offset: [0.5, -0.5, 0.01], scale: [3, 0.1, 1] });
+      expect(svc.config().rig).toEqual({ eye_l: { offset: [0.12, -0.12, 0.01], scale: [1.8, 0.5, 1] } });
+      svc.setRigJoint('jaw', { offset: [0, 0, 0] });
+      expect(svc.config().rig).toEqual({ eye_l: { offset: [0.12, -0.12, 0.01], scale: [1.8, 0.5, 1] } });
+      svc.setRigJoint('eye_l', {});
+      expect(svc.config().rig).withContext('no adjusted joints left → no rig key').toBeUndefined();
+      expect('rig' in svc.config()).toBeFalse();
+    });
+
+    it('setRig replaces the whole rig (what auto-adjust hands back) and clearRig removes it', () => {
+      svc.setRigJoint('brow_l', { scale: [1, 1.2, 1] });
+      svc.setRig({ jaw: { offset: [0, -0.03, 0] }, nose: { offset: [1, 1, 1] } });
+      expect(svc.config().rig).toEqual({ jaw: { offset: [0, -0.03, 0] } });
+      svc.clearRig();
+      expect('rig' in svc.config()).toBeFalse();
+      expect(svc.definitionJson()).not.toContain('rig');
+    });
+  });
 });

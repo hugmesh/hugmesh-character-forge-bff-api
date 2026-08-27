@@ -31,6 +31,15 @@ class FakeCharForge implements CharForgeBridge {
   setPack(key: string): void {
     this.calls.push({ method: 'setPack', args: [key] });
   }
+  setRig(json: string): void {
+    this.calls.push({ method: 'setRig', args: [json] });
+  }
+  autoAdjustRig(): void {
+    this.calls.push({ method: 'autoAdjustRig', args: [] });
+  }
+  setAutoRotate(on: boolean): void {
+    this.calls.push({ method: 'setAutoRotate', args: [on] });
+  }
   /** Ack now, answer later — exactly how the engine behaves. */
   importModel(base64: string, fileName: string): string {
     this.calls.push({ method: 'importModel', args: [base64, fileName] });
@@ -302,5 +311,29 @@ describe('EngineBridgeService (packs + BYO import)', () => {
     expect(canvas.width).toBeGreaterThan(0);
     expect(canvas.height).toBeGreaterThan(0);
     expect(canvas.id).toBe('cf-engine-canvas');
+  });
+});
+
+describe('EngineBridgeService (rig + turntable over the bridge)', () => {
+  it('forwards setRig/autoAdjustRig/setAutoRotate once the bridge registers, in order', async () => {
+    const svc = makeService();
+    const fake = new FakeCharForge();
+    svc.setRig({ jaw: { offset: [0, -0.02, 0] } });
+    svc.autoAdjustRig();
+    svc.setAutoRotate(false);
+    expect(fake.calls.length).withContext('queued until the bridge is up').toBe(0);
+    svc.registerBridge(fake);
+    const methods = fake.calls.map((c) => c.method);
+    expect(methods).toEqual(['setRig', 'autoAdjustRig', 'setAutoRotate']);
+    expect(JSON.parse(fake.calls[0].args[0] as string)).toEqual({ jaw: { offset: [0, -0.02, 0] } });
+    expect(fake.calls[2].args[0]).toBeFalse();
+  });
+
+  it('setRig with nothing sends an empty rig (the engine clears its adjustments)', () => {
+    const svc = makeService();
+    const fake = new FakeCharForge();
+    svc.registerBridge(fake);
+    svc.setRig(undefined);
+    expect(fake.calls.find((c) => c.method === 'setRig')?.args[0]).toBe('{}');
   });
 });

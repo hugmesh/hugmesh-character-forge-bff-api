@@ -136,7 +136,20 @@
       8297,
       65279,
       65529
-    ]
+    ],
+    "rigJoints": [
+      "head",
+      "jaw",
+      "eye_l",
+      "eye_r",
+      "brow_l",
+      "brow_r",
+      "ear_l",
+      "ear_r"
+    ],
+    "rigOffsetMax": 0.12,
+    "rigScaleMin": 0.5,
+    "rigScaleMax": 1.8
   },
   "acceptedDefinitions": [
     {

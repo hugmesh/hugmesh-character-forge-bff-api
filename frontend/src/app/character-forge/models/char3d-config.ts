@@ -46,6 +46,21 @@ export const BODY_ARCHETYPES = HEAD_FAMILIES;
 export type BodyArchetype = (typeof BODY_ARCHETYPES)[number];
 
 export const FORGE_STYLES = ['anime', 'toon', 'classic'] as const;
+
+/** Rig joints a definition may nudge — the assembler's head/face anchors. */
+export const RIG_JOINTS = ['head', 'jaw', 'eye_l', 'eye_r', 'brow_l', 'brow_r', 'ear_l', 'ear_r'] as const;
+export type RigJoint = (typeof RIG_JOINTS)[number];
+/** Offset clamp in metres of the joint's parent space (a head is ~0.5 m tall). */
+export const RIG_OFFSET_MAX = 0.12;
+export const RIG_SCALE_MIN = 0.5;
+export const RIG_SCALE_MAX = 1.8;
+export type Triple = [number, number, number];
+export interface Char3dRigEntry {
+  offset?: Triple;
+  scale?: Triple;
+}
+/** SPARSE: only joints with a non-identity offset/scale are present. */
+export type Char3dRig = Partial<Record<RigJoint, Char3dRigEntry>>;
 export type ForgeStyle = (typeof FORGE_STYLES)[number];
 
 /** The seven §2 part attachment slots (VN partId passthrough, id|null). */
@@ -211,6 +226,8 @@ export interface Char3dConfig {
   parts: Char3dParts;
   materials: Char3dMaterials;
   style: ForgeStyle;
+  /** Present only when at least one joint is adjusted (the server drops identity). */
+  rig?: Char3dRig;
 }
 
 /** Default material hexes — the studio's neutral fur/accent scheme. */
@@ -426,7 +443,48 @@ export function normalizeChar3dConfig(input: unknown): Char3dConfig {
   if (source) {
     config.source = source;
   }
+  const rig = normalizeRig(raw['rig']);
+  if (rig) {
+    config.rig = rig;
+  }
   return config;
+}
+
+function clampTriple(v: unknown, min: number, max: number, fallback: number): Triple | null {
+  if (!Array.isArray(v) || v.length !== 3) {
+    return null;
+  }
+  return [
+    clampNumber(v[0], min, max, fallback),
+    clampNumber(v[1], min, max, fallback),
+    clampNumber(v[2], min, max, fallback),
+  ];
+}
+
+/**
+ * The rig the way the server canonicalizes it: unknown joints dropped, numbers
+ * clamped, identity entries removed, and `undefined` (not `{}`) when nothing is
+ * adjusted — so a config with no rig serializes without the key.
+ */
+export function normalizeRig(input: unknown): Char3dRig | undefined {
+  const raw = asRecord(input);
+  const out: Char3dRig = {};
+  for (const joint of RIG_JOINTS) {
+    const entry = asRecord(raw[joint]);
+    const clean: Char3dRigEntry = {};
+    const offset = clampTriple(entry['offset'], -RIG_OFFSET_MAX, RIG_OFFSET_MAX, 0);
+    if (offset && offset.some(n => n !== 0)) {
+      clean.offset = offset;
+    }
+    const scale = clampTriple(entry['scale'], RIG_SCALE_MIN, RIG_SCALE_MAX, 1);
+    if (scale && scale.some(n => n !== 1)) {
+      clean.scale = scale;
+    }
+    if (clean.offset || clean.scale) {
+      out[joint] = clean;
+    }
+  }
+  return Object.keys(out).length ? out : undefined;
 }
 
 /**
