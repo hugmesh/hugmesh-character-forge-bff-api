@@ -206,21 +206,22 @@ the GPU memory for a look the palette-strip recolor design does not need.
    and both VRoid bases (166/134 — VRoid spring-bone hair chains) exceed the ~75
    bone Quest guidance. Flagged per-model in `pack.json`; the fix is bone-chain
    pruning, which needs a rig-aware tool.
-4. **BLOCKER — the web export will currently drop every `.vrm` and every
-   manifest.** Measured in this tree: of the 86 files under `assets/packs/`, only
-   the **64 `.glb`** have `.import` sidecars. The **11 `.vrm`** (all three viseme
-   packs: `vroid-cc0-v1`, `polygonalmind-100avatars-v1`, `godette-v1` — 11.6 MB)
-   and the **11 `.json`** (10 `pack.json` + `index.json`) have none, because
-   `.vrm` is consumed through the *runtime* loader (godot-vrm is not enabled in
-   `project.godot`) and Godot has no importer for these JSON files. `preset.0` in
-   `export_presets.cfg` is `export_filter="all_resources"` with
-   `include_filter=""`, which ships imported resources only — so all 22 of those
-   files are excluded from the bundle, taking the entire anime/viseme lane and
-   the index the runtime reads instead of enumerating `res://` with them.
-   **Fix (owned by whoever owns `export_presets.cfg`, not this lane):**
-   `include_filter="*.vrm,*.json"`. This cannot be verified from here — DESIGN §0
-   bars this lane from downloading export templates or running exports — so it
-   must be re-checked on the first real web export.
+4. **RESOLVED — the web export dropped every `.vrm`** (issue #3). The Godot
+   project now lives in hugmesh-games (`games/character-forge/`), whose
+   `export_presets.cfg` sets
+   `include_filter="assets/packs/*.json,assets/packs/*.vrm"`. Verified on a
+   real Web export (Godot 4.7.1, 2026-09-01): with that filter the PCK carries
+   all **11 `.vrm`** and all **12 `.json`** (10 `pack.json` + `index.json` +
+   `lanes.json`), byte-identical to source; with the filter blanked the same
+   export drops all 11 `.vrm` (35.3 MB → 23.2 MB PCK) while still exiting 0 —
+   the `.json` survive only because the engine loads JSON as a resource, which
+   nothing relies on. Guards, in hugmesh-games: `games/character-forge/export_required.txt`
+   declares the raw-byte files; `tests/run_tests.gd` checks the preset's
+   filters cover each one with the engine's own `matchn`; `make build-godot`
+   runs `scripts/verify-godot-pck.mjs` on the produced `index.pck` and fails on
+   any missing or drifted file. Nothing in this repo produces the export: it
+   is built in hugmesh-games and copied into `frontend/src/assets/game/` by
+   the orchestrator (see `godot/README.md`).
 5. **Quaternius RPG Character Pack** is Google-Drive-only and was skipped; its
    coverage overlaps what is already shipped. (Confirmed at the source: the only
    download control on `quaternius.com/packs/rpgcharacters.html` is an
