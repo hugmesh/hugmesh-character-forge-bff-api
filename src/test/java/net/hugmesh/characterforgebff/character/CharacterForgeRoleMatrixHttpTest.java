@@ -65,6 +65,18 @@ class CharacterForgeRoleMatrixHttpTest extends PostgresTestSupport {
         registry.add("app.tenancy.issuers",
                 () -> BRAND_X.issuerUri() + "=brandx," + BRAND_Y.issuerUri() + "=brandy");
         registry.add("spring.security.oauth2.resourceserver.jwt.issuer-uri", BRAND_X::issuerUri);
+        // HERMETIC JWKS for the back-compat issuer. BRAND_X is ALSO the lone back-compat
+        // issuer (issuer-uri above), and TenancyResourceServerConfig builds that issuer's
+        // decoder from spring.security.oauth2.resourceserver.jwt.jwk-set-uri whenever one is
+        // set (the discovery-free path). application.yml defaults jwk-set-uri from the
+        // CASDOOR_* env vars, NOT from the issuer-uri property overridden here, so without
+        // this line every BRAND_X token was verified against
+        // https://id.hugmesh.net/.well-known/jwks -- public DNS from a unit-test tier, and a
+        // 500 "Could not obtain the keys" wherever that name does not resolve. Point it at
+        // BRAND_X's own in-process JWKS: the same issuer+JWKS pairing production gets from
+        // CASDOOR_ISSUER_URI/CASDOOR_JWKS_URI, so the discovery-free path stays exercised.
+        registry.add("spring.security.oauth2.resourceserver.jwt.jwk-set-uri",
+                () -> BRAND_X.issuerUri() + "/.well-known/jwks.json");
     }
 
     @AfterAll
