@@ -1,10 +1,15 @@
 # Character Forge 3D asset pipeline
 
 Reproducible fetch → convert → audit → manifest pipeline for the vendored 3D
-character packs in `godot/character-forge/assets/packs/**`.
+character packs in `assets/packs/**` of the Godot project.
 
-Nothing under `assets/packs/` is hand-made or hand-edited. Re-running the two
-commands below from a clean checkout reproduces the committed bytes and the
+**The Godot project no longer lives in this repo.** It moved to hugmesh-games as
+`games/character-forge/` (commit `b232d38`), and the 75 committed pack files went
+with it. The scripts here still look for it at `godot/character-forge/`, a path
+that holds only a leftover `build/bundle/` in this repo. See known gap 9.
+
+Nothing under `assets/packs/` is hand-made or hand-edited. With the project in
+place, re-running the commands below reproduces the committed bytes and the
 manifests that describe them.
 
 ```bash
@@ -70,13 +75,14 @@ mixing lane is Quaternius + KayKit.
 | `vrm-slim.mjs` | VRM texture surgery that preserves the VRM extension byte-for-byte. |
 | `audit.mjs` | read-only measurement of the committed bytes (tris, render-tris, joints, jaw bone, animations, morph targets, visemes, extensions, VRM licence metadata). |
 | `build-manifests.mjs` | writes `pack.json` × 10 + `assets/packs/index.json` + `THIRD_PARTY_ASSETS.md`; fails the build over 60 MB. |
-| `lanes.json` + `build-lanes.mjs` | the hand-authored mapping of models onto the assembler's style lanes / head families / palette regions, resolved against the manifests and the engine's own enums (read out of `char3d_config.gd`, so a lane cannot name a family the engine lacks). Emits `assets/packs/lanes.json` for `scripts/pack_library.gd` and `pack-catalog.generated.ts` for the Angular selector — one source, two consumers, no drift. |
+| `lanes.json` + `build-lanes.mjs` | the hand-authored mapping of models onto the assembler's style lanes / head families / palette regions, resolved against the manifests and the engine's own enums (read out of `char3d_config.gd`, so a lane cannot name a family the engine lacks). Emits `assets/packs/lanes.json` for `scripts/pack_library.gd` and `pack-catalog.generated.ts` for the Angular selector — one source, two consumers, no drift. `--check` regenerates both in memory and fails if either committed file differs; the GitHub `frontend` job runs it. |
+| `glb-measure.mjs` | counts, straight from the GLB bytes, the triangles a bone-weight head split will yield and the glTF node names that carry a mesh. Feeds `build-lanes.mjs` so the catalogue can publish an honest triangle budget for the body-plus-donor-head entries. It splits nothing; the split runs at runtime in `mesh_surgery.gd`. |
 | `lib/check-manifests.mjs` | asserts every manifest still describes the bytes on disk, that no file is unmanifested, and that `index.json` agrees with every `pack.json` it indexes. |
 | `verify.sh` | offline gate: manifest freshness, no non-core glTF extensions, glTF validation, Godot load test. |
 
 ### The gate, and the proof it is not vacuous
 
-`GODOT=… ./verify.sh` currently reports **1805 passed, 0 failed** over 75 assets.
+`GODOT=… ./verify.sh` reported **1805 passed, 0 failed** over 75 assets when this was written.
 Those are measurements, not existence checks — each was confirmed by breaking it
 on purpose and watching the gate go red:
 
@@ -247,6 +253,19 @@ the GPU memory for a look the palette-strip recolor design does not need.
 8. **Quaternius' free UBC zip references textures it does not ship**
    (`T_Eye_Normal_png.png`, `T_Hair_1_Normal_png.png`). `slim.mjs` aliases
    `<name>_png.png` → `<name>.png` and drops them as normal maps regardless.
+9. **The scripts still point at the old Godot path.** `build-lanes.mjs`,
+   `build-manifests.mjs` and the defaults of `build.sh` and `verify.sh` use
+   `godot/character-forge/…`, which no longer exists here. `build.sh` and
+   `verify.sh` take a `PACKS=` override; `build-lanes.mjs` and
+   `build-manifests.mjs` hard-code the path (they also read `scripts/char3d_config.gd`
+   and write `THIRD_PARTY_ASSETS.md` relative to this repo). Run from this repo as
+   it stands, `node tools/asset-pipeline/build-lanes.mjs --check` stops with
+   `ENOENT … godot/character-forge/scripts/char3d_config.gd`, so the last step of
+   the GitHub `frontend` job cannot pass. It passes (48 entries) when
+   `godot/character-forge` is a link to a checkout of hugmesh-games'
+   `games/character-forge`, which replaces the leftover `build/bundle/` there; do not commit
+   that link. Pack bytes are committed in hugmesh-games, so a changed pack lands as
+   a pull request in both repos. The fix is to make the path a parameter.
 
 ---
 
