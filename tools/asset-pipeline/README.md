@@ -203,7 +203,7 @@ GPU memory for a look the palette-strip recolor design does not need.
    Blender, export both to GLB (`--background --python` batch), re-slot materials
    to the 7 semantic regions, add a jaw bone, and add them to `sources.json`.
 2. **No jaw bone anywhere on the CC0 lane.** Every Quaternius/KayKit/Fox character
-   is flagged `no jaw bone and no visemes`. Adding a bone is
+   is flagged `no jaw bone and no visemes` (33 of the 75 models). Adding a bone is
    a Blender batch job (legal-inventory.md). Until then the lip-sync channel for
    these models comes from the assembler (procedural jaw) or the JRPG-authentic
    5-frame mouth-texture strip (`shaders/mouth_strip.gdshader` already exists).
