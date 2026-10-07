@@ -1,7 +1,8 @@
 # Vendored VN pack manifests — provenance
 
-The four `<packId>/pack.json` files in this directory are BYTE-FAITHFUL vendored
-copies from the `hugmesh-character-studio-ui` repo:
+The four `<packId>/pack.json` files in this directory were vendored as BYTE-FAITHFUL
+copies from the `hugmesh-character-studio-ui` repo. As of 2026-10-07 three still match
+upstream `origin/main`; `srd-taxonomy-v1` is behind it (see the end of this file):
 
     hugmesh-character-studio-ui/src/assets/vn/packs/menagerie-v1/pack.json
     hugmesh-character-studio-ui/src/assets/vn/packs/anime-v1/pack.json
@@ -24,6 +25,16 @@ WHEN the studio packs change: re-copy the four files verbatim and re-run the
 tests (`VnMapServiceTest` pins the mapping behaviour; a removed/renamed part
 falls back per the documented partId → body-archetype → humanoid chain, so a
 stale copy degrades gracefully rather than failing).
+
+Drift, checked 2026-10-07: `menagerie-v1`, `anime-v1` and `base-anthro-v1` are
+byte-identical to upstream `origin/main`. `srd-taxonomy-v1` is not. The vendored copy is
+version `1.0.0` ("Taxonomy + SRD Placeholders v1", 4 slots, 10 heads); upstream is `2.0.0`
+("SRD Chibi — All Species", 11 slots, 92 heads). The `licenseSpdx` and `attribution`
+fields still match. A head id missing from the vendored copy falls back to `humanoid`.
+Before a re-copy, note that upstream 2.0.0 also uses four `headArchetype`/`bodyArchetype`
+names that are not among this BFF's 29 families (`ursine_musteline`, `bovid_cervid`,
+`plant`, `lagomorph_rodent`). `VnMapService` sends any such name to `humanoid`, so a
+plain re-copy would not map those heads to a beast family.
 
 License note: srd-taxonomy-v1 carries SRD 5.1 CC-BY-4.0 attribution inside its
 manifest (`licenseSpdx`/`attribution` fields) — preserved verbatim by the
