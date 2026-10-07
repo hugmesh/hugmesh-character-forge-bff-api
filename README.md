@@ -43,9 +43,12 @@ it is not part of the artifact ID.
   `character-forge-bff-db.hugmesh-backend`) holding a single table,
   `character_forge_character` (see [Schema](#schema-liquibase-r2dbc-at-runtime)).
 - **Identity:** Casdoor JWT OAuth2 resource server; `issuer-uri` defaults to
-  `https://id.hugmesh.net` (override with `CASDOOR_ISSUER_URI`). Multi-brand
-  (multi-issuer) tenancy is opt-in via `APP_TENANCY_ISSUERS` — the same wiring
-  used by `hugmesh-forum-bff-api` via the shared `hugmesh-commons` classes.
+  `https://id.hugmesh.net` (override with `CASDOOR_ISSUER_URI`). Signing keys come
+  from an explicit JWKS URL (`CASDOOR_JWKS_URI`, default
+  `<issuer>/.well-known/jwks`), so the service never does OIDC discovery; `iss` is
+  still checked against `issuer-uri`. Multi-brand (multi-issuer) tenancy is opt-in
+  via `APP_TENANCY_ISSUERS` — the same wiring used by `hugmesh-forum-bff-api` via
+  the shared `hugmesh-commons` classes.
 
 ```mermaid
 flowchart LR
@@ -93,10 +96,14 @@ service actually uses), `config.SecurityConfig`, and `config.CommonsSecurityConf
 `net.hugmesh.commons.*`).
 
 Resolving the private artifacts: local development installs parent + commons into
-`~/.m2` (`mvn install` in their respective repos); CI and Docker builds resolve
-them from the committed [`settings.xml`](settings.xml) Maven registry using
-`CI_JOB_TOKEN` (passed to the [`Dockerfile`](Dockerfile) as a BuildKit secret,
-never baked into an image layer). No secrets are committed in either path.
+`~/.m2` (`mvn install` in their respective repos). CI and Docker builds have two
+routes. The GitLab and local-compose lane resolves them from the GitLab group
+Maven registry named in the committed [`settings.xml`](settings.xml), using
+`CI_JOB_TOKEN`. The GitHub release build mounts a `packages_read_token` secret
+and uses [`.github/maven-ci-settings.xml`](.github/maven-ci-settings.xml) against
+GitHub Packages. Both tokens reach the [`Dockerfile`](Dockerfile) as BuildKit
+secrets, never as an `ARG`, `ENV` or image layer, and `ReleaseImageGuardTest`
+pins both routes. No secrets are committed in any path.
 
 ## Role gates — route table
 
@@ -104,8 +111,8 @@ never baked into an image layer). No secrets are committed in either path.
 |---|---|---|---|
 | `/bff/character-forge/characters/**` | `.authenticated()` | `hasRole('USER')` | `CharacterForgeController` |
 | `/bff/character-forge/map` | `.authenticated()` (inherits the floor) | `hasRole('USER')` | `CharacterMapController` |
-| `/v3/api-docs/**`, `/swagger-ui/**` | dev/test: `permitAll()` · prod: `hasAnyRole('ADMIN','SUPERADMIN')` | — | springdoc |
-| `/actuator/health`, `/actuator/info` | `permitAll()` (probes) | — | actuator |
+| `/v3/api-docs/**`, `/swagger-ui/**`, `/swagger-ui.html`, `/webjars/swagger-ui/**` | dev/test: `permitAll()` · prod: `hasAnyRole('ADMIN','SUPERADMIN')` | — | springdoc |
+| `/actuator/health`, `/actuator/health/**`, `/actuator/info` | `permitAll()` (probes) | — | actuator |
 
 There is deliberately **no admin or moderation endpoint** on this service. That
 design rests on everything `/lookup` hands to another member being bounded,
@@ -150,14 +157,21 @@ foreign id as `404`.
 (create, update, and `/map` output all pass through it), which is why the
 cross-user `/lookup` surface needs no separate moderation pass:
 
-- **unknown keys → 400** at every level (root/source/body/head/parts/materials);
+- **unknown keys → 400** at every level (root/source/body/head/parts/materials/rig);
 - **numeric fields clamp** into range (`build` 0..1, `height` 0.5..1.5,
-  `body.curve` 0..1, `body.top` 0..1, `snoutLength` 0..1; a wrong type still
-  rejects). `curve` (hip-to-waist ratio) and `top` (chest volume) are the shape
-  axes, orthogonal to `build`: **both default to 0.5, and 0.5 is defined to
-  reproduce the pre-axis silhouette exactly**, which is what lets them exist
-  with no migration — every definition stored before they were added validates
-  with the defaults and must keep rendering byte-identically;
+  `body.curve`, `body.top`, `body.legs`, `body.arms`, `body.limb` and
+  `snoutLength` each 0..1; a wrong type still rejects). `curve` (hip-to-waist
+  ratio) and `top` (chest volume) are shape axes orthogonal to `build`; `legs`
+  and `arms` set limb length and `limb` sets limb girth. **All of them default to
+  0.5, and 0.5 is defined to reproduce the pre-axis silhouette exactly**, which
+  is what lets them exist with no migration — every definition stored before they
+  were added validates with the defaults and must keep rendering
+  byte-identically;
+- the optional, **sparse `rig`** holds per-joint adjustments for `head`, `jaw`,
+  `eye_l`, `eye_r`, `brow_l`, `brow_r`, `ear_l` and `ear_r`: `offset` is a
+  3-number array clamped to ±0.12 m, `scale` a 3-number array clamped to
+  0.5..1.8. Identity values are dropped; an unknown joint or entry key, or a
+  non-numeric triple, is a 400;
 - **hex colours** must match `^#[0-9a-fA-F]{3,8}$`; **ids** must match
   `^[A-Za-z0-9_-]{1,64}$`;
 - **families / archetypes / styles / pack ids / expressions are enum-checked**
@@ -182,7 +196,8 @@ accent); emitting nulls instead would freeze that derivation into every
 character forever. The `/map` endpoint applies the platform's character-mapping
 rules: head-slot `partId` → pack-manifest `headArchetype` → `head.family`
 (kemonomimi maps to `humanoid` plus ear/tail parts), palette regions map to
-materials 1:1, and pack maps to style (`anime-v1` → anime, `srd-taxonomy` →
+materials 1:1 (a region the palette leaves out gets the canonical default
+colour), and pack maps to style (`anime-v1` → anime, `srd-taxonomy` →
 classic, otherwise toon). The four VN pack manifests are vendored under
 `src/main/resources/vn/packs/` with their own provenance file (`PROVENANCE.md`).
 
@@ -226,28 +241,32 @@ materials, the per-joint rigging panel with its auto-fit, expression and mouth
 preview, turntable spin. `games/character-forge/register/` carries the manifest
 and SQL that publish the maker into `hugmesh.games` (`game_slug='character-forge'`).
 
-### Character styles — procedural first, 42 vendored models on top
+### Character styles — procedural first, 48 catalogue entries on top
 
 Every one of the 29 head families renders **procedurally** with no external asset
 at all; that is the default and the only style guaranteed to be available. On top
-of it sit 42 vendored CC0/CC-BY models across five style lanes:
+of it sit 48 catalogue entries across five style lanes, built from 10 vendored
+CC0/CC-BY packs (75 model files, 38.8 MB):
 
 | Lane | What's in it | Recolourable? |
 | --- | --- | --- |
-| Anime | 2 VRoid CC0 VRM bases + the CC-BY Godette mascot | yes (VRoid), the atlas ones no |
-| JRPG | Quaternius Universal Base Characters, 4 modular outfit sets (peasant/ranger × m/f, assembled from 4–5 garment GLBs onto one skeleton at load time) and 5 KayKit adventurers | Quaternius yes, KayKit no |
-| Kemono / Furry | **procedural primary**, plus a CC0 mesh body under a procedural beast head and 3 Ultimate-Monsters chibi bipeds | yes |
-| Monsters | 11 Quaternius Ultimate Monsters + 4 KayKit undead | Quaternius yes, KayKit no |
-| Import | the 100Avatars VRM corpus + the "bring your own" import slot | no (not ours to repaint) |
+| Anime | 2 VRoid CC0 VRM bases + the CC-BY Godette mascot | yes |
+| JRPG | 2 Quaternius Universal Base Characters, 4 modular outfit sets (peasant and ranger, each on both bodies, assembled from 4–5 garment GLBs onto one skeleton at load time) and 5 KayKit adventurers | yes (Quaternius by material slot, KayKit through the atlas) |
+| Kemono / Furry | **procedural primary**, plus 2 CC0 mesh bodies under a procedural beast head, 6 real animal heads (wolf, fox, husky, shiba inu, deer, horse) grafted onto a mesh body, and 3 Ultimate-Monsters chibi bipeds | yes |
+| Monsters | 11 Quaternius Ultimate Monsters + 4 KayKit undead | yes (Quaternius by material slot, KayKit through the atlas) |
+| Import | 8 models of the 100Avatars VRM corpus + the "bring your own" import slot | yes for the 8 corpus models (by hue cluster); a file you import is not ours to repaint |
 
 The kemono lane is procedural-first for a concrete reason: no production-grade
 CC0 rigged-and-animated anthro biped exists anywhere publicly, so the parametric
-assembler (driven by numeric style rules) is the primary path, and the mesh
-options are a hybrid — a CC0 humanoid body with our procedural head grafted onto
-its head bone at runtime.
+assembler (driven by numeric style rules) is the primary path. The mesh options
+are hybrids. One puts our procedural head on a CC0 humanoid body, grafted onto
+its head bone at runtime. The other splits a real animal head out of a
+Quaternius quadruped by bone weight (`mesh_surgery.gd`) and grafts that onto the
+same body.
 
 Licence discipline is enforced in code, not by convention: a mesh basis is
-**refused** unless it carries `licenseSpdx` (from a CC0/CC-BY/MIT allow-list),
+**refused** unless it carries `licenseSpdx` (from the allow-list `CC0-1.0`,
+`CC-BY-3.0`, `CC-BY-4.0`, `MIT`),
 `attribution`, `sourceUrl`, and an ISO `retrievedAt` — otherwise the family
 silently stays procedural. See [`THIRD_PARTY_ASSETS.md`](THIRD_PARTY_ASSETS.md)
 for the full manifest.
@@ -268,11 +287,12 @@ redistribute are linked to, never bundled.
 The Angular native-federation remote mounted at `/character-forge/**` (remote
 name `character-forge`, exposing `./routes`; built from the
 `hugmesh-character-studio-ui` template). The forge studio page embeds the Godot
-canvas from same-origin assets (`frontend/src/assets/game/` — a placeholder
-README until the export is baked in; the page still boots and shows an "engine
-bundle not present" panel when the export is absent), parameter editor panels,
-import-from-VN (paste or `localStorage`, mapped through `/map`), save/load via
-this BFF (using the `HttpOnly` `bff_` cookie), and a randomizer. See
+canvas from same-origin assets (`frontend/src/assets/game/` holds the committed
+Web export — `index.js`, `index.pck`, `index.wasm` and two audio worklets — beside
+a README; if the export is absent the page still boots and shows an "engine
+bundle not present" panel), style selector, parameter editor and rigging panels,
+credits view, import-from-VN (paste or `localStorage`, mapped through `/map`),
+save/load via this BFF (using the `HttpOnly` `bff_` cookie), and a randomizer. See
 [`frontend/README.md`](frontend/README.md) for frontend-specific setup.
 
 ## Configuration
@@ -284,6 +304,7 @@ local-dev default.
 | Variable | Default | Purpose |
 |---|---|---|
 | `CASDOOR_ISSUER_URI` | `https://id.hugmesh.net` | Casdoor OIDC issuer used for JWT validation (single-issuer mode) |
+| `CASDOOR_JWKS_URI` | `${CASDOOR_ISSUER_URI}/.well-known/jwks` | Explicit JWKS URL, so the resource server skips OIDC discovery (inside a container the published issuer URL can be unreachable) |
 | `APP_TENANCY_ISSUERS` | *(empty)* | Comma-separated `issuerUri=domainName` pairs; non-empty enables multi-issuer (multi-brand) mode, and any issuer outside this list is rejected with 401 |
 | `SPRING_R2DBC_URL` / `SPRING_R2DBC_USERNAME` / `SPRING_R2DBC_PASSWORD` | in-cluster Postgres service | Runtime R2DBC connection |
 | `SPRING_LIQUIBASE_URL` / `SPRING_LIQUIBASE_USER` / `SPRING_LIQUIBASE_PASSWORD` | in-cluster Postgres service | JDBC connection used only for Liquibase migrations at startup |
@@ -292,6 +313,7 @@ local-dev default.
 | `SSL_KEY_STORE`, `SSL_KEY_STORE_TYPE`, `SSL_KEY_STORE_PASSWORD` | `/stores/keystore.p12`, `PKCS12`, *(empty)* | Server TLS identity (Vault-PKI issued in-cluster) |
 | `SSL_TRUST_STORE`, `SSL_TRUST_STORE_TYPE`, `SSL_TRUST_STORE_PASSWORD` | `/stores/truststore.p12`, `PKCS12`, *(empty)* | Cluster CA trust store for client-cert validation |
 | `SSL_ENABLED_PROTOCOLS` | `TLSv1.3` | TLS protocol floor when TLS is enabled |
+| `app.mfa.enabled`, `app.mfa.freshness-window` | `false`, `600000` (ms) | Properties, not env vars in `application.yml`. When enabled, the shared Casdoor authority converter derives the `MFA_SATISFIED` marker; when off (the default) it is never produced |
 
 Locally, none of the TLS variables need to be set — the service runs in plain
 HTTP with `client-auth=none` by default, and the test suite never touches the
@@ -311,22 +333,33 @@ trust/key stores.
   validator/map unit and slice tests, a `@DataR2dbcTest` repository slice run
   against the real Liquibase schema, and a **role-matrix + ownership +
   brand-wall HTTP test** driven by real RS256 tokens (`TestIssuer`).
-- `OpenApiSpecDumpTest` writes the committed, deterministic
+  `ClientContractFixturesTest` is the server half of the contract fixture the
+  frontend and the Godot suite also read; `ReleaseImageGuardTest` pins the
+  Dockerfile's two Maven-registry routes.
+- `OpenApiSpecDumpTest` checks the committed, deterministic
   [`src/main/resources/openapi/openapi.json`](src/main/resources/openapi/openapi.json)
   (sorted keys; `openapi_3_0` with `default-produces-media-type: application/json`
-  pinned in `application.yml` for `ng-openapi-gen` compatibility).
-  `-Dopenapi.spec.check=true` turns it into a CI drift guard.
+  pinned in `application.yml` for `ng-openapi-gen` compatibility) against the live
+  API and fails on drift. After an API change, refresh the file with
+  `./mvnw -Dtest=OpenApiSpecDumpTest -Dopenapi.spec.write=true test` and commit it.
 - `make pentest` mirrors the CI SCA/DAST pen-test stage locally (non-enforcing);
   see the [Makefile](Makefile) for the knobs (`SCA_FAIL_CVSS`, `USE_DOCKER`,
   `DAST_TARGET_URL`).
 
 ### CI
 
-GitLab CI (`.gitlab-ci.yml`: test → build image → pentest, the same shape as
-`forum-bff`; uses `CI_JOB_TOKEN` for registry access) is the enforcing pipeline.
-GitHub Actions (`.github/workflows/ci.yml`) mirrors it as a merge gate on this
-mirror. The Docker build is a multi-stage `eclipse-temurin:25` build with the
-registry token supplied as a BuildKit secret, never written into an image layer.
+GitLab CI (`.gitlab-ci.yml`: jobs `test`, `build:image`, `pentest:sca` and
+`pentest:dast`, the same shape as `forum-bff`; uses `CI_JOB_TOKEN` for registry
+access) is the enforcing pipeline. GitHub Actions (`.github/workflows/ci.yml`)
+is the merge gate on this mirror, with two jobs on self-hosted runners labelled
+`self-hosted, hugmesh-x86`: `build (Spring BFF)` runs
+`./mvnw -B -s settings.xml clean verify`, and `frontend` runs `npm ci`,
+`npm test`, `npm run build`, then `node tools/asset-pipeline/build-lanes.mjs --check`
+(see known gap 9 in
+[`tools/asset-pipeline/README.md`](tools/asset-pipeline/README.md)). The Godot
+job left with the project. The Docker build is a multi-stage `eclipse-temurin:25`
+build with the registry token supplied as a BuildKit secret, never written into
+an image layer.
 
 ## Deploy
 
@@ -336,9 +369,10 @@ descriptor. The authoritative production manifests live in
 [`hugmesh-generator`](https://github.com/hugmesh/hugmesh-generator)'s
 `character-forge` optional-services slug (disabled by default; enabled with
 `--with-character-forge`). The service deploys into the `hugmesh-backend`
-namespace on port 8080, with mTLS keystore support available via the
-`SSL_ENABLED` family of settings above (off by default — see
-[`application.yml`](src/main/resources/application.yml)).
+namespace on port 8080 behind a ClusterIP service. mTLS is off by default in
+[`application.yml`](src/main/resources/application.yml) and on in
+[`deploy/deployment.yaml`](deploy/deployment.yaml) (`SSL_ENABLED=true`,
+`SSL_CLIENT_AUTH=need`, PKCS12 stores under `/stores`).
 
 ## Contributing
 
