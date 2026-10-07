@@ -16,14 +16,17 @@ discovery doc is served by a tiny in-process JDK `HttpServer` bound to `127.0.0.
 ## The two reusable seams (copied; only this repo's package + ctor shape adapted)
 
 - `src/test/java/net/hugmesh/characterforgebff/testsupport/TestIssuer.java` —
-  mints issuer-specific RS256 JWTs against an in-process JWKS. Copied VERBATIM from the
-  gateway (only the `package` line changed). Only dependency: `nimbus-jose-jwt`,
-  transitive via `spring-boot-starter-oauth2-resource-server`.
+  mints issuer-specific RS256 JWTs against an in-process JWKS. Copied from the
+  gateway with only the `package` line changed; the two files have since diverged.
+  The gateway's copy adds `mintExpired`, and this copy adds `mintWithWrongKid`.
+  Only dependency: `nimbus-jose-jwt`, transitive via
+  `spring-boot-starter-oauth2-resource-server`.
 - `src/test/java/net/hugmesh/characterforgebff/config/SecuritySliceSupport.java` —
   builds this repo's REAL `SecurityConfig` filter chain into a `WebTestClient`, no full
   Spring Boot context. Adapted to this repo's `SecurityConfig(DomainRegistry,
-  ObjectProvider<...>)` ctor (same shape as the gateway) and its **profile-split**
-  chain beans: `devFilterChain` (`@Profile({"dev","test"})`, spec public) via
+  ObjectProvider<...>, mfaEnabled, mfaFreshnessWindowMillis)` ctor (the slices pass
+  `false` and `600000L`; the gateway's ctor also takes the application name) and its
+  **profile-split** chain beans: `devFilterChain` (`@Profile({"dev","test"})`, spec public) via
   `sliceClient(...)` and `filterChain` (`@Profile("!dev & !test")`, spec ADMIN-gated)
   via `prodSliceClient(...)`.
 
@@ -50,8 +53,10 @@ the tenancy resolver bean, the `DomainRegistry` built from the real property, an
 `resolver != null && domainRegistry.isMultiIssuer()`. A `productionWiring_…` assertion
 pins that the multi-issuer path was actually taken in the booted context (so the
 fail-closed semantics below are genuinely the resolver's). The back-compat
-`issuer-uri` is pointed at brand X so Spring Boot's auto-configured decoder discovers
-offline and the context boots.
+`issuer-uri` and `jwk-set-uri` are both pointed at brand X's in-process issuer and
+JWKS. `application.yml` takes `jwk-set-uri` from the `CASDOOR_*` variables, not from
+the overridden `issuer-uri`, so without the override brand X's tokens would be checked
+against `https://id.hugmesh.net` over the network.
 
 | # | Scenario | Expectation |
 |---|----------|-------------|
@@ -73,7 +78,8 @@ the allowlist before any key lookup).
   authenticated — the converter floors every principal to `ROLE_USER`, so
   `.authenticated()` proves authentication);
 - unknown-iss **401 end-to-end**;
-- prod chain: `/v3/api-docs` requires ADMIN (plain user 403, unauthenticated 401).
+- prod chain: `/v3/api-docs` requires ADMIN or SUPERADMIN (plain user 403,
+  unauthenticated 401).
 
 ## Where the `ROLE_USER` gate lives
 
