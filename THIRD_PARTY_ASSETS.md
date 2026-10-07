@@ -18,7 +18,7 @@ Vendored *code* (the godot-vrm and MToon addons) is tracked separately in
 
 ## License discipline (binding)
 
-Only CC0 / CC-BY items carrying a positive redistribution verdict in the XR-chat
+Only CC0 / CC-BY items with a positive redistribution verdict in the XR-chat
 research reports (`legal-inventory.md`, `kemono.md`, `jrpg-bases.md`,
 `link-audit.md`) may be vendored. **Nothing** from Mixamo, Synty, VRoid Hub,
 BOOTH, CGTrader, or unverified Sketchfab uploads. VRoid meshes ship only as
@@ -27,8 +27,8 @@ Every file gets a `pack.json` entry with its licence quoted from the source.
 
 ## Where the licence is enforced at runtime
 
-The manifests below are not the only place this discipline lives — the code
-refuses to load an asset that lacks them:
+The manifests are not the only place this discipline lives. The code refuses to
+load an asset that lacks them:
 
 | Layer | File | What it enforces |
 | --- | --- | --- |
@@ -39,9 +39,9 @@ refuses to load an asset that lacks them:
 | In-app credit | `frontend/src/app/character-forge/panels/pack-selector.component.html` | Shows the licence and credit on every model card — what discharges the CC-BY visibility requirement. |
 | In-app credit (VN packs) | `frontend/src/app/character-forge/panels/credits.component.html` | Quotes the pack-level `attribution` of every vendored VN manifest verbatim — the SRD 5.1 notice srd-taxonomy-v1 carries. The strings are pinned to the server's own parse of those manifests by the shared contract fixture. |
 
-User-imported models never enter any of this: the importer reads the file in
-the browser, hands the bytes to the engine, and surfaces the file's OWN
-in-file licence terms. Nothing imported is uploaded, stored or redistributed.
+User-imported models never enter any of this. The importer reads the file in the
+browser, hands the bytes to the engine, and shows the file's OWN in-file licence
+terms. Nothing imported is uploaded, stored or redistributed.
 
 ## Attribution required (CC-BY — must also be shown in-app)
 
