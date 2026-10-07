@@ -82,7 +82,8 @@ is Quaternius + KayKit.
 
 ### The gate, and the proof it is not vacuous
 
-`GODOT=… ./verify.sh` reported **1805 passed, 0 failed** over 75 assets when this was written.
+`GODOT=… ./verify.sh` reports **1805 passed, 0 failed** over 75 assets (rechecked
+2026-10-07 with Godot 4.7.2, against the hugmesh-games tree at `origin/main`).
 These are measurements, not existence checks. Each was confirmed by breaking it on
 purpose and watching the gate go red:
 
