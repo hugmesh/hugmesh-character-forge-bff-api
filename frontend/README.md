@@ -98,9 +98,11 @@ single-threaded export, headers are owned by the gateway).
 
 ## Vendored models
 
-`src/app/character-forge/models/vn-character.ts` + `vn-manifest.ts` are
-byte-faithful vendored copies from hugmesh-character-studio-ui (provenance
-headers in-file; native-federation forbids cross-remote runtime imports).
+`src/app/character-forge/models/vn-character.ts` + `vn-manifest.ts` were vendored
+byte-faithfully from hugmesh-character-studio-ui (provenance headers in-file;
+native-federation forbids cross-remote runtime imports). Both now lag upstream: as
+of 2026-10-07 the studio's copies add slot-transform types (`vn-character.ts`) and
+`viseme`/`visemeOf` fields (`vn-manifest.ts`) that these lack.
 `part-archetypes.ts` is generated data extracted from the studio's packs
 (partId → headArchetype + per-slot part ids) powering the client-side map
 mirror and the randomizer.
