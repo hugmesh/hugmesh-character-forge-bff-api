@@ -62,7 +62,7 @@ jobs:
   build:
     name: build (Spring BFF)
     # Github-hosted (the hugmesh-x86 label is retired) — see the RUNNER note above. Has Docker for Testcontainers.
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.RUNS_ON || '"ubuntu-latest"') }}
     steps:
       - uses: actions/checkout@v4
 
@@ -94,7 +94,7 @@ jobs:
 
   frontend:
     name: frontend (Angular remote — karma)
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.RUNS_ON || '"ubuntu-latest"') }}
     defaults:
       run:
         working-directory: frontend
