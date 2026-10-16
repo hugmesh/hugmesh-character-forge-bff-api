@@ -75,7 +75,7 @@ is Quaternius + KayKit.
 | `vrm-slim.mjs` | VRM texture surgery that preserves the VRM extension byte-for-byte. |
 | `audit.mjs` | read-only measurement of the committed bytes (tris, render-tris, joints, jaw bone, animations, morph targets, visemes, extensions, VRM licence metadata). |
 | `build-manifests.mjs` | writes `pack.json` × 10 + `assets/packs/index.json` + `THIRD_PARTY_ASSETS.md`; fails the build over 60 MB. |
-| `lanes.json` + `build-lanes.mjs` | the hand-authored mapping of models onto the assembler's style lanes / head families / palette regions, resolved against the manifests and the engine's own enums (read out of `char3d_config.gd`, so a lane cannot name a family the engine lacks). Emits `assets/packs/lanes.json` for `scripts/pack_library.gd` and `pack-catalog.generated.ts` for the Angular selector — one source, two consumers, no drift. `--check` regenerates both in memory and fails if either committed file differs; the GitHub `frontend` job runs it. |
+| `lanes.json` + `build-lanes.mjs` | the hand-authored mapping of models onto the assembler's style lanes / head families / palette regions, resolved against the manifests and the engine's own enums (read out of `char3d_config.gd`, so a lane cannot name a family the engine lacks). Emits `assets/packs/lanes.json` for `scripts/pack_library.gd` and `pack-catalog.generated.ts` for the Angular selector — one source, two consumers, no drift. `--check` regenerates both in memory and fails if either committed file differs. No CI job runs it (see known gap 9). |
 | `glb-measure.mjs` | counts, straight from the GLB bytes, the triangles a bone-weight head split will yield and the glTF node names that carry a mesh. Feeds `build-lanes.mjs` so the catalogue can publish an honest triangle budget for the body-plus-donor-head entries. It splits nothing; the split runs at runtime in `mesh_surgery.gd`. |
 | `lib/check-manifests.mjs` | asserts every manifest still describes the bytes on disk, that no file is unmanifested, and that `index.json` agrees with every `pack.json` it indexes. |
 | `verify.sh` | offline gate: manifest freshness, no non-core glTF extensions, glTF validation, Godot load test. |
@@ -260,8 +260,9 @@ GPU memory for a look the palette-strip recolor design does not need.
    `build-manifests.mjs` hard-code the path (they also read `scripts/char3d_config.gd`
    and write `THIRD_PARTY_ASSETS.md` relative to this repo). Run from this repo as
    it stands, `node tools/asset-pipeline/build-lanes.mjs --check` stops with
-   `ENOENT … godot/character-forge/scripts/char3d_config.gd`, so the last step of
-   the GitHub `frontend` job cannot pass. It passes (48 entries) when
+   `ENOENT … godot/character-forge/scripts/char3d_config.gd`. For that reason the
+   step was removed from the GitHub `frontend` job, and no CI job checks catalogue
+   parity now. It passes (48 entries) when
    `godot/character-forge` is a link to a checkout of hugmesh-games'
    `games/character-forge`, which replaces the leftover `build/bundle/` there; do not commit
    that link. Pack bytes are committed in hugmesh-games, so a changed pack lands as

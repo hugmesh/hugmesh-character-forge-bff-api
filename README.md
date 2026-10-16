@@ -349,12 +349,16 @@ Locally you set none of the TLS variables. The service runs in plain HTTP with
 GitLab CI (`.gitlab-ci.yml`: jobs `test`, `build:image`, `pentest:sca` and
 `pentest:dast`, the same shape as `forum-bff`; uses `CI_JOB_TOKEN` for registry
 access) is the enforcing pipeline. GitHub Actions (`.github/workflows/ci.yml`)
-is the merge gate on this mirror. It has two jobs on self-hosted runners labelled
-`self-hosted, hugmesh-x86`. `build (Spring BFF)` runs
-`./mvnw -B -s settings.xml clean verify`. `frontend` runs `npm ci`, `npm test`,
-`npm run build`, then `node tools/asset-pipeline/build-lanes.mjs --check` (see
-known gap 9 in [`tools/asset-pipeline/README.md`](tools/asset-pipeline/README.md)).
-The Godot job left with the project. The Docker build is a multi-stage
+is the merge gate on this mirror. It has two jobs, which run on the runner named by
+the `RUNS_ON` repository variable (default `ubuntu-latest`). `build (Spring BFF)` runs
+`./mvnw -B -s settings.xml clean verify`; on a GitHub-hosted runner it cannot reach the
+GitLab registry that `settings.xml` names. `frontend` runs `npm ci`, `npm test` and
+`npm run build`. The catalogue parity step (`build-lanes.mjs --check`) was removed
+because the engine files it reads moved to hugmesh-games (known gap 9 in
+[`tools/asset-pipeline/README.md`](tools/asset-pipeline/README.md)). The Godot job
+left with the project. A manual `Release` workflow (`.github/workflows/release.yml`)
+builds the image and pushes it to GHCR, resolving the private libraries from GitHub
+Packages. The Docker build is a multi-stage
 `eclipse-temurin:25` build; the registry token arrives as a BuildKit secret and
 never lands in an image layer.
 
