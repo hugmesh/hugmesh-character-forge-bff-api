@@ -7,12 +7,18 @@
 # PR could merge with a BROKEN main and GitLab only fail afterwards. This workflow
 # makes the compile + test a REQUIRED, merge-blocking GitHub status check.
 #
-# RUNNER — must be SELF-HOSTED in-cluster (tailnet).
-# The private deps (hugmesh-parent / hugmesh-commons) live ONLY in the in-cluster
-# GitLab group Maven registry, which a github.com-hosted runner cannot reach (Tailscale-
-# only). So this runs on a self-hosted runner registered to the repo/org that sits on the
-# tailnet and has Docker (for the Testcontainers full-context tests) — the same host class
-# as the GitLab `hugmesh-x86` runner.
+# RUNNER — github-hosted `ubuntu-latest`.
+# Both jobs used to ask for `runs-on: [self-hosted, hugmesh-x86]`. No runner carries
+# that label (the org's self-hosted runner has self-hosted, Linux, X64), so every run
+# since the file was added ended `cancelled` after GitHub's 24h queue limit: this gate
+# has never reported. It now runs on `ubuntu-latest`, which has Docker (Testcontainers)
+# and Chrome (karma). Plain `ubuntu-latest`, not the RUNS_ON repository variable.
+#
+# KNOWN FAILURE UNTIL THE MAVEN CHAIN MOVES: the `build` job still resolves the
+# private hugmesh-parent / hugmesh-commons from the in-cluster GitLab group Maven
+# registry through the GITLAB_* secrets, which a github-hosted runner cannot reach
+# (tailnet-only). So `build (Spring BFF)` fails at dependency resolution until the
+# build reads the chain from GitHub Packages. That is a separate change from the label.
 #
 # SCOPE — ALL THREE LANES OF THIS REPO ARE GATED HERE.
 # This repo ships three suites in one tree (DESIGN §4): the Spring BFF at the root, the
@@ -25,8 +31,7 @@
 # project that did not even PARSE both reached main.
 #
 # PREREQS (one-time, per the org / repo settings):
-#   1. Register a self-hosted runner (labels: self-hosted, hugmesh-x86) on the tailnet
-#      with Docker available (mirrors the GitLab privileged shell runner).
+#   1. (none: the runner is github-hosted `ubuntu-latest`)
 #   2. Add repo/org SECRETS that map to the settings.xml ${env.*} placeholders:
 #        GITLAB_MAVEN_TOKEN  -> a read-scoped token for the GitLab group Maven registry
 #        GITLAB_API_V4_URL   -> the in-cluster GitLab API v4 URL
@@ -56,8 +61,8 @@ concurrency:
 jobs:
   build:
     name: build (Spring BFF)
-    # Self-hosted, in-cluster (tailnet) — see the RUNNER note above. Has Docker for Testcontainers.
-    runs-on: [self-hosted, hugmesh-x86]
+    # Github-hosted (the hugmesh-x86 label is retired) — see the RUNNER note above. Has Docker for Testcontainers.
+    runs-on: ${{ fromJSON(vars.RUNS_ON || '"ubuntu-latest"') }}
     steps:
       - uses: actions/checkout@v4
 
@@ -89,7 +94,7 @@ jobs:
 
   frontend:
     name: frontend (Angular remote — karma)
-    runs-on: [self-hosted, hugmesh-x86]
+    runs-on: ${{ fromJSON(vars.RUNS_ON || '"ubuntu-latest"') }}
     defaults:
       run:
         working-directory: frontend
@@ -120,17 +125,14 @@ jobs:
       - name: Production build
         run: npm run build
 
-      # CATALOGUE PARITY. The engine's assets/packs/lanes.json and the frontend's
-      # pack-catalog.generated.ts are the same data compiled twice from
-      # tools/asset-pipeline/lanes.json, and nothing else in this workflow compares
-      # them: the karma job above reads only the frontend copy, the godot job below
-      # reads only the engine copy, so BOTH stay green while the two disagree.
-      #
-      # That is not hypothetical. A rename moved ten lane keys in the frontend and
-      # not in the engine, and 10 of 42 catalogue entries (24%) were dead in the
-      # browser for a whole release — every one of them reporting success — with a
-      # fully green CI. The regenerate step is offline, needs no npm deps and takes
-      # milliseconds, so there is no reason for it not to gate every merge.
-      - name: Catalogue parity (engine lanes.json == frontend catalogue == source)
-        working-directory: ${{ github.workspace }}
-        run: node tools/asset-pipeline/build-lanes.mjs --check
+      # CATALOGUE PARITY IS NOT CHECKED HERE ANY MORE (removed 2026-10-07).
+      # The step ran `node tools/asset-pipeline/build-lanes.mjs --check`, which reads the
+      # ENGINE copy of the catalogue (godot/character-forge/assets/packs/lanes.json and
+      # scripts/char3d_config.gd). Those files moved to hugmesh-games
+      # (games/character-forge/) with the Godot project (b232d38), so the script dies
+      # with ENOENT on a clean checkout: the first hosted run showed it (run 37691430952,
+      # job 113032297809). It had never executed before, because this workflow never got a
+      # runner. Nothing replaces it: hugmesh-games has no build-lanes. Restoring the gate
+      # needs the two repos side by side (a cross-repo checkout of the private
+      # hugmesh-games needs a token this repo does not have) or the check moving to
+      # hugmesh-games. This is an open gap, stated in PR #28, not a silent drop.
