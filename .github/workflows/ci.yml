@@ -12,7 +12,10 @@
 # that label (the org's self-hosted runner has self-hosted, Linux, X64), so every run
 # since the file was added ended `cancelled` after GitHub's 24h queue limit: this gate
 # has never reported. It now runs on `ubuntu-latest`, which has Docker (Testcontainers)
-# and Chrome (karma). Plain `ubuntu-latest`, not the RUNS_ON repository variable.
+# and Chrome (karma). Plain `ubuntu-latest`, not the RUNS_ON repository variable: both
+# jobs run on pull_request, and once the repo is public a pull-request job that can be
+# pointed at the self-hosted runner is a way onto that machine. Only the Release workflow
+# (push to main, v* tags, dispatch) may use the local runner, through RUNS_ON_PUBLISH.
 #
 # KNOWN FAILURE UNTIL THE MAVEN CHAIN MOVES: the `build` job still resolves the
 # private hugmesh-parent / hugmesh-commons from the in-cluster GitLab group Maven
@@ -62,7 +65,9 @@ jobs:
   build:
     name: build (Spring BFF)
     # Github-hosted (the hugmesh-x86 label is retired) — see the RUNNER note above. Has Docker for Testcontainers.
-    runs-on: ${{ fromJSON(vars.RUNS_ON || '"ubuntu-latest"') }}
+    # Written literally: this job runs on pull_request, and a pull-request job must never read a
+    # variable that can point it at the self-hosted runner (beta scheme 3.2, 2026-10-21).
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -94,7 +99,8 @@ jobs:
 
   frontend:
     name: frontend (Angular remote — karma)
-    runs-on: ${{ fromJSON(vars.RUNS_ON || '"ubuntu-latest"') }}
+    # Literal ubuntu-latest for the same reason as `build`.
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: frontend

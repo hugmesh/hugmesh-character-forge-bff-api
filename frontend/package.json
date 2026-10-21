@@ -1,6 +1,6 @@
 {
   "name": "@hugmesh/character-forge",
-  "version": "0.0.0",
+  "version": "0.2.0-beta.1",
   "description": "Character Forge — 3D character maker (native-federation remote 'character-forge'). Maps VN characters (character-studio SVG packs) to Char3DConfig and embeds the Godot studio canvas.",
   "scripts": {
     "ng": "ng",

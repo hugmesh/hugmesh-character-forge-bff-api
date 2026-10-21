@@ -1,7 +1,25 @@
 name: Release
 
-# Manual only. Builds the image and pushes it to GHCR (ghcr.io/hugmesh/hugmesh-character-forge-bff-api).
-# Never add `push`/`tags` triggers here without an explicit decision to go live.
+# Builds the image and pushes it to GHCR (ghcr.io/hugmesh/hugmesh-character-forge-bff-api).
+#
+# WHAT PUBLISHES WHAT (beta scheme, 2026-10-21)
+#   push to main                      -> :main and :sha-<12>. No versioned tag moves.
+#   push of tag v<version>            -> :<version>, :beta and :sha-<12>, then a GitHub prerelease.
+#   workflow_dispatch on a v* tag     -> the same as the tag push (the re-run path).
+#   workflow_dispatch on main         -> the same as a push to main.
+#   anything else                     -> refused by the version job, nothing is built.
+# The tag is the publish decision: <version> is the project <version> in pom.xml (and
+# frontend/package.json), and scripts/release-version.sh refuses a tag that does not name it.
+# A published <version> tag is never overwritten, and a beta never moves :latest.
+#
+# RUNNER. Every job uses the same runs-on expression. It picks the runner list in the
+# RUNS_ON_PUBLISH repository variable (a JSON array such as ["self-hosted","Linux","X64"]) ONLY
+# for a non-pull-request event on refs/heads/main or a v*/studio-v* tag; everything else, and
+# every run while RUNS_ON_PUBLISH is unset, goes to GitHub-hosted ubuntu-latest. Deleting
+# RUNS_ON_PUBLISH is the off switch. This workflow has no pull_request trigger and must never get
+# one. The expression keeps our own jobs off the local runner; it is NOT a security boundary
+# against fork pull requests, which bring their own workflow file (that protection is the runner
+# group's settings).
 #
 # The Maven build inside the Dockerfile resolves the PRIVATE net.hugmesh libraries
 # (hugmesh-parent, hugmesh-build-config, hugmesh-commons) from GitHub
@@ -10,21 +28,46 @@ name: Release
 # has run, the Preflight step fails by name. The repo-root settings.xml (GitLab registry) is not
 # used by this workflow and stays for GitLab CI and the local compose lane.
 #
-# Runs on a GitHub-hosted runner: the GitLab registry is tailnet-only and unreachable from there.
-#
 # Shape copied from hugmesh-tube-bff-api's release.yml (itself from hugmesh-user-bff-api, reconciled
 # with owncast-bff), with hugmesh-auth-core NOT in the preflight (this service does not depend on it)
 # and the build-record upload switched off. Only the image name differs.
 
 on:
-  workflow_dispatch:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 env:
   IMAGE: ghcr.io/hugmesh/hugmesh-character-forge-bff-api
 
 jobs:
+  version:
+    runs-on: ${{ fromJSON(github.event_name != 'pull_request' && github.event_name != 'pull_request_target' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/studio-v')) && vars.RUNS_ON_PUBLISH || '"ubuntu-latest"') }}
+    outputs:
+      version: ${{ steps.guard.outputs.version }}
+      kind: ${{ steps.guard.outputs.kind }}
+      sha12: ${{ steps.guard.outputs.sha12 }}
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      # Refuses any ref other than main or v<pom version>, a SNAPSHOT, a malformed version and a
+      # frontend/package.json that disagrees with the pom. Nothing below runs when it fails.
+      - name: Version guard
+        id: guard
+        run: bash scripts/release-version.sh
+
   preflight:
-    runs-on: ubuntu-latest
+    needs: version
+    runs-on: ${{ fromJSON(github.event_name != 'pull_request' && github.event_name != 'pull_request_target' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/studio-v')) && vars.RUNS_ON_PUBLISH || '"ubuntu-latest"') }}
     steps:
       # Preflight, cross-repo package read. Fails here, by name, instead of deep inside Maven.
       # The net.hugmesh libraries live in the PRIVATE GitHub Packages registries of the chain
@@ -68,8 +111,8 @@ jobs:
           exit ${rc}
 
   build-and-push:
-    needs: preflight
-    runs-on: ubuntu-latest
+    needs: [version, preflight]
+    runs-on: ${{ fromJSON(github.event_name != 'pull_request' && github.event_name != 'pull_request_target' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/studio-v')) && vars.RUNS_ON_PUBLISH || '"ubuntu-latest"') }}
     permissions:
       contents: read
       packages: write
@@ -87,12 +130,64 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Compute image tag
-        id: tag
-        run: echo "tag=${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
+      # A published <version> tag is immutable: a release run stops if it already exists. Only a
+      # clear "not found" lets the run go on; any other registry error stops it too, because
+      # "could not look" must not be read as "absent".
+      - name: Refuse to overwrite a published version
+        if: needs.version.outputs.kind == 'release'
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          set -uo pipefail
+          if out=$(docker buildx imagetools inspect "${IMAGE}:${VERSION}" 2>&1); then
+            echo "::error::${IMAGE}:${VERSION} is already published. A beta is never overwritten: raise N in pom.xml and frontend/package.json, merge, and tag the new version."
+            exit 1
+          fi
+          if printf '%s\n' "${out}" | grep -a -i -E 'not found|manifest unknown|name unknown' >/dev/null; then
+            echo "${IMAGE}:${VERSION} is not published yet."
+          else
+            printf '%s\n' "${out}"
+            echo "::error::could not tell whether ${IMAGE}:${VERSION} exists (the registry answered with something other than 'not found'). Nothing was pushed."
+            exit 1
+          fi
 
-      # `latest` moves only when the run is on main, so a proof dispatch from a branch can never
-      # overwrite it. (A blank line in `tags` is ignored.)
+      # Release: <version> (immutable), beta (newest beta of this repo), sha-<12>.
+      # Main: main, sha-<12>. Never latest: it is reserved for a final (non-beta) release, and
+      # none exists yet, so a final version is refused here until that decision is made.
+      - name: Compute image tags
+        id: tags
+        env:
+          KIND: ${{ needs.version.outputs.kind }}
+          VERSION: ${{ needs.version.outputs.version }}
+          SHA12: ${{ needs.version.outputs.sha12 }}
+        run: |
+          set -euo pipefail
+          case "${KIND}" in
+            release)
+              case "${VERSION}" in
+                *-beta.*) ;;
+                *) echo "::error::${VERSION} is not a beta; a final release needs its own decision about moving tags."; exit 1 ;;
+              esac
+              tags="${IMAGE}:${VERSION}"$'\n'"${IMAGE}:beta"$'\n'"${IMAGE}:sha-${SHA12}"
+              label_version="${VERSION}"
+              ;;
+            main)
+              tags="${IMAGE}:main"$'\n'"${IMAGE}:sha-${SHA12}"
+              label_version=main
+              ;;
+            *)
+              echo "::error::unknown kind '${KIND}'"
+              exit 1
+              ;;
+          esac
+          {
+            echo "tags<<EOF_TAGS"
+            echo "${tags}"
+            echo "EOF_TAGS"
+            echo "label_version=${label_version}"
+          } >> "$GITHUB_OUTPUT"
+          echo "${tags}"
+
       - name: Build and push image
         uses: docker/build-push-action@v6
         env:
@@ -104,11 +199,42 @@ jobs:
           context: .
           push: true
           pull: true
-          tags: |
-            ${{ env.IMAGE }}:${{ steps.tag.outputs.tag }}
-            ${{ github.ref == 'refs/heads/main' && format('{0}:latest', env.IMAGE) || '' }}
+          tags: ${{ steps.tags.outputs.tags }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.version=${{ steps.tags.outputs.label_version }}
+            org.opencontainers.image.revision=${{ github.sha }}
           build-args: |
             UPSTREAM_PACKAGES_ACTOR=${{ secrets.PACKAGES_READ_ACTOR || github.actor }}
           # BuildKit secret, never an ARG/ENV, never persisted in a layer.
           secrets: |
             packages_read_token=${{ secrets.PACKAGES_READ_TOKEN }}
+
+  github-release:
+    needs: [version, build-and-push]
+    if: needs.version.outputs.kind == 'release'
+    runs-on: ${{ fromJSON(github.event_name != 'pull_request' && github.event_name != 'pull_request_target' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/studio-v')) && vars.RUNS_ON_PUBLISH || '"ubuntu-latest"') }}
+    permissions:
+      contents: write
+    steps:
+      # A prerelease, never "latest". A dispatch that re-runs an existing release leaves it alone.
+      - name: Create the GitHub prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+          VERSION: ${{ needs.version.outputs.version }}
+          SHA12: ${{ needs.version.outputs.sha12 }}
+        run: |
+          set -euo pipefail
+          if gh release view "${TAG}" >/dev/null 2>&1; then
+            echo "release ${TAG} already exists; left unchanged"
+            exit 0
+          fi
+          prerelease=()
+          case "${VERSION}" in
+            *-*) prerelease=(--prerelease) ;;
+          esac
+          gh release create "${TAG}" --verify-tag "${prerelease[@]}" --latest=false \
+            --title "${TAG}" \
+            --notes "Image: ${IMAGE}:${VERSION} (also :beta and :sha-${SHA12})."
