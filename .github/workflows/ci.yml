@@ -16,6 +16,12 @@
 # jobs run on pull_request, and once the repo is public a pull-request job that can be
 # pointed at the self-hosted runner is a way onto that machine. Only the Release workflow
 # (push to main, v* tags, dispatch) may use the local runner, through RUNS_ON_PUBLISH.
+# This line is NOT a security boundary against a fork: a fork's pull request runs the
+# fork's copy of this file, which can say `runs-on: self-hosted` directly. The boundaries
+# are org settings: the runner group must keep "allow public repositories" OFF, and fork
+# pull requests must need approval before any workflow runs. tools/ci/check-pr-runners.py
+# (the `workflow-guard` job) only keeps OUR workflow files from sending PR jobs to a
+# self-hosted runner by accident.
 #
 # KNOWN FAILURE UNTIL THE MAVEN CHAIN MOVES: the `build` job still resolves the
 # private hugmesh-parent / hugmesh-commons from the in-cluster GitLab group Maven
@@ -34,7 +40,8 @@
 # project that did not even PARSE both reached main.
 #
 # PREREQS (one-time, per the org / repo settings):
-#   1. (none: the runner is github-hosted `ubuntu-latest`)
+#   1. Runner: nothing to install for pull requests (`ubuntu-latest`). RUNS_ON is optional
+#      and only ever applies to pushes to main (see RUNNER above).
 #   2. Add repo/org SECRETS that map to the settings.xml ${env.*} placeholders:
 #        GITLAB_MAVEN_TOKEN  -> a read-scoped token for the GitLab group Maven registry
 #        GITLAB_API_V4_URL   -> the in-cluster GitLab API v4 URL
@@ -62,6 +69,21 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Static check over .github/workflows: a workflow that anything other than push,
+  # workflow_dispatch or schedule can trigger (a pull request, an issue, a comment, ...)
+  # may not send a job to a self-hosted runner, and pull_request_target is refused outright.
+  # Plain python3 + PyYAML, both preinstalled on ubuntu-latest. It runs the PR's own copy of
+  # the script, which is fine only because this job is pinned to GitHub-hosted ubuntu-latest.
+  workflow-guard:
+    name: workflow-guard (no self-hosted runner for PR jobs)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Guard self-test
+        run: python3 tools/ci/test_check_pr_runners.py
+      - name: PR jobs never reach a self-hosted runner
+        run: python3 tools/ci/check-pr-runners.py .github/workflows
+
   build:
     name: build (Spring BFF)
     # Github-hosted (the hugmesh-x86 label is retired) — see the RUNNER note above. Has Docker for Testcontainers.
