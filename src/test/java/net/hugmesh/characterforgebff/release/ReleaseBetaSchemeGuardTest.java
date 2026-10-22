@@ -146,7 +146,13 @@ class ReleaseBetaSchemeGuardTest {
         assertThat(jobs).isNotEmpty();
         jobs.forEach((name, body) -> assertThat(runsOn(body)).as("runs-on of CI job %s", name)
                 .containsExactly("ubuntu-latest"));
-        assertThat(yaml).doesNotContain("vars.RUNS_ON").doesNotContain("self-hosted");
+        assertThat(yaml).doesNotContain("vars.RUNS_ON");
+        // Job and step display names (the workflow-guard job from main says what it refuses)
+        // may name the self-hosted runner; nothing else may.
+        String withoutNames = yaml.lines()
+                .filter(l -> !l.strip().startsWith("name:") && !l.strip().startsWith("- name:"))
+                .collect(java.util.stream.Collectors.joining("\n"));
+        assertThat(withoutNames).doesNotContain("self-hosted");
     }
 
     // ---------------------------------------------------------------------------------------
