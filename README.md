@@ -349,8 +349,17 @@ Locally you set none of the TLS variables. The service runs in plain HTTP with
 GitLab CI (`.gitlab-ci.yml`: jobs `test`, `build:image`, `pentest:sca` and
 `pentest:dast`, the same shape as `forum-bff`; uses `CI_JOB_TOKEN` for registry
 access) is the enforcing pipeline. GitHub Actions (`.github/workflows/ci.yml`)
-is the merge gate on this mirror. It has two jobs, which run on the runner named by
-the `RUNS_ON` repository variable (default `ubuntu-latest`). `build (Spring BFF)` runs
+is the merge gate on this mirror. Pull requests always run on GitHub-hosted
+`ubuntu-latest`; only a push to `main` may use the runner named by the `RUNS_ON`
+repository variable (default `ubuntu-latest`), so code from a pull request never
+runs on a self-hosted runner. The `workflow-guard` job
+([`tools/ci/check-pr-runners.py`](tools/ci/check-pr-runners.py), with its self-test)
+fails if a workflow that anything other than a push, a manual run or a schedule can
+trigger (a pull request, an issue, a comment, a trigger it does not know) could reach a
+self-hosted runner, or if any workflow uses `pull_request_target`. That guard covers this repository's own
+files; against a fork's pull request the real protection is the org settings (the
+runner group refuses public repositories, and fork pull requests need approval).
+`build (Spring BFF)` runs
 `./mvnw -B -s settings.xml clean verify`; on a GitHub-hosted runner it cannot reach the
 GitLab registry that `settings.xml` names. `frontend` runs `npm ci`, `npm test` and
 `npm run build`. The catalogue parity step (`build-lanes.mjs --check`) was removed
