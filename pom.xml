@@ -16,7 +16,7 @@
   <parent>
     <groupId>net.hugmesh</groupId>
     <artifactId>hugmesh-parent</artifactId>
-    <version>2.8.0</version>
+    <version>2.9.0-beta.1</version>
     <relativePath/>
   </parent>
 
@@ -30,7 +30,11 @@
   <!-- NO -api suffix in the artifactId (mirrors forum-bff/user-bff/admin-bff): -api is
        only in the repo/service/image name. -->
   <artifactId>character-forge-bff</artifactId>
-  <version>0.1.0</version>
+  <!-- The release version (beta scheme, 2026-10-21): MAJOR.MINOR.PATCH-beta.N, never
+       SNAPSHOT. The image tag v<version> must equal this value; the Release workflow's
+       version job (scripts/release-version.sh) refuses a tag that does not, and
+       frontend/package.json carries the same string (ReleaseBetaSchemeGuardTest). -->
+  <version>0.2.0-beta.1</version>
   <name>hugmesh-character-forge-bff-api</name>
   <description>HugMesh character-forge BFF — 3D character (Char3DConfig) persistence,
     active-character lookup and the VnCharacter→Char3DConfig mapping surface</description>
@@ -55,14 +59,14 @@
     <!-- The hugmesh-commons TEST-JAR — supplies the shared full-context test base
          net.hugmesh.commons.testsupport.PostgresTestSupport (a singleton
          Testcontainers Postgres + a fresh per-class logical DB + r2dbc/Liquibase
-         DynamicPropertySource wiring). Version pinned explicitly to 2.1.0 (the real
-         published commons coordinate, matching hugmesh-parent's managed
+         DynamicPropertySource wiring). Version pinned explicitly to 2.2.0-beta.1 (the
+         commons beta, matching hugmesh-parent 2.9.0-beta.1's managed
          hugmesh-commons.version); the parent's dependencyManagement does NOT manage
          the tests classifier, so the <version> must stay explicit here. -->
     <dependency>
       <groupId>net.hugmesh</groupId>
       <artifactId>hugmesh-commons</artifactId>
-      <version>2.1.0</version>
+      <version>2.2.0-beta.1</version>
       <classifier>tests</classifier>
       <scope>test</scope>
     </dependency>

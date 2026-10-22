@@ -7,24 +7,21 @@
 # PR could merge with a BROKEN main and GitLab only fail afterwards. This workflow
 # makes the compile + test a REQUIRED, merge-blocking GitHub status check.
 #
-# RUNNER — pull requests ALWAYS run on GitHub-hosted `ubuntu-latest`.
-# Every job uses the same runs-on line:
-#   ${{ fromJSON(github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.RUNS_ON || '"ubuntu-latest"') }}
-# Only a push to main may use the runner named by the RUNS_ON repository variable (a JSON
-# value such as ["self-hosted","Linux","X64"]). Every other event, pull_request included,
-# runs on `ubuntu-latest`, and so does main when RUNS_ON is unset or empty. Deleting RUNS_ON
-# moves main back to hosted as well.
-# Why: on a public repository anyone can open a pull request from a fork, and a
-# pull_request job runs the PR's own code. On a self-hosted runner that is a stranger's
-# code on our machine. A push to main only runs reviewed, merged code.
+# RUNNER — github-hosted `ubuntu-latest`.
+# Both jobs used to ask for `runs-on: [self-hosted, hugmesh-x86]`. No runner carries
+# that label (the org's self-hosted runner has self-hosted, Linux, X64), so every run
+# since the file was added ended `cancelled` after GitHub's 24h queue limit: this gate
+# has never reported. It now runs on `ubuntu-latest`, which has Docker (Testcontainers)
+# and Chrome (karma). Plain `ubuntu-latest`, not the RUNS_ON repository variable: both
+# jobs run on pull_request, and once the repo is public a pull-request job that can be
+# pointed at the self-hosted runner is a way onto that machine. Only the Release workflow
+# (push to main, v* tags, dispatch) may use the local runner, through RUNS_ON_PUBLISH.
 # This line is NOT a security boundary against a fork: a fork's pull request runs the
 # fork's copy of this file, which can say `runs-on: self-hosted` directly. The boundaries
 # are org settings: the runner group must keep "allow public repositories" OFF, and fork
 # pull requests must need approval before any workflow runs. tools/ci/check-pr-runners.py
 # (the `workflow-guard` job) only keeps OUR workflow files from sending PR jobs to a
 # self-hosted runner by accident.
-# History: both jobs once asked for `[self-hosted, hugmesh-x86]`, a label no runner has,
-# so every run sat queued until GitHub cancelled it after 24h.
 #
 # KNOWN FAILURE UNTIL THE MAVEN CHAIN MOVES: the `build` job still resolves the
 # private hugmesh-parent / hugmesh-commons from the in-cluster GitLab group Maven
@@ -89,9 +86,10 @@ jobs:
 
   build:
     name: build (Spring BFF)
-    # Pull requests: GitHub-hosted ubuntu-latest, never self-hosted (see the RUNNER note above).
-    # ubuntu-latest has Docker for Testcontainers.
-    runs-on: ${{ fromJSON(github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.RUNS_ON || '"ubuntu-latest"') }}
+    # Github-hosted (the hugmesh-x86 label is retired) — see the RUNNER note above. Has Docker for Testcontainers.
+    # Written literally: this job runs on pull_request, and a pull-request job must never read a
+    # variable that can point it at the self-hosted runner (beta scheme 3.2, 2026-10-21).
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -123,7 +121,8 @@ jobs:
 
   frontend:
     name: frontend (Angular remote — karma)
-    runs-on: ${{ fromJSON(github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.RUNS_ON || '"ubuntu-latest"') }}
+    # Literal ubuntu-latest for the same reason as `build`.
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: frontend

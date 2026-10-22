@@ -25,7 +25,7 @@ Spring Boot 4.0.7. It is copy-adapted from
 [`hugmesh-forum-bff-api`](https://github.com/hugmesh/hugmesh-forum-bff-api),
 the platform's canonical small-BFF scaffold.
 
-Maven artifact: `character-forge-bff` version `0.1.0` (package
+Maven artifact: `character-forge-bff` version `0.2.0-beta.1` (package
 `net.hugmesh.characterforgebff`). The `-api` suffix is only in the
 repo/service/image name, as with `forum-bff` and `user-bff`. It is not part of the
 artifact ID.
@@ -80,11 +80,11 @@ Repositories this README refers to:
 
 ## Shared commons library
 
-Parent POM `net.hugmesh:hugmesh-parent:2.8.0` (a child of
+Parent POM `net.hugmesh:hugmesh-parent:2.9.0-beta.1` (a child of
 `spring-boot-starter-parent:4.0.7` that supplies the reactive-BFF dependency
-and plugin baseline) and `net.hugmesh:hugmesh-commons` (managed at 2.1.0)
+and plugin baseline) and `net.hugmesh:hugmesh-commons` (managed at 2.2.0-beta.1)
 provide `CasdoorAuthorities`, `DomainRegistry`, `DomainScope`,
-`TenancyResourceServerConfig` and `ApiException`. The `hugmesh-commons:2.1.0:tests`
+`TenancyResourceServerConfig` and `ApiException`. The `hugmesh-commons:2.2.0-beta.1:tests`
 test-jar adds `PostgresTestSupport`: a singleton Testcontainers Postgres instance
 with a per-class logical database and R2DBC/Liquibase wiring.
 
@@ -333,7 +333,10 @@ Locally you set none of the TLS variables. The service runs in plain HTTP with
   brand-wall HTTP test** driven by real RS256 tokens (`TestIssuer`).
   `ClientContractFixturesTest` is the server half of the contract fixture that the
   frontend and the Godot suite also read. `ReleaseImageGuardTest` pins the
-  Dockerfile's two Maven-registry routes.
+  Dockerfile's two Maven-registry routes. `ReleaseBetaSchemeGuardTest` pins the release
+  version, the publish triggers and runner lines, and the hosted runner of the CI jobs;
+  `ReleaseVersionScriptTest` runs `scripts/release-version.sh` against the refs a
+  Release run can see.
 - `OpenApiSpecDumpTest` compares the committed, deterministic
   [`src/main/resources/openapi/openapi.json`](src/main/resources/openapi/openapi.json)
   (sorted keys; `openapi_3_0` with `default-produces-media-type: application/json`
@@ -349,10 +352,9 @@ Locally you set none of the TLS variables. The service runs in plain HTTP with
 GitLab CI (`.gitlab-ci.yml`: jobs `test`, `build:image`, `pentest:sca` and
 `pentest:dast`, the same shape as `forum-bff`; uses `CI_JOB_TOKEN` for registry
 access) is the enforcing pipeline. GitHub Actions (`.github/workflows/ci.yml`)
-is the merge gate on this mirror. Pull requests always run on GitHub-hosted
-`ubuntu-latest`; only a push to `main` may use the runner named by the `RUNS_ON`
-repository variable (default `ubuntu-latest`), so code from a pull request never
-runs on a self-hosted runner. The `workflow-guard` job
+is the merge gate on this mirror. It has three jobs, all on GitHub-hosted `ubuntu-latest`
+(written literally: they run on pull requests, so they never read a variable that could
+send them to the self-hosted runner). The `workflow-guard` job
 ([`tools/ci/check-pr-runners.py`](tools/ci/check-pr-runners.py), with its self-test)
 fails if a workflow that anything other than a push, a manual run or a schedule can
 trigger (a pull request, an issue, a comment, a trigger it does not know) could reach a
@@ -365,9 +367,18 @@ GitLab registry that `settings.xml` names. `frontend` runs `npm ci`, `npm test` 
 `npm run build`. The catalogue parity step (`build-lanes.mjs --check`) was removed
 because the engine files it reads moved to hugmesh-games (known gap 9 in
 [`tools/asset-pipeline/README.md`](tools/asset-pipeline/README.md)). The Godot job
-left with the project. A manual `Release` workflow (`.github/workflows/release.yml`)
+left with the project. The `Release` workflow (`.github/workflows/release.yml`)
 builds the image and pushes it to GHCR, resolving the private libraries from GitHub
-Packages. The Docker build is a multi-stage
+Packages. A push to `main` publishes `:main` and `:sha-<12>`. Pushing the tag
+`v<version>` (the pom `<version>`, which `frontend/package.json` repeats) publishes
+`:<version>`, `:beta` and `:sha-<12>` and creates a GitHub prerelease; a beta never
+moves `:latest`. `scripts/release-version.sh` refuses any other ref, a tag that does not
+match the pom, and a SNAPSHOT, and the run stops if `:<version>` already exists. Its jobs
+use the self-hosted runner only when the `RUNS_ON_PUBLISH` repository variable is set
+(a JSON list such as `["self-hosted","Linux","X64"]`) and the run is a push to `main`,
+a `v*` tag or a dispatch on one of those; otherwise they run on `ubuntu-latest`.
+Versions follow `MAJOR.MINOR.PATCH-beta.N`: a fix during a beta raises N, and the tag
+is pushed by a person after the version bump is merged. The Docker build is a multi-stage
 `eclipse-temurin:25` build; the registry token arrives as a BuildKit secret and
 never lands in an image layer.
 
