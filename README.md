@@ -354,8 +354,9 @@ is the merge gate on this mirror. Pull requests always run on GitHub-hosted
 repository variable (default `ubuntu-latest`), so code from a pull request never
 runs on a self-hosted runner. The `workflow-guard` job
 ([`tools/ci/check-pr-runners.py`](tools/ci/check-pr-runners.py), with its self-test)
-fails if a workflow that a pull request can trigger could reach a self-hosted runner,
-or if any workflow uses `pull_request_target`. That guard covers this repository's own
+fails if a workflow that anything other than a push, a manual run or a schedule can
+trigger (a pull request, an issue, a comment, a trigger it does not know) could reach a
+self-hosted runner, or if any workflow uses `pull_request_target`. That guard covers this repository's own
 files; against a fork's pull request the real protection is the org settings (the
 runner group refuses public repositories, and fork pull requests need approval).
 `build (Spring BFF)` runs

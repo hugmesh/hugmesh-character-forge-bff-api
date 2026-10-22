@@ -6,9 +6,12 @@ Usage: python3 tools/ci/check-pr-runners.py [.github/workflows]
 Rules, for every *.yml / *.yaml file in the directory:
   1. `pull_request_target` is refused outright. It runs with this repository's
      secrets and write token, so checking out PR code under it hands both to a fork.
-  2. If a pull request can trigger the workflow (pull_request, pull_request_review,
-     pull_request_review_comment, issue_comment, workflow_run), every job must name a
-     GitHub-hosted runner. Allowed `runs-on` values:
+  2. If anything other than push, workflow_dispatch or schedule can trigger the
+     workflow, every job must name a GitHub-hosted runner. That covers pull requests
+     (pull_request, pull_request_review, pull_request_review_comment) and every event a
+     stranger can cause on a public repository (issue_comment, issues, discussion,
+     discussion_comment, workflow_run, ...). The list is an ALLOW list, so a trigger this
+     script has never heard of is treated as untrusted. Allowed `runs-on` values:
        * a plain hosted label: ubuntu-*, windows-*, macos-*
        * exactly this expression shape, which can only pick a configured runner for a
          push to main and falls back to hosted for every other event:
@@ -34,13 +37,12 @@ except ImportError:  # pragma: no cover - ubuntu-latest ships PyYAML
     print("check-pr-runners: PyYAML is not installed (pip install pyyaml)", file=sys.stderr)
     sys.exit(2)
 
-PR_EVENTS = {
-    "pull_request",
-    "pull_request_review",
-    "pull_request_review_comment",
-    "issue_comment",
-    "workflow_run",
-}
+# Only these triggers may reach a self-hosted runner. Each needs write access to the
+# repository (push, workflow_dispatch) or runs code already on the default branch on a
+# timer (schedule). Every other trigger is untrusted: either it runs a pull request's
+# code, or a stranger can fire it (an issue, a comment, a discussion, a star, a fork) and
+# its payload is stranger input. Allow list, not deny list, so a new event fails closed.
+TRUSTED_EVENTS = {"push", "workflow_dispatch", "schedule"}
 REFUSED_EVENTS = {"pull_request_target"}
 
 HOSTED_LABEL = re.compile(r"^(ubuntu|windows|macos)-[A-Za-z0-9.\-]+$")
@@ -87,7 +89,7 @@ def check_file(path):
     events = triggers(doc)
     for ev in sorted(events & REFUSED_EVENTS):
         problems.append(f"{path}: trigger `{ev}` is refused (runs with secrets and a write token)")
-    pr_events = events & PR_EVENTS
+    pr_events = events - TRUSTED_EVENTS
     if not pr_events:
         return problems, None
     jobs = doc.get("jobs")

@@ -79,6 +79,32 @@ class Guard(unittest.TestCase):
             rc, out = run_guard({"x.yml": wf(f"[{ev}]", "[self-hosted]")})
             self.assertEqual(rc, 1, f"{ev}: {out}")
 
+    def test_stranger_triggered_events_count_as_untrusted(self):
+        # Anyone can open an issue, comment, start a discussion, star or fork a public
+        # repository. None of these may put a job on a self-hosted runner.
+        for ev in ("issues", "discussion", "discussion_comment", "watch", "fork"):
+            rc, out = run_guard({"x.yml": wf(f"[{ev}]", "[self-hosted]")})
+            self.assertEqual(rc, 1, f"{ev}: {out}")
+            self.assertIn("job `a` runs on", out)
+
+    def test_unknown_event_fails_closed(self):
+        rc, out = run_guard({"x.yml": wf("[some_future_event]", "[self-hosted]")})
+        self.assertEqual(rc, 1, out)
+
+    def test_workflow_call_is_untrusted(self):
+        # A reusable workflow inherits its caller's event, which may be a pull request.
+        rc, out = run_guard({"x.yml": wf("{workflow_call: {}}", "[self-hosted]")})
+        self.assertEqual(rc, 1, out)
+
+    def test_pull_request_target_with_self_hosted_job_reports_the_job_too(self):
+        rc, out = run_guard({"x.yml": wf("[pull_request_target]", "[self-hosted]")})
+        self.assertEqual(rc, 1, out)
+        self.assertIn("job `a` runs on", out)
+
+    def test_schedule_may_use_self_hosted(self):
+        rc, out = run_guard({"nightly.yml": wf("{schedule: [{cron: '0 3 * * *'}]}", "[self-hosted]")})
+        self.assertEqual(rc, 0, out)
+
     def test_reusable_workflow_call_on_pr_is_refused(self):
         body = "on: [pull_request]\njobs:\n  a:\n    uses: org/repo/.github/workflows/x.yml@main\n"
         rc, out = run_guard({"ci.yml": body})
