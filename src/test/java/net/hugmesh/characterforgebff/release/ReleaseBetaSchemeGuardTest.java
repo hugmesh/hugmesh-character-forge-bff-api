@@ -83,13 +83,16 @@ class ReleaseBetaSchemeGuardTest {
     }
 
     @Test
-    @DisplayName("every release.yml job runs on the scheme's publish runner line, and nothing reads RUNS_ON")
+    @DisplayName("release.yml jobs run on the scheme's publish runner line, the signed jobs on hosted ubuntu-latest; nothing reads RUNS_ON")
     void releaseRunnerLine() throws IOException {
         String yaml = code(read(".github/workflows/release.yml"));
         Map<String, String> jobs = jobs(yaml);
-        assertThat(jobs).containsOnlyKeys("version", "preflight", "build-and-push", "github-release");
+        assertThat(jobs).containsOnlyKeys("version", "preflight", "build-and-push", "github-release", "notify-site");
+        // The signed publish job and notify-site never run on the self-hosted runner
+        // (ReleaseSignedImageGuardTest pins the signing itself).
+        java.util.Set<String> hosted = java.util.Set.of("build-and-push", "notify-site");
         jobs.forEach((name, body) -> assertThat(runsOn(body)).as("runs-on of job %s", name)
-                .containsExactly(PUBLISH_RUNS_ON));
+                .containsExactly(hosted.contains(name) ? "ubuntu-latest" : PUBLISH_RUNS_ON));
         assertThat(Pattern.compile("vars\\.RUNS_ON(?!_PUBLISH)").matcher(yaml).find())
                 .as("the PR-era RUNS_ON variable is not read").isFalse();
     }
