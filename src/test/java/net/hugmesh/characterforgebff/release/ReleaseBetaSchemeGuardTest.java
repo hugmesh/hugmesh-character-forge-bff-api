@@ -24,10 +24,12 @@ import java.util.regex.Pattern;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Pins the beta scheme of 2026-10-21 for this repo: one version for the BFF image and the
- * frontend, a Release workflow that publishes only from main, v* tags and dispatch (on the local
- * runner only through RUNS_ON_PUBLISH), never moves {@code :latest} for a beta, and a CI workflow
- * whose pull-request jobs can never be pointed at the self-hosted runner.
+ * Pins the beta scheme of 2026-10-21 for this repo, with the release channels of 2026-11-04: one
+ * version for the BFF image and the frontend, a Release workflow that publishes only from main,
+ * release/X.Y branches, v* tags and dispatch (on the local runner only through RUNS_ON_PUBLISH),
+ * whose tags are chosen by scripts/release-version.sh alone (a beta never moves {@code :latest};
+ * a stable moves it only on the newest line, see scripts/test-release-version.sh), and a CI
+ * workflow whose pull-request jobs can never be pointed at the self-hosted runner.
  *
  * <p>Whole-line comments are stripped before anything is asserted, so an explanation of why a
  * line is gone can neither satisfy nor defeat a check.
@@ -69,15 +71,17 @@ class ReleaseBetaSchemeGuardTest {
     }
 
     @Test
-    @DisplayName("release.yml publishes only on push to main, v* tags and dispatch, never on a pull request")
+    @DisplayName("release.yml publishes only on push to main or release/**, v* tags and dispatch, never on a pull request")
     void releaseTriggers() throws IOException {
         String yaml = code(read(".github/workflows/release.yml"));
         String on = block(yaml, "on");
         assertThat(Pattern.compile("(?m)^\\s*pull_request(_target)?\\s*:").matcher(yaml).find())
                 .as("no pull_request / pull_request_target trigger, ever").isFalse();
         assertThat(on).contains("workflow_dispatch");
-        assertThat(Pattern.compile("(?m)^ {4}branches: \\[main]\\s*$").matcher(on).find())
-                .as("push: branches: [main]").isTrue();
+        // release/** carries the stable line (release/X.Y): its push runs build :sha-<12> only,
+        // and its vX.Y.Z tags are the only stable releases (scripts/release-version.sh).
+        assertThat(Pattern.compile("(?m)^ {4}branches: \\[main, 'release/\\*\\*']\\s*$").matcher(on).find())
+                .as("push: branches: [main, 'release/**']").isTrue();
         assertThat(Pattern.compile("(?m)^ {4}tags: \\['v\\*']\\s*$").matcher(on).find())
                 .as("push: tags: ['v*']").isTrue();
     }
@@ -98,23 +102,32 @@ class ReleaseBetaSchemeGuardTest {
     }
 
     @Test
-    @DisplayName("release.yml: version guard first, no :latest, refuses an existing version, prerelease never latest")
+    @DisplayName("release.yml: tested version guard first, tags only from the guard, refuses an existing version, prerelease never latest")
     void releaseShape() throws IOException {
         String yaml = code(read(".github/workflows/release.yml"));
         Map<String, String> jobs = jobs(yaml);
 
-        assertThat(jobs.get("version")).contains("bash scripts/release-version.sh");
+        String version = jobs.get("version");
+        assertThat(version)
+                .contains("bash scripts/release-version.sh")
+                .contains("fetch-depth: 0")
+                .contains("bash scripts/test-release-version.sh")
+                .contains("python3 scripts/test-release-workflow.py");
+        assertThat(version.indexOf("bash scripts/test-release-version.sh"))
+                .as("the guard's tests run before the guard").isLessThan(version.indexOf("bash scripts/release-version.sh"));
         assertThat(jobs.get("preflight")).contains("needs: version");
         assertThat(jobs.get("build-and-push")).contains("needs: [version, preflight]");
 
-        // A beta never moves :latest (scheme section 4). The old file pushed :latest from main.
+        // The workflow never spells the latest tag itself: only scripts/release-version.sh adds
+        // it, for a stable on the newest line (scheme section 4; the old file pushed it from main).
         assertThat(Pattern.compile("(?i):latest\\b|'\\{0}:latest'").matcher(yaml).find())
-                .as("no :latest tag anywhere in the release workflow").isFalse();
+                .as("no :latest tag spelled in the release workflow").isFalse();
 
         String image = jobs.get("build-and-push");
         assertThat(image)
                 .contains("docker buildx imagetools inspect \"${IMAGE}:${VERSION}\"")
                 .contains("tags: ${{ steps.tags.outputs.tags }}")
+                .contains("TAGS: ${{ needs.version.outputs.tags }}")
                 .contains("\"${IMAGE}:beta\"")
                 .contains("org.opencontainers.image.source=https://github.com/${{ github.repository }}")
                 .contains("org.opencontainers.image.revision=${{ github.sha }}");

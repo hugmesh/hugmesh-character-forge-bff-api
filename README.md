@@ -369,16 +369,24 @@ because the engine files it reads moved to hugmesh-games (known gap 9 in
 [`tools/asset-pipeline/README.md`](tools/asset-pipeline/README.md)). The Godot job
 left with the project. The `Release` workflow (`.github/workflows/release.yml`)
 builds the image and pushes it to GHCR, resolving the private libraries from GitHub
-Packages. A push to `main` publishes `:main` and `:sha-<12>`. Pushing the tag
-`v<version>` (the pom `<version>`, which `frontend/package.json` repeats) publishes
-`:<version>`, `:beta` and `:sha-<12>` and creates a GitHub prerelease; a beta never
-moves `:latest`. `scripts/release-version.sh` refuses any other ref, a tag that does not
-match the pom, and a SNAPSHOT, and the run stops if `:<version>` already exists. Its jobs
+Packages. The tag decides the release channel. A push to `main` publishes `:main` and
+`:sha-<12>`; a push to a `release/X.Y` branch publishes `:sha-<12>` only. A beta tag
+`vX.Y.Z-beta.N` on a `main` commit publishes `:X.Y.Z-beta.N`, `:beta` and `:sha-<12>` and
+creates a GitHub prerelease; a beta never moves `:latest`. A stable tag `vX.Y.Z` on a
+`release/X.Y` commit publishes `:X.Y.Z`, `:X.Y` and `:sha-<12>`, plus `:latest` and the
+GitHub Release's Latest mark only when X.Y is the newest stable line (a patch on an older
+line moves `:X.Y` and nothing else). The tag must be `v` + the pom `<version>`, which
+`frontend/package.json` repeats. `scripts/release-version.sh` refuses any other ref or tag
+shape (an `-rc.N` included), a tag on the wrong branch for its channel, a stable patch below
+one already tagged on its line, a tag that does not match the pom, and a SNAPSHOT; the run
+stops if `:<version>` already exists, and every pushed tag is checked against the signed
+digest. `scripts/test-release-version.sh` and `scripts/test-release-workflow.py` test the
+guard and the workflow's own steps and run first in the release `version` job. Its jobs
 use the self-hosted runner only when the `RUNS_ON_PUBLISH` repository variable is set
 (a JSON list such as `["self-hosted","Linux","X64"]`) and the run is a push to `main`,
-a `v*` tag or a dispatch on one of those; otherwise they run on `ubuntu-latest`.
-Versions follow `MAJOR.MINOR.PATCH-beta.N`: a fix during a beta raises N, and the tag
-is pushed by a person after the version bump is merged. The Docker build is a multi-stage
+a `v*` tag or a dispatch on one of those; otherwise (`release/X.Y` included) they run on
+`ubuntu-latest`. A fix during a beta raises N; a fix on a stable line raises the patch on
+`release/X.Y`. The tag is pushed by a person after the version bump is merged. The Docker build is a multi-stage
 `eclipse-temurin:25` build; the registry token arrives as a BuildKit secret and
 never lands in an image layer.
 
