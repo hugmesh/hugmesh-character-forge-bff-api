@@ -34,7 +34,7 @@
        SNAPSHOT. The image tag v<version> must equal this value; the Release workflow's
        version job (scripts/release-version.sh) refuses a tag that does not, and
        frontend/package.json carries the same string (ReleaseBetaSchemeGuardTest). -->
-  <version>0.2.0-beta.1</version>
+  <version>0.4.0-beta.1</version>
   <name>hugmesh-character-forge-bff-api</name>
   <description>HugMesh character-forge BFF — 3D character (Char3DConfig) persistence,
     active-character lookup and the VnCharacter→Char3DConfig mapping surface</description>
