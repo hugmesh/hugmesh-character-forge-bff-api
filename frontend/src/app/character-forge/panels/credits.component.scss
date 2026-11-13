@@ -40,9 +40,7 @@
   }
 
   .current strong {
-    // --hug-accent-soft: the accent itself is backgrounds/borders only (3.22:1
-    // as text on #12121e, below WCAG 1.4.3); the soft accent is 7.38:1.
-    color: var(--hug-accent-soft, #b388ff);
+    color: var(--hug-accent, #7a5cff);
   }
 }
 
